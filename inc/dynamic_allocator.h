@@ -19,6 +19,7 @@ enum
 };
 
 LIST_HEAD(MemBlock_LIST, BlockMetaData);
+struct MemBlock_LIST memBlocks;
 
 struct BlockMetaData
 {
@@ -26,6 +27,7 @@ struct BlockMetaData
 	uint8 is_free;		//is_free block?
 	LIST_ENTRY(BlockMetaData) prev_next_info;	/* linked list links */
 };
+
 
 #define sizeOfMetaData() (sizeof(struct BlockMetaData))
 
