@@ -64,6 +64,7 @@ struct Command commands[] =
 		{"lru", "set replacement algorithm to LRU", command_set_page_rep_LRU, 1},
 		{"nclock", "set replacement algorithm to Nth chance CLOCK", command_set_page_rep_nthCLOCK, 1},
 		{"modbufflength", "set the length of the modified buffer", command_set_modified_buffer_length, 1},
+		{"allocFF" ,"", command_alloc_block_FF, 1},
 
 		//******************************//
 		/* COMMANDS WITH TWO ARGUMENTS */
@@ -490,7 +491,6 @@ int command_run_all(int number_of_arguments, char **arguments)
 int command_print_all(int number_of_arguments, char **arguments)
 {
 	sched_print_all();
-
 	return 0 ;
 }
 
@@ -823,6 +823,13 @@ int command_set_modified_buffer_length(int number_of_arguments, char **arguments
 	cprintf("Modified buffer length updated = %d\n", getModifiedBufferLength());
 	return 0;
 }
+
+int command_alloc_block_FF(int number_of_arguments, char **arguments){
+	int size = strtol(arguments[1],NULL,10);
+	alloc_block_FF((uint32)size);
+	return 0;
+}
+
 
 int command_get_modified_buffer_length(int number_of_arguments, char **arguments)
 {
