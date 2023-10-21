@@ -19,6 +19,7 @@ enum
 };
 
 LIST_HEAD(MemBlock_LIST, BlockMetaData);
+
 struct MemBlock_LIST memBlocks;
 
 struct BlockMetaData
