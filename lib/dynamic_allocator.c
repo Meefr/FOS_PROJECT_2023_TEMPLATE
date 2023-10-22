@@ -92,7 +92,7 @@ void initialize_dynamic_allocator(uint32 daStart,
 
 	//TODO: [PROJECT'23.MS1 - #5] [3] DYNAMIC ALLOCATOR - initialize_dynamic_allocator()
 	//	panic("initialize_dynamic_allocator is not implemented yet");
-	struct BlockMetaData *head;
+	struct BlockMetaData *head = (struct BlockMetaData *)daStart;
 	head->size = initSizeOfAllocatedSpace;
 	head->is_free = 1;
 	LIST_INSERT_HEAD(&memBlocks, head);
@@ -105,28 +105,34 @@ void *alloc_block_FF(uint32 size) {
 	//
 	//TODO: [PROJECT'23.MS1 - #6] [3] DYNAMIC ALLOCATOR - alloc_block_FF()
 	//	panic("alloc_block_FF is not implemented yet");
+	if(size == 0)
+		return NULL;
 	struct BlockMetaData *blk, *tmpBlk;
 	uint32 freeSpace = 0;
-	tmpBlk->size = 0;
+//	tmpBlk->size = 0;
 	LIST_FOREACH(blk, &memBlocks)
 	{
 		if (blk->is_free == 1) {
 			freeSpace += (blk->size - sizeOfMetaData());
 		}
 		if (blk->size - sizeOfMetaData() >= size && blk->is_free) {
+			tmpBlk = blk;
+			blk =(struct BlockMetaData *)((uint32 *)blk + (size+sizeOfMetaData()));
+			LIST_INSERT_BEFORE(&memBlocks, blk, tmpBlk);
 			tmpBlk->size = size + sizeOfMetaData();
 			tmpBlk->is_free = 0;
-			LIST_INSERT_BEFORE(memBlocks,blk,tmpBlk);
-			blk->size = (blk->size - tmpBlk->size);
+			blk->size = blk->size - tmpBlk->size;
+			break;
 		}
 	}
 	if (tmpBlk->size == 0) {
 		if (freeSpace >= size) {
-			//compaction
+			//compaction if need
 		} else {
 			sbrk(memBlocks.size);
 		}
 	}
+
 	return NULL;
 }
 //=========================================
@@ -160,14 +166,15 @@ void *alloc_block_NF(uint32 size) {
 void free_block(void *va) {
 	//TODO: [PROJECT'23.MS1 - #7] [3] DYNAMIC ALLOCATOR - free_block()
 	//	panic("free_block is not implemented yet");
-	struct BlockMetaData *ptr = ((struct BlockMetaData *) va - 1) , *blk;
+	struct BlockMetaData *ptr = ((struct BlockMetaData *) va - 1), *blk;
 
-	LIST_FOREACH(blk, &memBlocks){
-		if(blk->prev_next_info.le_next == ptr){
+	LIST_FOREACH(blk, &memBlocks)
+	{
+		if (blk->prev_next_info.le_next == ptr) {
 
 		}
 	}
-	return ((void)ptr);
+	return ((void) ptr);
 }
 
 //=========================================
