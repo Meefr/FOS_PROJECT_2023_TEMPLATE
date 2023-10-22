@@ -8,7 +8,6 @@
 #include <inc/string.h>
 #include "../inc/dynamic_allocator.h"
 
-
 //==================================================================================//
 //============================== GIVEN FUNCTIONS ===================================//
 //==================================================================================//
@@ -16,29 +15,27 @@
 //=====================================================
 // 1) GET BLOCK SIZE (including size of its meta data):
 //=====================================================
-uint32 get_block_size(void* va)
-{
-	struct BlockMetaData *curBlkMetaData = ((struct BlockMetaData *)va - 1) ;
-	return curBlkMetaData->size ;
+
+uint32 get_block_size(void* va) {
+	struct BlockMetaData *curBlkMetaData = ((struct BlockMetaData *) va - 1);
+	return curBlkMetaData->size;
 }
 
 //===========================
 // 2) GET BLOCK STATUS:
 //===========================
-int8 is_free_block(void* va)
-{
-	struct BlockMetaData *curBlkMetaData = ((struct BlockMetaData *)va - 1) ;
-	return curBlkMetaData->is_free ;
+
+int8 is_free_block(void* va) {
+	struct BlockMetaData *curBlkMetaData = ((struct BlockMetaData *) va - 1);
+	return curBlkMetaData->is_free;
 }
 
 //===========================================
 // 3) ALLOCATE BLOCK BASED ON GIVEN STRATEGY:
 //===========================================
-void *alloc_block(uint32 size, int ALLOC_STRATEGY)
-{
+void *alloc_block(uint32 size, int ALLOC_STRATEGY) {
 	void *va = NULL;
-	switch (ALLOC_STRATEGY)
-	{
+	switch (ALLOC_STRATEGY) {
 	case DA_FF:
 		va = alloc_block_FF(size);
 		break;
@@ -62,14 +59,13 @@ void *alloc_block(uint32 size, int ALLOC_STRATEGY)
 // 4) PRINT BLOCKS LIST:
 //===========================
 
-void print_blocks_list(struct MemBlock_LIST list)
-{
+void print_blocks_list(struct MemBlock_LIST list) {
 	cprintf("=========================================\n");
-	struct BlockMetaData* blk ;
+	struct BlockMetaData* blk;
 	cprintf("\nDynAlloc Blocks List:\n");
 	LIST_FOREACH(blk, &list)
 	{
-		cprintf("(size: %d, isFree: %d)\n", blk->size, blk->is_free) ;
+		cprintf("(size: %d, isFree: %d)\n", blk->size, blk->is_free);
 	}
 	cprintf("=========================================\n");
 
@@ -85,33 +81,81 @@ void print_blocks_list(struct MemBlock_LIST list)
 //==================================
 // [1] INITIALIZE DYNAMIC ALLOCATOR:
 //==================================
-void initialize_dynamic_allocator(uint32 daStart, uint32 initSizeOfAllocatedSpace)
-{
+void initialize_dynamic_allocator(uint32 daStart,
+		uint32 initSizeOfAllocatedSpace) {
 	//=========================================
 	//DON'T CHANGE THESE LINES=================
 	if (initSizeOfAllocatedSpace == 0)
-		return ;
+		return;
 	//=========================================
 	//=========================================
 
 	//TODO: [PROJECT'23.MS1 - #5] [3] DYNAMIC ALLOCATOR - initialize_dynamic_allocator()
-	panic("initialize_dynamic_allocator is not implemented yet");
+	//	panic("initialize_dynamic_allocator is not implemented yet");
+	struct BlockMetaData *head = (struct BlockMetaData *) daStart;
+	head->size = initSizeOfAllocatedSpace;
+	head->is_free = 1;
+	LIST_INSERT_HEAD(&memBlocks, head);
 }
 
 //=========================================
 // [4] ALLOCATE BLOCK BY FIRST FIT:
 //=========================================
-void *alloc_block_FF(uint32 size)
-{
+void *alloc_block_FF(uint32 size) {
+	//
 	//TODO: [PROJECT'23.MS1 - #6] [3] DYNAMIC ALLOCATOR - alloc_block_FF()
-	panic("alloc_block_FF is not implemented yet");
+	//	panic("alloc_block_FF is not implemented yet");
+	if (size == 0)
+		return NULL;
+	struct BlockMetaData *blk, *tmpBlk;
+	uint32 freeSpace = 0;
+//	tmpBlk->size = 0;
+	LIST_FOREACH(blk, &memBlocks)
+	{
+		if (blk->is_free == 1) {
+			freeSpace += (blk->size - sizeOfMetaData());
+		}
+		//blk size is found -> allocate
+		if (blk->size - (uint32)sizeOfMetaData() >= size && blk->is_free == 1) {
+			//blk size is not enough to hold data -> no split
+			if (blk->size - (uint32)sizeOfMetaData() - size < (uint32)sizeOfMetaData()) {
+				blk->is_free = 0;
+				return (struct BlockMetaData *) ((uint32 *) blk);
+			}
+			//blk size is big enough to hold data -> split
+			else {
+				tmpBlk = blk;
+				cprintf("blk data %x\n", blk);
+				cprintf("blk data with mD %x\n", blk + sizeOfMetaData());
+				cprintf("blk data%x\n", sizeOfMetaData());
+				blk = (struct BlockMetaData *) ((uint32 *) blk
+						+ (size + sizeOfMetaData()));
+				LIST_INSERT_BEFORE(&memBlocks, blk, tmpBlk);
+				tmpBlk->size = size + sizeOfMetaData();
+				blk->size = blk->size - tmpBlk->size;
+				tmpBlk->is_free = 0;
+				print_blocks_list(memBlocks);
+				cprintf("size of meta data%x\n", sizeOfMetaData());
+
+//				cprintf("size of tmp %x\n", (struct BlockMetaData *)tmpBlk.size);
+				cprintf("size of req %d\n", size);
+				return (struct BlockMetaData *) ((uint32 *)blk
+						+ sizeOfMetaData());
+			}
+		}
+	}
+	//no free space for required size -> no allocate + no space
+	if (freeSpace >= size) {
+		//compaction if need
+	} else {
+		sbrk((uint32)(size + sizeOfMetaData()));
+	}
 	return NULL;
 }
 //=========================================
 // [5] ALLOCATE BLOCK BY BEST FIT:
 //=========================================
-void *alloc_block_BF(uint32 size)
-{
+void *alloc_block_BF(uint32 size) {
 	//TODO: [PROJECT'23.MS1 - BONUS] [3] DYNAMIC ALLOCATOR - alloc_block_BF()
 	panic("alloc_block_BF is not implemented yet");
 	return NULL;
@@ -120,8 +164,7 @@ void *alloc_block_BF(uint32 size)
 //=========================================
 // [6] ALLOCATE BLOCK BY WORST FIT:
 //=========================================
-void *alloc_block_WF(uint32 size)
-{
+void *alloc_block_WF(uint32 size) {
 	panic("alloc_block_WF is not implemented yet");
 	return NULL;
 }
@@ -129,8 +172,7 @@ void *alloc_block_WF(uint32 size)
 //=========================================
 // [7] ALLOCATE BLOCK BY NEXT FIT:
 //=========================================
-void *alloc_block_NF(uint32 size)
-{
+void *alloc_block_NF(uint32 size) {
 	panic("alloc_block_NF is not implemented yet");
 	return NULL;
 }
@@ -138,17 +180,24 @@ void *alloc_block_NF(uint32 size)
 //===================================================
 // [8] FREE BLOCK WITH COALESCING:
 //===================================================
-void free_block(void *va)
-{
+void free_block(void *va) {
 	//TODO: [PROJECT'23.MS1 - #7] [3] DYNAMIC ALLOCATOR - free_block()
-	panic("free_block is not implemented yet");
+	//	panic("free_block is not implemented yet");
+	struct BlockMetaData *ptr = ((struct BlockMetaData *) va - 1), *blk;
+
+	LIST_FOREACH(blk, &memBlocks)
+	{
+		if (blk->prev_next_info.le_next == ptr) {
+
+		}
+	}
+	return ((void) ptr);
 }
 
 //=========================================
 // [4] REALLOCATE BLOCK BY FIRST FIT:
 //=========================================
-void *realloc_block_FF(void* va, uint32 new_size)
-{
+void *realloc_block_FF(void* va, uint32 new_size) {
 	//TODO: [PROJECT'23.MS1 - #8] [3] DYNAMIC ALLOCATOR - realloc_block_FF()
 	panic("realloc_block_FF is not implemented yet");
 	return NULL;
