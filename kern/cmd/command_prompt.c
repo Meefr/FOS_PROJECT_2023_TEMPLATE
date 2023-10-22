@@ -377,30 +377,76 @@ int process_command(int number_of_arguments, char** arguments) {
 	//		panic("process_command is not implemented yet");
 	int flag = 0; // 0-> begin , 1-> found with invalid number of args, 2->
 	for (int i = 0; i < NUM_OF_COMMANDS; i++) {
-		if (strncmp(arguments[0], commands[i].name, strlen(arguments[0])) == 0) {
+		int p1=0,p2=0;
+		while(p1<strlen(arguments[0])&&p2<strlen(commands[i].name)){
+			if(arguments[0][p1]==commands[i].name[p2]){
+				p1++;
+			}
+			p2++;
+		}
+		if(strlen(arguments[0])&&strlen(commands[i].name)&&p1==p2){
 			if ((number_of_arguments - 1 == commands[i].num_of_args)
-					|| (commands[i].num_of_args == -1 && number_of_arguments - 1 >= 1)) {
-				return i;
+				|| (commands[i].num_of_args == -1 && number_of_arguments - 1 >= 1)) {
+						return i;
 			}
 		}
+//		if (strncmp(arguments[0], commands[i].name, strlen(arguments[0])) == 0) {
+//			if ((number_of_arguments - 1 == commands[i].num_of_args)
+//					|| (commands[i].num_of_args == -1 && number_of_arguments - 1 >= 1)) {
+//				return i;
+//			}
+//		}
 	}
+	//hl
+	//hewelp
 	for (int i = 0; i < NUM_OF_COMMANDS; i++) {
-		if (strncmp(arguments[0], commands[i].name, strlen(arguments[0])) == 0) {
+
+		int p1=0,p2=0;
+		while(p1<strlen(arguments[0])&&p2<strlen(commands[i].name)){
+			if(arguments[0][p1]==commands[i].name[p2]){
+				p1++;
+			}
+			p2++;
+		}
+		if(strlen(arguments[0])&&strlen(commands[i].name)&&p1==p2){
 			if (number_of_arguments - 1 != commands[i].num_of_args) {
 				flag = 1;
 				LIST_INSERT_TAIL(&foundCommands, (struct Command *) &commands[i]);
 			}
 		}
+
+//		if (strncmp(arguments[0], commands[i].name, strlen(arguments[0])) == 0) {
+//			if (number_of_arguments - 1 != commands[i].num_of_args) {
+//				flag = 1;
+//				LIST_INSERT_TAIL(&foundCommands, (struct Command *) &commands[i]);
+//			}
+//		}
 	}
-	if (flag)
+	if (flag){
+		flag=0;
 		return CMD_INV_NUM_ARGS;
+	}
+
 	for (int i = 0; i < NUM_OF_COMMANDS; i++) {
 		uint32 stringSize = strlen(arguments[0]);
-		if (strncmp(arguments[0], commands[i].name, 1) > 0) {
+
+		int p1=0,p2=0;
+		while(p1<strlen(arguments[0])&&p2<strlen(commands[i].name)){
+			if(arguments[0][p1]==commands[i].name[p2]){
+				p1++;
+			}
+			p2++;
+		}
+		if(p1==strlen(arguments[0])){
 			// push in found list
 			struct Command *ptr = &commands[i];
 			LIST_INSERT_TAIL(&foundCommands, (struct Command *) &commands[i]);
 		}
+//		if (strncmp(arguments[0], commands[i].name, 1) > 0) {
+//			// push in found list
+//			struct Command *ptr = &commands[i];
+//			LIST_INSERT_TAIL(&foundCommands, (struct Command *) &commands[i]);
+//		}
 	}
 	//not found and number of
 	if (LIST_SIZE(&foundCommands) <= 0)
