@@ -179,15 +179,14 @@ void *alloc_block_NF(uint32 size) {
 void free_block(void *va) {
 	//TODO: [PROJECT'23.MS1 - #7] [3] DYNAMIC ALLOCATOR - free_block()
 	//	panic("free_block is not implemented yet");
-	struct BlockMetaData *ptr = ((struct BlockMetaData *) va - 1), *blk;
-
+	struct BlockMetaData *ptr = ((struct BlockMetaData *) va - 1);
+	if(ptr == NULL)
+		return;
 	// ptr need to free is free -> no need to do anything
 	// invalid address -> no need to do anything
 	// check corners
-	LIST_FOREACH(blk, &memBlocks)
-	{
-		if (blk == ptr) {
-			// next and prev meta data is free
+	ptr->is_free = 1;
+	// next and prev meta data is free
 			if (ptr->prev_next_info.le_prev != NULL
 					&& ptr->prev_next_info.le_next != NULL
 					&& ptr->prev_next_info.le_next->is_free == 1
@@ -203,32 +202,29 @@ void free_block(void *va) {
 				LIST_REMOVE(&memBlocks, ptr);
 			}
 			// neither next or prev meta data is free
-			else if (ptr->prev_next_info.le_prev != NULL
+			if (ptr->prev_next_info.le_prev != NULL
 					&& ptr->prev_next_info.le_next != NULL
 					&& ptr->prev_next_info.le_next->is_free == 0
 					&& ptr->prev_next_info.le_prev->is_free == 0) {
 				ptr->is_free = 1;
 			}
-			// prev meta data is free only
-			else if (ptr->prev_next_info.le_prev != NULL
-					&& ptr->prev_next_info.le_prev->is_free == 1) {
-				ptr->prev_next_info.le_prev->size = (ptr->size
-						+ ptr->prev_next_info.le_prev->size);
-				ptr->size = 0;
-				ptr->is_free = 0;
-				LIST_REMOVE(&memBlocks, ptr);
-			}
-			// next meta data is free only
-			else if (ptr->prev_next_info.le_next != NULL
-					&& ptr->prev_next_info.le_next->is_free == 1) {
-				ptr->size = (ptr->prev_next_info.le_next->size + ptr->size);
-				ptr->prev_next_info.le_next->size = 0;
-				ptr->prev_next_info.le_next->is_free = 0;
-				ptr->is_free = 1;
-				LIST_REMOVE(&memBlocks, ptr->prev_next_info.le_next);
-			} else
-				ptr->is_free = 1;
-		}
+//			// prev meta data is free only
+	if (ptr->prev_next_info.le_prev != NULL
+			&& ptr->prev_next_info.le_prev->is_free == 1) {
+		ptr->prev_next_info.le_prev->size = (ptr->size
+				+ ptr->prev_next_info.le_prev->size);
+		ptr->size = 0;
+		ptr->is_free = 0;
+		LIST_REMOVE(&memBlocks, ptr);
+	}
+	// next meta data is free only
+	if (ptr->prev_next_info.le_next != NULL
+			&& ptr->prev_next_info.le_next->is_free == 1) {
+		ptr->size = (ptr->prev_next_info.le_next->size + ptr->size);
+		ptr->prev_next_info.le_next->size = 0;
+		ptr->prev_next_info.le_next->is_free = 0;
+		ptr->is_free = 1;
+		LIST_REMOVE(&memBlocks, ptr->prev_next_info.le_next);
 	}
 }
 
