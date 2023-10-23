@@ -134,6 +134,14 @@ void *alloc_block_FF(uint32 size) {
 				tmpBlk->is_free = 0;
 				return (struct BlockMetaData *) ((uint32) tmpBlk
 						+ sizeOfMetaData());
+//				 tmpBlk = blk;
+//				                struct BlockMetaData *newBlk = (struct BlockMetaData *)((uint32)blk + (size + sizeOfMetaData()));
+//				                newBlk->size = tmpBlk->size - (size + sizeOfMetaData());
+//				                newBlk->is_free = 1;
+//				                LIST_INSERT_AFTER(&memBlocks, tmpBlk, newBlk);
+//				                tmpBlk->size = size + sizeOfMetaData();
+//				                tmpBlk->is_free = 0;
+//				                return (struct BlockMetaData *)((uint32)tmpBlk + sizeOfMetaData());
 			}
 		}
 	}
@@ -198,8 +206,8 @@ void free_block(void *va) {
 				ptr->prev_next_info.le_next->is_free = 0;
 				ptr->size = 0;
 				ptr->is_free = 0;
-				LIST_REMOVE(&memBlocks, ptr->prev_next_info.le_next);
-				LIST_REMOVE(&memBlocks, ptr);
+//				LIST_REMOVE(&memBlocks, ptr->prev_next_info.le_next);
+//				LIST_REMOVE(&memBlocks, ptr);
 			}
 			// neither next or prev meta data is free
 			if (ptr->prev_next_info.le_prev != NULL
@@ -215,7 +223,7 @@ void free_block(void *va) {
 				+ ptr->prev_next_info.le_prev->size);
 		ptr->size = 0;
 		ptr->is_free = 0;
-		LIST_REMOVE(&memBlocks, ptr);
+//		LIST_REMOVE(&memBlocks, ptr);
 	}
 	// next meta data is free only
 	if (ptr->prev_next_info.le_next != NULL
@@ -224,7 +232,7 @@ void free_block(void *va) {
 		ptr->prev_next_info.le_next->size = 0;
 		ptr->prev_next_info.le_next->is_free = 0;
 		ptr->is_free = 1;
-		LIST_REMOVE(&memBlocks, ptr->prev_next_info.le_next);
+//		LIST_REMOVE(&memBlocks, ptr->prev_next_info.le_next);
 	}
 }
 
