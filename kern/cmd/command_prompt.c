@@ -375,7 +375,9 @@ int process_command(int number_of_arguments, char** arguments) {
 	//TODO: [PROJECT'23.MS1 - #2] [1] PLAY WITH CODE! - process_command
 	//Comment the following line before start coding...
 	//		panic("process_command is not implemented yet");
-	int flag = 0; // 0-> begin , 1-> found with invalid number of args, 2->
+	// 0-> begin , 1-> found with invalid number of args, 2->
+
+	int flag = 0;
 	for (int i = 0; i < NUM_OF_COMMANDS; i++) {
 		int p1=0,p2=0;
 		while(p1<strlen(arguments[0])&&p2<strlen(commands[i].name)){
