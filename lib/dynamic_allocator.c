@@ -108,49 +108,53 @@ void *alloc_block_FF(uint32 size) {
 	if (size == 0)
 		return NULL;
 	struct BlockMetaData *blk, *tmpBlk;
-	uint32 freeSpace = 0;
-//	tmpBlk->size = 0;
+	//	tmpBlk->size = 0;
 	LIST_FOREACH(blk, &memBlocks)
 	{
-		if (blk->is_free == 1) {
-			freeSpace += (blk->size - sizeOfMetaData());
-		}
+		//need to compaction ?
+
 		//blk size is found -> allocate
-		if (blk->size - (uint32)sizeOfMetaData() >= size && blk->is_free == 1) {
+		if ((blk->size - sizeOfMetaData()) >= size && blk->is_free == 1) {
 			//blk size is not enough to hold data -> no split
-			if (blk->size - (uint32)sizeOfMetaData() - size < (uint32)sizeOfMetaData()) {
+			if ((blk->size - (sizeOfMetaData() + size)) < sizeOfMetaData()) {
 				blk->is_free = 0;
-				return (struct BlockMetaData *) ((uint32 *) blk);
+				return (struct BlockMetaData *) ((uint32) blk + sizeOfMetaData());
 			}
 			//blk size is big enough to hold data -> split
 			else {
 				tmpBlk = blk;
-				cprintf("blk data %x\n", blk);
-				cprintf("blk data with mD %x\n", blk + sizeOfMetaData());
-				cprintf("blk data%x\n", sizeOfMetaData());
-				blk = (struct BlockMetaData *) ((uint32 *) blk
+				blk = (struct BlockMetaData *) ((uint32) blk
 						+ (size + sizeOfMetaData()));
-				LIST_INSERT_BEFORE(&memBlocks, blk, tmpBlk);
-				tmpBlk->size = size + sizeOfMetaData();
-				blk->size = blk->size - tmpBlk->size;
-				tmpBlk->is_free = 0;
-				print_blocks_list(memBlocks);
-				cprintf("size of meta data%x\n", sizeOfMetaData());
+				blk->size = tmpBlk->size - (size + sizeOfMetaData());
+				blk->is_free = 1;
 
-//				cprintf("size of tmp %x\n", (struct BlockMetaData *)tmpBlk.size);
-				cprintf("size of req %d\n", size);
-				return (struct BlockMetaData *) ((uint32 *)blk
+//				cprintf("blk: %x\ntmp: %x\n", blk, tmpBlk);
+				LIST_INSERT_AFTER(&memBlocks, tmpBlk, blk);
+				tmpBlk->size = size + sizeOfMetaData();
+				tmpBlk->is_free = 0;
+				return (struct BlockMetaData *) ((uint32) tmpBlk
 						+ sizeOfMetaData());
+//				 tmpBlk = blk;
+//				                struct BlockMetaData *newBlk = (struct BlockMetaData *)((uint32)blk + (size + sizeOfMetaData()));
+//				                newBlk->size = tmpBlk->size - (size + sizeOfMetaData());
+//				                newBlk->is_free = 1;
+//				                LIST_INSERT_AFTER(&memBlocks, tmpBlk, newBlk);
+//				                tmpBlk->size = size + sizeOfMetaData();
+//				                tmpBlk->is_free = 0;
+//				                return (struct BlockMetaData *)((uint32)tmpBlk + sizeOfMetaData());
 			}
 		}
 	}
 	//no free space for required size -> no allocate + no space
-	if (freeSpace >= size) {
-		//compaction if need
-	} else {
-		sbrk((uint32)(size + sizeOfMetaData()));
+	uint32* ptr = (uint32 *) sbrk((size + sizeOfMetaData()));
+	if (ptr != (uint32 *) -1) {
+		tmpBlk = (struct BlockMetaData *) ((uint32) memBlocks.lh_last);
+		tmpBlk->size = size + sizeOfMetaData();
+		tmpBlk->is_free = 0;
+		return (struct BlockMetaData *) ((uint32) tmpBlk + sizeOfMetaData());
 	}
 	return NULL;
+
 }
 //=========================================
 // [5] ALLOCATE BLOCK BY BEST FIT:
@@ -183,15 +187,53 @@ void *alloc_block_NF(uint32 size) {
 void free_block(void *va) {
 	//TODO: [PROJECT'23.MS1 - #7] [3] DYNAMIC ALLOCATOR - free_block()
 	//	panic("free_block is not implemented yet");
-	struct BlockMetaData *ptr = ((struct BlockMetaData *) va - 1), *blk;
-
-	LIST_FOREACH(blk, &memBlocks)
-	{
-		if (blk->prev_next_info.le_next == ptr) {
-
-		}
+	struct BlockMetaData *ptr = ((struct BlockMetaData *) va - 1);
+	if(ptr == NULL)
+		return;
+	// ptr need to free is free -> no need to do anything
+	// invalid address -> no need to do anything
+	// check corners
+	ptr->is_free = 1;
+	// next and prev meta data is free
+			if (ptr->prev_next_info.le_prev != NULL
+					&& ptr->prev_next_info.le_next != NULL
+					&& ptr->prev_next_info.le_next->is_free == 1
+					&& ptr->prev_next_info.le_prev->is_free == 1) {
+				ptr->prev_next_info.le_prev->size = (ptr->size
+						+ ptr->prev_next_info.le_next->size
+						+ ptr->prev_next_info.le_prev->size);
+				ptr->prev_next_info.le_next->size = 0;
+				ptr->prev_next_info.le_next->is_free = 0;
+				ptr->size = 0;
+				ptr->is_free = 0;
+//				LIST_REMOVE(&memBlocks, ptr->prev_next_info.le_next);
+//				LIST_REMOVE(&memBlocks, ptr);
+			}
+			// neither next or prev meta data is free
+			if (ptr->prev_next_info.le_prev != NULL
+					&& ptr->prev_next_info.le_next != NULL
+					&& ptr->prev_next_info.le_next->is_free == 0
+					&& ptr->prev_next_info.le_prev->is_free == 0) {
+				ptr->is_free = 1;
+			}
+//			// prev meta data is free only
+	if (ptr->prev_next_info.le_prev != NULL
+			&& ptr->prev_next_info.le_prev->is_free == 1) {
+		ptr->prev_next_info.le_prev->size = (ptr->size
+				+ ptr->prev_next_info.le_prev->size);
+		ptr->size = 0;
+		ptr->is_free = 0;
+//		LIST_REMOVE(&memBlocks, ptr);
 	}
-	return ((void) ptr);
+	// next meta data is free only
+	if (ptr->prev_next_info.le_next != NULL
+			&& ptr->prev_next_info.le_next->is_free == 1) {
+		ptr->size = (ptr->prev_next_info.le_next->size + ptr->size);
+		ptr->prev_next_info.le_next->size = 0;
+		ptr->prev_next_info.le_next->is_free = 0;
+		ptr->is_free = 1;
+//		LIST_REMOVE(&memBlocks, ptr->prev_next_info.le_next);
+	}
 }
 
 //=========================================
