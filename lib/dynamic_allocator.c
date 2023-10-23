@@ -210,14 +210,14 @@ void free_block(void *va) {
 //				LIST_REMOVE(&memBlocks, ptr);
 			}
 			// neither next or prev meta data is free
-			if (ptr->prev_next_info.le_prev != NULL
+			else if (ptr->prev_next_info.le_prev != NULL
 					&& ptr->prev_next_info.le_next != NULL
 					&& ptr->prev_next_info.le_next->is_free == 0
 					&& ptr->prev_next_info.le_prev->is_free == 0) {
 				ptr->is_free = 1;
 			}
 //			// prev meta data is free only
-	if (ptr->prev_next_info.le_prev != NULL
+			else if (ptr->prev_next_info.le_prev != NULL
 			&& ptr->prev_next_info.le_prev->is_free == 1) {
 		ptr->prev_next_info.le_prev->size = (ptr->size
 				+ ptr->prev_next_info.le_prev->size);
@@ -226,7 +226,7 @@ void free_block(void *va) {
 //		LIST_REMOVE(&memBlocks, ptr);
 	}
 	// next meta data is free only
-	if (ptr->prev_next_info.le_next != NULL
+			else if (ptr->prev_next_info.le_next != NULL
 			&& ptr->prev_next_info.le_next->is_free == 1) {
 		ptr->size = (ptr->prev_next_info.le_next->size + ptr->size);
 		ptr->prev_next_info.le_next->size = 0;
