@@ -323,6 +323,7 @@ char* str2lower(char *dst, const char *src)
 			tmp = (char)((int)tmp + 32);
 		}
 		dst[i] = tmp;
+		cprintf("%c \n",dst[i]);
 	}
-	return NULL;
+	return 0;
 }

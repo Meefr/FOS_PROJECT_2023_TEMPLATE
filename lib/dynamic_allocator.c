@@ -96,7 +96,9 @@ void initialize_dynamic_allocator(uint32 daStart,
 	head->size = initSizeOfAllocatedSpace;
 	head->is_free = 1;
 	LIST_INSERT_HEAD(&memBlocks, head);
+
 }
+
 
 //=========================================
 // [4] ALLOCATE BLOCK BY FIRST FIT:

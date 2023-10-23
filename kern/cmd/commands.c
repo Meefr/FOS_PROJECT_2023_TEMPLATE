@@ -7,7 +7,6 @@
  */
 
 #include "commands.h"
-
 #include <kern/trap/trap.h>
 #include <kern/trap/fault_handler.h>
 #include <kern/proc/user_environment.h>
@@ -69,7 +68,7 @@ struct Command commands[] =
 		//******************************//
 		{ "wm", "writes one byte to specific physical location" ,command_writemem_k, 2},
 		{ "schedBSD", "switch the scheduler to BSD with given # queues & quantum", command_sch_BSD, 2},
-
+		{"stl","string To Lower",command_str2lower,2},
 		//********************************//
 		/* COMMANDS WITH THREE ARGUMENTS */
 		//********************************//
@@ -125,6 +124,12 @@ int command_kernel_info(int number_of_arguments, char **arguments )
 //*****************************************************************************************//
 //***************************** PROJECT HELPERS COMMAND ***********************************//
 //*****************************************************************************************//
+
+int command_str2lower(int number_of_arguments, char **arguments){
+	char* tmp[];
+	str2lower(tmp,arguments[1]);
+	return 0;
+}
 int command_writeusermem(int number_of_arguments, char **arguments)
 {
 	//deal with the kernel page directory
