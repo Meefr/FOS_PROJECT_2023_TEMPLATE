@@ -161,8 +161,57 @@ void *alloc_block_FF(uint32 size) {
 //=========================================
 void *alloc_block_BF(uint32 size) {
 	//TODO: [PROJECT'23.MS1 - BONUS] [3] DYNAMIC ALLOCATOR - alloc_block_BF()
-	panic("alloc_block_BF is not implemented yet");
-	return NULL;
+	//	panic("alloc_block_BF is not implemented yet");
+	if (size == 0)
+		return NULL;
+	struct BlockMetaData *blk, *tmpBlk, *blkAt;
+	uint32 minSize = -1;
+	//	tmpBlk->size = 0;
+	LIST_FOREACH(blk, &memBlocks)
+	{
+		//need to compaction ?
+		//blk size is found -> allocate
+		if ((blk->size - sizeOfMetaData()) >= size && blk->is_free == 1) {
+			if (minSize == -1) {
+				minSize = blk->size;
+				blkAt = blk;
+			} else if (minSize > blk->size) {
+				minSize = blk->size;
+				blkAt = blk;
+			}
+		}
+	}
+	//no free space for required size -> no allocate + no space
+	if (minSize == -1) {
+		uint32* ptr = (uint32 *) sbrk((size + sizeOfMetaData()));
+		if (ptr != (uint32 *) -1) {
+			tmpBlk = (struct BlockMetaData *) ((uint32) memBlocks.lh_last);
+			tmpBlk->size = size + sizeOfMetaData();
+			tmpBlk->is_free = 0;
+			return (struct BlockMetaData *) ((uint32) tmpBlk + sizeOfMetaData());
+		}
+		return NULL;
+	} else {
+		//blk size is not enough to hold data -> no split
+		if ((blkAt->size - (sizeOfMetaData() + size)) < sizeOfMetaData()) {
+			blkAt->is_free = 0;
+			return (struct BlockMetaData *) ((uint32) blkAt + sizeOfMetaData());
+		}
+		//blk size is big enough to hold data -> split
+		else {
+			tmpBlk = blkAt;
+			blkAt = (struct BlockMetaData *) ((uint32) blkAt
+					+ (size + sizeOfMetaData()));
+			blkAt->size = tmpBlk->size - (size + sizeOfMetaData());
+			blkAt->is_free = 1;
+
+			//				cprintf("blk: %x\ntmp: %x\n", blk, tmpBlk);
+			LIST_INSERT_AFTER(&memBlocks, tmpBlk, blkAt);
+			tmpBlk->size = size + sizeOfMetaData();
+			tmpBlk->is_free = 0;
+			return (struct BlockMetaData *) ((uint32) tmpBlk + sizeOfMetaData());
+		}
+	}
 }
 
 //=========================================
@@ -188,34 +237,34 @@ void free_block(void *va) {
 	//TODO: [PROJECT'23.MS1 - #7] [3] DYNAMIC ALLOCATOR - free_block()
 	//	panic("free_block is not implemented yet");
 	struct BlockMetaData *ptr = ((struct BlockMetaData *) va - 1);
-	if(ptr == NULL)
+	if (ptr == NULL)
 		return;
 	// ptr need to free is free -> no need to do anything
 	// invalid address -> no need to do anything
 	// check corners
 	ptr->is_free = 1;
 	// next and prev meta data is free
-			if (ptr->prev_next_info.le_prev != NULL
-					&& ptr->prev_next_info.le_next != NULL
-					&& ptr->prev_next_info.le_next->is_free == 1
-					&& ptr->prev_next_info.le_prev->is_free == 1) {
-				ptr->prev_next_info.le_prev->size = (ptr->size
-						+ ptr->prev_next_info.le_next->size
-						+ ptr->prev_next_info.le_prev->size);
-				ptr->prev_next_info.le_next->size = 0;
-				ptr->prev_next_info.le_next->is_free = 0;
-				ptr->size = 0;
-				ptr->is_free = 0;
+	if (ptr->prev_next_info.le_prev != NULL
+			&& ptr->prev_next_info.le_next != NULL
+			&& ptr->prev_next_info.le_next->is_free == 1
+			&& ptr->prev_next_info.le_prev->is_free == 1) {
+		ptr->prev_next_info.le_prev->size = (ptr->size
+				+ ptr->prev_next_info.le_next->size
+				+ ptr->prev_next_info.le_prev->size);
+		ptr->prev_next_info.le_next->size = 0;
+		ptr->prev_next_info.le_next->is_free = 0;
+		ptr->size = 0;
+		ptr->is_free = 0;
 //				LIST_REMOVE(&memBlocks, ptr->prev_next_info.le_next);
 //				LIST_REMOVE(&memBlocks, ptr);
-			}
-			// neither next or prev meta data is free
-			if (ptr->prev_next_info.le_prev != NULL
-					&& ptr->prev_next_info.le_next != NULL
-					&& ptr->prev_next_info.le_next->is_free == 0
-					&& ptr->prev_next_info.le_prev->is_free == 0) {
-				ptr->is_free = 1;
-			}
+	}
+	// neither next or prev meta data is free
+	if (ptr->prev_next_info.le_prev != NULL
+			&& ptr->prev_next_info.le_next != NULL
+			&& ptr->prev_next_info.le_next->is_free == 0
+			&& ptr->prev_next_info.le_prev->is_free == 0) {
+		ptr->is_free = 1;
+	}
 //			// prev meta data is free only
 	if (ptr->prev_next_info.le_prev != NULL
 			&& ptr->prev_next_info.le_prev->is_free == 1) {
