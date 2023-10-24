@@ -266,7 +266,7 @@ void free_block(void *va) {
 		ptr->is_free = 1;
 	}
 //			// prev meta data is free only
-			else if (ptr->prev_next_info.le_prev != NULL
+	else if (ptr->prev_next_info.le_prev != NULL
 			&& ptr->prev_next_info.le_prev->is_free == 1) {
 		ptr->prev_next_info.le_prev->size = (ptr->size
 				+ ptr->prev_next_info.le_prev->size);
@@ -275,7 +275,7 @@ void free_block(void *va) {
 //		LIST_REMOVE(&memBlocks, ptr);
 	}
 	// next meta data is free only
-			else if (ptr->prev_next_info.le_next != NULL
+	else if (ptr->prev_next_info.le_next != NULL
 			&& ptr->prev_next_info.le_next->is_free == 1) {
 		ptr->size = (ptr->prev_next_info.le_next->size + ptr->size);
 		ptr->prev_next_info.le_next->size = 0;
@@ -290,6 +290,64 @@ void free_block(void *va) {
 //=========================================
 void *realloc_block_FF(void* va, uint32 new_size) {
 	//TODO: [PROJECT'23.MS1 - #8] [3] DYNAMIC ALLOCATOR - realloc_block_FF()
-	panic("realloc_block_FF is not implemented yet");
+	// new_size == 0 -> free
+	if (new_size == 0 && va != NULL) {
+		free_block(va);
+		return NULL;
+	}
+
+	// size != zero and va == NULL -> allocate the new size
+	else if (new_size != 0 && va == NULL) {
+		return alloc_block_FF(new_size);
+	}
+
+	// size == 0 and va == NULL
+	else if (new_size == 0 && va == NULL) {
+		return NULL;
+	}
+
+	// size != 0 and va != NULL
+	new_size += sizeOfMetaData();
+	struct BlockMetaData *ptr = ((struct BlockMetaData *) va - 1), *tmpBlk;
+	if (new_size < ptr->size) {
+		tmpBlk = ptr;
+		ptr = (struct BlockMetaData *) ((uint32) ptr + (new_size));
+		ptr->size = tmpBlk->size - (new_size);
+		ptr->is_free = 1;
+		tmpBlk->size = new_size;
+		LIST_INSERT_AFTER(&memBlocks, tmpBlk, ptr);
+		return (struct BlockMetaData *) ((uint32) tmpBlk + sizeOfMetaData());
+	} else if (new_size > ptr->size) {
+		if (ptr->prev_next_info.le_next != NULL
+				&& ptr->prev_next_info.le_next->is_free == 1) {
+			if((ptr->prev_next_info.le_next->size - sizeOfMetaData()
+						> (new_size - ptr->size))){
+			uint32 tmpsize = ptr->prev_next_info.le_next->size;
+			struct BlockMetaData * tmpPtr = ptr->prev_next_info.le_next;
+			tmpPtr->is_free = 0;
+			tmpPtr->size = 0;
+			tmpPtr =
+					(struct BlockMetaData *) ((uint32) tmpPtr
+							+ (new_size - ptr->size));
+			tmpPtr->size = tmpsize
+					- (new_size - ptr->size);
+			tmpPtr->is_free = 1;
+			ptr->size = new_size;
+//			LIST_INSERT_AFTER(&memBlocks,ptr->prev_next_info.le_next,tmpPtr);
+			}else{
+				ptr->size = new_size;
+				ptr->prev_next_info.le_next->is_free = 0;
+				ptr->prev_next_info.le_next->size = 0;
+			}
+			return (struct BlockMetaData *) ((uint32) ptr + sizeOfMetaData());
+		} else if ((ptr->prev_next_info.le_next->is_free == 0 || ptr->prev_next_info.le_next == NULL)
+				|| (ptr->prev_next_info.le_next->size < (new_size - ptr->size))) {
+			free_block(ptr);
+			return alloc_block_FF(new_size - sizeOfMetaData());
+		}
+	}else if(new_size == ptr->size) {
+		return va;
+	}
+	//panic("realloc_block_FF is not implemented yet");
 	return NULL;
 }

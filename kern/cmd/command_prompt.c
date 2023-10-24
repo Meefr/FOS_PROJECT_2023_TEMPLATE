@@ -370,7 +370,11 @@ int execute_command(char *command_string) {
 	}
 	return 0;
 }
-
+int command_str2lower(int number_of_arguments, char** arguments){
+	char*str =str2lower(arguments[1],arguments[2]);
+	cprintf("%s\n",str);
+	return 0;
+}
 int process_command(int number_of_arguments, char** arguments) {
 	//TODO: [PROJECT'23.MS1 - #2] [1] PLAY WITH CODE! - process_command
 	//Comment the following line before start coding...

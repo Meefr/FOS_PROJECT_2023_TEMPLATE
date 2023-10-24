@@ -33,6 +33,6 @@ void command_prompt_readline(const char *, char *);
 
 /*2024*/
 int process_command(int number_of_arguments, char** arguments);
-
+int command_str2lower(int number_of_arguments, char** arguments);
 
 #endif	// !FOS_KERN_MONITOR_H

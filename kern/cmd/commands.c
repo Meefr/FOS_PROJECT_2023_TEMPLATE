@@ -69,7 +69,7 @@ struct Command commands[] =
 		//******************************//
 		{ "wm", "writes one byte to specific physical location" ,command_writemem_k, 2},
 		{ "schedBSD", "switch the scheduler to BSD with given # queues & quantum", command_sch_BSD, 2},
-
+		{"str2lower","",command_str2lower,2},
 		//********************************//
 		/* COMMANDS WITH THREE ARGUMENTS */
 		//********************************//
