@@ -317,15 +317,17 @@ char* str2lower(char *dst, const char *src)
 	//Comment the following line before start coding...
 //	panic("process_command is not implemented yet");
 	int string_Size = strlen(src);
-	char* s=dst;
 	for(int i = 0; i < string_Size; i++){
 		char tmp = src[i];
 		if(src[i] >= 'A' && src[i] <= 'Z'){
 			tmp = (char)((int)tmp + 32);
 		}
 		dst[i] = tmp;
-		//cprintf("%c\n",dst[i]);
-	}
 
-	return s;
+	}
+//	cprintf("%c\n",dst[string_Size]);
+//	cprintf("%c\n",dst[string_Size+1]);
+//	cprintf("%c\n",dst[string_Size+2]);
+	dst[string_Size ] = '\0';
+	return dst;
 }
