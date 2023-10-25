@@ -317,8 +317,18 @@ void *realloc_block_FF(void* va, uint32 new_size) {
 		tmpBlk->size = new_size;
 		LIST_INSERT_AFTER(&memBlocks, tmpBlk, ptr);
 		return (struct BlockMetaData *) ((uint32) tmpBlk + sizeOfMetaData());
-	} else if (new_size > ptr->size) {
-		if (ptr->prev_next_info.le_next != NULL
+	}
+	else if (new_size > ptr->size) {
+		//This if not handeled in test
+		// no check if the next is free or not
+		// no test if th next is null
+		//no test if the next size < size i need (we compare next with its meta)
+		if (ptr->prev_next_info.le_next->is_free == 0 || ptr->prev_next_info.le_next == NULL
+				|| (ptr->prev_next_info.le_next->size < (new_size - ptr->size))) {
+			free_block(ptr);
+			return alloc_block_FF(new_size - sizeOfMetaData());
+		}
+		else if (ptr->prev_next_info.le_next != NULL
 				&& ptr->prev_next_info.le_next->is_free == 1) {
 			if ((ptr->prev_next_info.le_next->size - sizeOfMetaData()
 					> (new_size - ptr->size))) {
@@ -332,19 +342,27 @@ void *realloc_block_FF(void* va, uint32 new_size) {
 				tmpPtr->is_free = 1;
 				ptr->size = new_size;
 //			LIST_INSERT_AFTER(&memBlocks,ptr->prev_next_info.le_next,tmpPtr);
-			} else {
+			}
+
+			// here we have problem if the space i need is less than next size-meta so we should allocate
+
+			// This else not handeled in Test
+
+			else{
 				ptr->size = new_size;
 				ptr->prev_next_info.le_next->is_free = 0;
 				ptr->prev_next_info.le_next->size = 0;
 			}
 			return (struct BlockMetaData *) ((uint32) ptr + sizeOfMetaData());
-		} else if ((ptr->prev_next_info.le_next->is_free == 0
+		}
+		else if ((ptr->prev_next_info.le_next->is_free == 0
 				|| ptr->prev_next_info.le_next == NULL)
 				|| (ptr->prev_next_info.le_next->size < (new_size - ptr->size))) {
 			free_block(ptr);
 			return alloc_block_FF(new_size - sizeOfMetaData());
 		}
-	} else if (new_size == ptr->size) {
+	}
+	else if(new_size == ptr->size) {
 		return va;
 	}
 	//panic("realloc_block_FF is not implemented yet");
