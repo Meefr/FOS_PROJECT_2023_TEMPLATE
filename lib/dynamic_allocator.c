@@ -271,7 +271,6 @@ void free_block(void *va) {
 	else if (ptr->prev_next_info.le_prev != NULL
 			&& ptr->prev_next_info.le_prev->is_free == 1) {
 		ptr->prev_next_info.le_prev->size = (ptr->size
-				+ ptr->prev_next_info.le_next->size
 				+ ptr->prev_next_info.le_prev->size);
 		ptr->size = 0;
 		ptr->is_free = 0;
