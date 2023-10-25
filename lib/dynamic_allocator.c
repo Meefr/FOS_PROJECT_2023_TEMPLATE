@@ -111,17 +111,19 @@ void *alloc_block_FF(uint32 size) {
 	//	tmpBlk->size = 0;
 	LIST_FOREACH(blk, &memBlocks)
 	{
-		//need to compaction ?
-
 		//blk size is found -> allocate
 		if ((blk->size - sizeOfMetaData()) >= size && blk->is_free == 1) {
+//		cprintf("sn: %d , sb: %d \n",(size +sizeOfMetaData()) , blk->size);
+
 			//blk size is not enough to hold data -> no split
-			if ((blk->size - (sizeOfMetaData() + size)) < sizeOfMetaData()) {
+			if ((blk->size - (sizeOfMetaData() + size)) <= sizeOfMetaData()) {
+//				cprintf("---------second if---------");
 				blk->is_free = 0;
 				return (struct BlockMetaData *) ((uint32) blk + sizeOfMetaData());
 			}
 			//blk size is big enough to hold data -> split
 			else {
+//				cprintf("---------else---------");
 				tmpBlk = blk;
 				blk = (struct BlockMetaData *) ((uint32) blk
 						+ (size + sizeOfMetaData()));
@@ -269,6 +271,7 @@ void free_block(void *va) {
 	else if (ptr->prev_next_info.le_prev != NULL
 			&& ptr->prev_next_info.le_prev->is_free == 1) {
 		ptr->prev_next_info.le_prev->size = (ptr->size
+				+ ptr->prev_next_info.le_next->size
 				+ ptr->prev_next_info.le_prev->size);
 		ptr->size = 0;
 		ptr->is_free = 0;
@@ -283,6 +286,34 @@ void free_block(void *va) {
 		ptr->is_free = 1;
 //		LIST_REMOVE(&memBlocks, ptr->prev_next_info.le_next);
 	}
+
+	//			// prev meta data is free only
+		else if (ptr->prev_next_info.le_prev != NULL
+				&& ptr->prev_next_info.le_prev->is_free == 1) {
+			ptr->prev_next_info.le_prev->size = (ptr->size
+					+ ptr->prev_next_info.le_prev->size);
+			ptr->size = 0;
+			ptr->is_free = 0;
+//			LIST_REMOVE(&memBlocks, ptr);
+		}
+		// next meta data is free only
+		else if (ptr->prev_next_info.le_next != NULL
+				&& ptr->prev_next_info.le_next->is_free == 1) {
+			ptr->size = (ptr->prev_next_info.le_next->size + ptr->size);
+			ptr->prev_next_info.le_next->size = 0;
+			ptr->prev_next_info.le_next->is_free = 0;
+			ptr->is_free = 1;
+//			LIST_REMOVE(&memBlocks, ptr->prev_next_info.le_next);
+		}
+
+	// neither next or prev meta data is free
+	else if (ptr->prev_next_info.le_prev != NULL
+			&& ptr->prev_next_info.le_next != NULL
+			&& ptr->prev_next_info.le_next->is_free == 0
+			&& ptr->prev_next_info.le_prev->is_free == 0) {
+		ptr->is_free = 1;
+	}
+
 }
 
 //=========================================
