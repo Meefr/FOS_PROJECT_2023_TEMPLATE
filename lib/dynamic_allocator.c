@@ -111,17 +111,19 @@ void *alloc_block_FF(uint32 size) {
 	//	tmpBlk->size = 0;
 	LIST_FOREACH(blk, &memBlocks)
 	{
-		//need to compaction ?
-
 		//blk size is found -> allocate
 		if ((blk->size - sizeOfMetaData()) >= size && blk->is_free == 1) {
+//		cprintf("sn: %d , sb: %d \n",(size +sizeOfMetaData()) , blk->size);
+
 			//blk size is not enough to hold data -> no split
-			if ((blk->size - (sizeOfMetaData() + size)) < sizeOfMetaData()) {
+			if ((blk->size - (sizeOfMetaData() + size)) <= sizeOfMetaData()) {
+//				cprintf("---------second if---------");
 				blk->is_free = 0;
 				return (struct BlockMetaData *) ((uint32) blk + sizeOfMetaData());
 			}
 			//blk size is big enough to hold data -> split
 			else {
+//				cprintf("---------else---------");
 				tmpBlk = blk;
 				blk = (struct BlockMetaData *) ((uint32) blk
 						+ (size + sizeOfMetaData()));
@@ -180,52 +182,55 @@ void free_block(void *va) {
 	//TODO: [PROJECT'23.MS1 - #7] [3] DYNAMIC ALLOCATOR - free_block()
 	//	panic("free_block is not implemented yet");
 	struct BlockMetaData *ptr = ((struct BlockMetaData *) va - 1);
-	if(ptr == NULL)
+	if (ptr == NULL)
 		return;
 	// ptr need to free is free -> no need to do anything
 	// invalid address -> no need to do anything
 	// check corners
 	ptr->is_free = 1;
 	// next and prev meta data is free
-			if (ptr->prev_next_info.le_prev != NULL
-					&& ptr->prev_next_info.le_next != NULL
-					&& ptr->prev_next_info.le_next->is_free == 1
-					&& ptr->prev_next_info.le_prev->is_free == 1) {
-				ptr->prev_next_info.le_prev->size = (ptr->size
-						+ ptr->prev_next_info.le_next->size
-						+ ptr->prev_next_info.le_prev->size);
-				ptr->prev_next_info.le_next->size = 0;
-				ptr->prev_next_info.le_next->is_free = 0;
-				ptr->size = 0;
-				ptr->is_free = 0;
-				LIST_REMOVE(&memBlocks, ptr->prev_next_info.le_next);
-				LIST_REMOVE(&memBlocks, ptr);
-			}
-			// neither next or prev meta data is free
-			if (ptr->prev_next_info.le_prev != NULL
-					&& ptr->prev_next_info.le_next != NULL
-					&& ptr->prev_next_info.le_next->is_free == 0
-					&& ptr->prev_next_info.le_prev->is_free == 0) {
-				ptr->is_free = 1;
-			}
-//			// prev meta data is free only
 	if (ptr->prev_next_info.le_prev != NULL
+			&& ptr->prev_next_info.le_next != NULL
+			&& ptr->prev_next_info.le_next->is_free == 1
 			&& ptr->prev_next_info.le_prev->is_free == 1) {
 		ptr->prev_next_info.le_prev->size = (ptr->size
+				+ ptr->prev_next_info.le_next->size
 				+ ptr->prev_next_info.le_prev->size);
-		ptr->size = 0;
-		ptr->is_free = 0;
-		LIST_REMOVE(&memBlocks, ptr);
-	}
-	// next meta data is free only
-	if (ptr->prev_next_info.le_next != NULL
-			&& ptr->prev_next_info.le_next->is_free == 1) {
-		ptr->size = (ptr->prev_next_info.le_next->size + ptr->size);
 		ptr->prev_next_info.le_next->size = 0;
 		ptr->prev_next_info.le_next->is_free = 0;
-		ptr->is_free = 1;
-		LIST_REMOVE(&memBlocks, ptr->prev_next_info.le_next);
+		ptr->size = 0;
+		ptr->is_free = 0;
+//		LIST_REMOVE(&memBlocks, ptr->prev_next_info.le_next);
+//		LIST_REMOVE(&memBlocks, ptr);
 	}
+
+	//			// prev meta data is free only
+		else if (ptr->prev_next_info.le_prev != NULL
+				&& ptr->prev_next_info.le_prev->is_free == 1) {
+			ptr->prev_next_info.le_prev->size = (ptr->size
+					+ ptr->prev_next_info.le_prev->size);
+			ptr->size = 0;
+			ptr->is_free = 0;
+//			LIST_REMOVE(&memBlocks, ptr);
+		}
+		// next meta data is free only
+		else if (ptr->prev_next_info.le_next != NULL
+				&& ptr->prev_next_info.le_next->is_free == 1) {
+			ptr->size = (ptr->prev_next_info.le_next->size + ptr->size);
+			ptr->prev_next_info.le_next->size = 0;
+			ptr->prev_next_info.le_next->is_free = 0;
+			ptr->is_free = 1;
+//			LIST_REMOVE(&memBlocks, ptr->prev_next_info.le_next);
+		}
+
+	// neither next or prev meta data is free
+	else if (ptr->prev_next_info.le_prev != NULL
+			&& ptr->prev_next_info.le_next != NULL
+			&& ptr->prev_next_info.le_next->is_free == 0
+			&& ptr->prev_next_info.le_prev->is_free == 0) {
+		ptr->is_free = 1;
+	}
+
 }
 
 //=========================================

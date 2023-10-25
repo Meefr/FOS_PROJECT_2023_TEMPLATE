@@ -18,6 +18,7 @@
 #include "../mem/memory_manager.h"
 #include "../tests/tst_handler.h"
 #include "../tests/utilities.h"
+#include "../../inc/dynamic_allocator.h"
 
 
 //Array of commands. (initialized)
