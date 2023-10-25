@@ -91,5 +91,6 @@ int command_sch_test(int number_of_arguments, char **arguments);
 //2023
 int command_tst(int number_of_arguments, char **arguments);
 int command_alloc_block_FF(int number_of_arguments, char **arguments);
+void *alloc_tst(uint32 size);
 
 #endif /* KERN_CMD_COMMANDS_H_ */
