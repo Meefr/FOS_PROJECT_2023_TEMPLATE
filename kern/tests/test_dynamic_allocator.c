@@ -1438,6 +1438,11 @@ void test_realloc_block_FF()
 		eval += 30;
 	}
 
+	//[4.2] next block is not full (with coalesce)
+	cprintf("	4.2: next block is not full (with coalesce)\n\n") ;
+
+	//[4.3] next block is NULL
+	cprintf("	4.3: next block is NULL \n\n") ;
 
 	cprintf("test realloc_block with FIRST FIT completed. Evaluation = %d%\n", eval);
 
