@@ -323,7 +323,17 @@ char* str2lower(char *dst, const char *src)
 			tmp = (char)((int)tmp + 32);
 		}
 		dst[i] = tmp;
+<<<<<<< HEAD
 		cprintf("%c \n",dst[i]);
 	}
 	return 0;
+=======
+
+	}
+//	cprintf("%c\n",dst[string_Size]);
+//	cprintf("%c\n",dst[string_Size+1]);
+//	cprintf("%c\n",dst[string_Size+2]);
+	dst[string_Size ] = '\0';
+	return dst;
+>>>>>>> meefr
 }

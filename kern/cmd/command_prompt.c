@@ -371,12 +371,17 @@ int execute_command(char *command_string) {
 	}
 	return 0;
 }
-
+int command_str2lower(int number_of_arguments, char** arguments){
+	char*str =str2lower(arguments[1],arguments[2]);
+	cprintf("%s\n",str);
+	return 0;
+}
 int process_command(int number_of_arguments, char** arguments) {
 	//TODO: [PROJECT'23.MS1 - #2] [1] PLAY WITH CODE! - process_command
 	//Comment the following line before start coding...
 	//		panic("process_command is not implemented yet");
 	// 0-> begin , 1-> found with invalid number of args, 2->
+<<<<<<< HEAD
 
 	struct Command * ptr = NULL;
 	LIST_FOREACH(ptr, &foundCommands)
@@ -384,6 +389,12 @@ int process_command(int number_of_arguments, char** arguments) {
 		LIST_REMOVE(&foundCommands, ptr);
 	}
 
+=======
+	struct Command *ptr=NULL;
+	LIST_FOREACH(ptr,&foundCommands){
+		LIST_REMOVE(&foundCommands,ptr);
+	}
+>>>>>>> meefr
 	int flag = 0;
 	for (int i = 0; i < NUM_OF_COMMANDS; i++) {
 		int p1 = 0, p2 = 0;
@@ -393,7 +404,11 @@ int process_command(int number_of_arguments, char** arguments) {
 			}
 			p2++;
 		}
+<<<<<<< HEAD
 		if (strlen(arguments[0]) == strlen(commands[i].name) && p1 == p2) {
+=======
+		if(strlen(arguments[0])==strlen(commands[i].name)&&p1==p2){
+>>>>>>> meefr
 			if ((number_of_arguments - 1 == commands[i].num_of_args)
 					|| (commands[i].num_of_args == -1
 							&& number_of_arguments - 1 >= 1)) {
@@ -419,7 +434,11 @@ int process_command(int number_of_arguments, char** arguments) {
 			}
 			p2++;
 		}
+<<<<<<< HEAD
 		if (strlen(arguments[0]) == strlen(commands[i].name) && p1 == p2) {
+=======
+		if(strlen(arguments[0])==strlen(commands[i].name)&&p1==p2){
+>>>>>>> meefr
 			if (number_of_arguments - 1 != commands[i].num_of_args) {
 				flag = 1;
 				LIST_INSERT_TAIL(&foundCommands,
