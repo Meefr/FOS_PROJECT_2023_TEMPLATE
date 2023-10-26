@@ -116,7 +116,7 @@ void *alloc_block_FF(uint32 size) {
 			//blk size is not enough to hold data -> no split
 			if ((blk->size - (sizeOfMetaData() + size)) <= sizeOfMetaData()) {
 				blk->is_free = 0;
-				return (struct BlockMetaData *) ((uint32) blk + sizeOfMetaData());
+				return (void *) ((uint32) blk + sizeOfMetaData());
 			}
 			//blk size is big enough to hold data -> split
 			else {
@@ -128,7 +128,7 @@ void *alloc_block_FF(uint32 size) {
 				LIST_INSERT_AFTER(&memBlocks, tmpBlk, blk);
 				tmpBlk->size = size + sizeOfMetaData();
 				tmpBlk->is_free = 0;
-				return (struct BlockMetaData *) ((uint32) tmpBlk
+				return (void *) ((uint32) tmpBlk
 						+ sizeOfMetaData());
 			}
 		}
@@ -139,7 +139,7 @@ void *alloc_block_FF(uint32 size) {
 		tmpBlk = (struct BlockMetaData *) ((uint32) memBlocks.lh_last);
 		tmpBlk->size = size + sizeOfMetaData();
 		tmpBlk->is_free = 0;
-		return (struct BlockMetaData *) ((uint32) tmpBlk + sizeOfMetaData());
+		return (void *) ((uint32) tmpBlk + sizeOfMetaData());
 	}
 	return NULL;
 
@@ -176,14 +176,14 @@ void *alloc_block_BF(uint32 size) {
 			tmpBlk = (struct BlockMetaData *) ((uint32) memBlocks.lh_last);
 			tmpBlk->size = size + sizeOfMetaData();
 			tmpBlk->is_free = 0;
-			return (struct BlockMetaData *) ((uint32) tmpBlk + sizeOfMetaData());
+			return (void *) ((uint32) tmpBlk + sizeOfMetaData());
 		}
 		return NULL;
 	} else {
 		//blk size is not enough to hold data -> no split
 		if ((blkAt->size - (sizeOfMetaData() + size)) < sizeOfMetaData()) {
 			blkAt->is_free = 0;
-			return (struct BlockMetaData *) ((uint32) blkAt + sizeOfMetaData());
+			return (void *) ((uint32) blkAt + sizeOfMetaData());
 		}
 		//blk size is big enough to hold data -> split
 		else {
@@ -197,7 +197,7 @@ void *alloc_block_BF(uint32 size) {
 			LIST_INSERT_AFTER(&memBlocks, tmpBlk, blkAt);
 			tmpBlk->size = size + sizeOfMetaData();
 			tmpBlk->is_free = 0;
-			return (struct BlockMetaData *) ((uint32) tmpBlk + sizeOfMetaData());
+			return (void *) ((uint32) tmpBlk + sizeOfMetaData());
 		}
 	}
 }
@@ -328,7 +328,7 @@ void *realloc_block_FF(void* va, uint32 new_size) {
 			}
 			LIST_INSERT_AFTER(&memBlocks, tmpBlk, ptr);
 		}
-		return (struct BlockMetaData *) ((uint32) tmpBlk + sizeOfMetaData());
+		return (void *) ((uint32) tmpBlk + sizeOfMetaData());
 	} else if (new_size > ptr->size) {
 		//This if not handeled in test
 		// no check if the next is free or not
@@ -349,6 +349,7 @@ void *realloc_block_FF(void* va, uint32 new_size) {
 				struct BlockMetaData * tmpPtr = ptr->prev_next_info.le_next;
 				tmpPtr->is_free = 0;
 				tmpPtr->size = 0;
+				LIST_REMOVE(&memBlocks, tmpPtr);
 				tmpPtr = (struct BlockMetaData *) ((uint32) tmpPtr
 						+ (new_size - ptr->size));
 				tmpPtr->size = tmpsize - (new_size - ptr->size);
@@ -365,8 +366,10 @@ void *realloc_block_FF(void* va, uint32 new_size) {
 				ptr->size = new_size;
 				ptr->prev_next_info.le_next->is_free = 0;
 				ptr->prev_next_info.le_next->size = 0;
+				struct BlockMetaData * tmpPtr = ptr->prev_next_info.le_next;
+				LIST_REMOVE(&memBlocks, tmpPtr);
 			}
-			return (struct BlockMetaData *) ((uint32) ptr + sizeOfMetaData());
+			return (void *) ((uint32) ptr + sizeOfMetaData());
 		}
 	} else if (new_size == ptr->size) {
 		return va;
