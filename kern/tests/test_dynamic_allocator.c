@@ -1388,6 +1388,61 @@ void test_realloc_block_FF()
 		eval += 25;
 	}
 
+	//[3.3] reallocate with next block not free
+	cprintf("    3.3: reallocate with next block not free\n\n");
+	is_correct = 1;
+	{
+		//blockIndex = 4*allocCntPerSize - 1 ;
+		//new_size = allocSizes[3] /*12+16 B*/ + allocSizes[4]/2 /*2KB/2*/ - sizeOfMetaData();
+		blockIndex = 3*allocCntPerSize + 1;
+		old_size = allocSizes[0] /*4KB*/;
+		new_size = old_size + 1*kilo - sizeOfMetaData();
+
+		cprintf("%x \n",startVAs[blockIndex]);
+
+			va = realloc_block_FF(startVAs[blockIndex], new_size);
+			//check return address
+			//cprintf("Expected %x, Actual %x\n", startVAs[blockIndex] ,va);
+			if( va == startVAs[blockIndex])
+			{
+				is_correct = 0;
+				cprintf("test_realloc_block_FF #11.1: WRONG REALLOC - it return wrong address. Expected %x, Actual %x\n", startVAs[blockIndex] ,va);
+			}
+			//check reallocated block size & status
+			block_size = get_block_size(va) ;
+			if (block_size != new_size + sizeOfMetaData())
+			{
+				is_correct = 0;
+				cprintf("test_realloc_block_FF #11.2: WRONG REALLOC! block size after realloc is not correct. Expected %d, Actual %d\n",new_size + sizeOfMetaData(), block_size);
+			}
+			block_status = is_free_block(va) ;
+			if (block_status != 0)
+			{
+				is_correct = 0;
+				cprintf("test_realloc_block_FF #11.3: WRONG REALLOC! block status (is_free) not equal 0 after realloc.\n");
+			}
+			//check vanishing block (if any)
+			if (get_block_size(startVAs[blockIndex]) != 0 || is_free_block(startVAs[blockIndex]) != 0)
+			{
+				cprintf("%x \n",startVAs[blockIndex]);
+				is_correct = 0;
+				cprintf("test_realloc_block_FF #11.4: WRONG REALLOC! make sure to ZEROing the size & is_free values of the vanishing block.\n");
+			}
+			//check content of reallocated block
+			if (*(startVAs[blockIndex]) != blockIndex || *(midVAs[blockIndex]) != blockIndex ||	*(endVAs[blockIndex]) != blockIndex)
+			{
+				is_correct = 0;
+				cprintf("test_realloc_block_FF #11.5: WRONG REALLOC! content of the block is not correct. Expected %d\n", blockIndex);
+			}
+
+	}
+	if (is_correct)
+	{
+		eval += 25;
+	}
+
+
+
 	//[4] Test realloc with decreased sizes
 	cprintf("4: Test calling realloc with decreased sizes.[30%]\n\n") ;
 	//[4.1] next block is full (NO coalesce)

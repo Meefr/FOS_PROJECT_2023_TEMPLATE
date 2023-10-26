@@ -244,6 +244,7 @@ void free_block(void *va) {
 	// ptr need to free is free -> no need to do anything
 	// invalid address -> no need to do anything
 	// check corners
+	cprintf("in free %x \n ",ptr);
 	ptr->is_free = 1;
 	// next and prev meta data is free
 	if (ptr->prev_next_info.le_prev != NULL
@@ -257,6 +258,9 @@ void free_block(void *va) {
 		ptr->prev_next_info.le_next->is_free = 0;
 		ptr->size = 0;
 		ptr->is_free = 0;
+		struct BlockMetaData *tmp = ptr->prev_next_info.le_next;
+		LIST_REMOVE(&memBlocks, tmp);
+		LIST_REMOVE(&memBlocks, ptr);
 //				LIST_REMOVE(&memBlocks, ptr->prev_next_info.le_next);
 //				LIST_REMOVE(&memBlocks, ptr);
 	}
@@ -274,7 +278,7 @@ void free_block(void *va) {
 				+ ptr->prev_next_info.le_prev->size);
 		ptr->size = 0;
 		ptr->is_free = 0;
-//		LIST_REMOVE(&memBlocks, ptr);
+		LIST_REMOVE(&memBlocks, ptr);
 	}
 	// next meta data is free only
 	else if (ptr->prev_next_info.le_next != NULL
@@ -283,7 +287,8 @@ void free_block(void *va) {
 		ptr->prev_next_info.le_next->size = 0;
 		ptr->prev_next_info.le_next->is_free = 0;
 		ptr->is_free = 1;
-//		LIST_REMOVE(&memBlocks, ptr->prev_next_info.le_next);
+		struct BlockMetaData *tmp = ptr->prev_next_info.le_next;
+		LIST_REMOVE(&memBlocks, tmp);
 	}
 }
 
@@ -349,7 +354,8 @@ void *realloc_block_FF(void* va, uint32 new_size) {
 		if (ptr->prev_next_info.le_next->is_free == 0
 				|| ptr->prev_next_info.le_next == NULL
 				|| (ptr->prev_next_info.le_next->size- sizeOfMetaData() < (new_size - ptr->size))) {
-			free_block(ptr);
+			cprintf("befor free fun %x \n",(struct BlockMetaData *) ((uint32) ptr + sizeOfMetaData()));
+			free_block(((struct BlockMetaData *) ptr + 1));
 			return alloc_block_FF(new_size - sizeOfMetaData());
 		} else if (ptr->prev_next_info.le_next != NULL
 				&& ptr->prev_next_info.le_next->is_free == 1) {
