@@ -1228,6 +1228,7 @@ void test_realloc_block_FF()
 
 	//====================================================================//
 	/* Try to allocate a block with a size equal to the size of the first existing free block*/
+
 	actualSize = remainSize - sizeOfMetaData();
 	va = startVAs[idx] = realloc_block_FF(NULL, actualSize);
 	midVAs[idx] = va + actualSize/2 ;
