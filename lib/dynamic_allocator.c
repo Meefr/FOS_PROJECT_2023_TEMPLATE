@@ -305,7 +305,15 @@ void *realloc_block_FF(void* va, uint32 new_size) {
 	new_size += sizeOfMetaData();
 	struct BlockMetaData *ptr = ((struct BlockMetaData *) va - 1), *tmpBlk;
 	if (new_size < ptr->size) {
-		tmpBlk = ptr;
+		/*
+		 * [ for testing function ]
+		 * -- test next = NULL --
+		 * -- text next.isFree == 1 --
+		 */
+//		if(ptr->prev_next_info.le_next != NULL){
+//			return ptr+1;
+//		}
+	 	tmpBlk = ptr;
 		if (ptr->size - new_size >= sizeOfMetaData()) {
 			ptr = (struct BlockMetaData *) ((uint32) ptr + (new_size));
 			ptr->size = tmpBlk->size - (new_size);
@@ -315,6 +323,7 @@ void *realloc_block_FF(void* va, uint32 new_size) {
 			 * take care if he can reallocate a free block of data so
 			 * free function will change the needed size
 			 */
+			LIST_INSERT_AFTER(&memBlocks, tmpBlk, ptr);
 			if (tmpBlk->is_free == 1) {
 				tmpBlk->is_free = 0;
 				free_block(
@@ -326,7 +335,6 @@ void *realloc_block_FF(void* va, uint32 new_size) {
 						(struct BlockMetaData *) ((uint32) ptr
 								+ sizeOfMetaData()));
 			}
-			LIST_INSERT_AFTER(&memBlocks, tmpBlk, ptr);
 		}
 		return (void *) ((uint32) tmpBlk + sizeOfMetaData());
 	} else if (new_size > ptr->size) {
@@ -339,7 +347,7 @@ void *realloc_block_FF(void* va, uint32 new_size) {
 				|| ptr->prev_next_info.le_next == NULL
 				|| (ptr->prev_next_info.le_next->size - sizeOfMetaData()
 						< (new_size - ptr->size))) {
-			free_block(ptr);
+			free_block((void *)((struct BlockMetaData *) ptr + 1));
 			return alloc_block_FF(new_size - sizeOfMetaData());
 		} else if (ptr->prev_next_info.le_next != NULL
 				&& ptr->prev_next_info.le_next->is_free == 1) {
