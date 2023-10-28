@@ -505,7 +505,11 @@ void test_free_block_FF()
 	{
 		totalSizes += allocSizes[i] * allocCntPerSize ;
 	}
+
 	int remainSize = initAllocatedSpace - totalSizes ;
+
+	//cprintf("remainSize %d \n initAllocatedSpace %d \n totalSizes %d \n ",remainSize,initAllocatedSpace,totalSizes);
+
 	if (remainSize <= 0)
 		panic("test_free_block is not configured correctly. Consider updating the initial allocated space OR the required allocations");
 
@@ -667,8 +671,15 @@ void test_free_block_FF()
 	is_correct = 1;
 	//Free last block (coalesce with previous)
 	uint32 blockIndex = numOfAllocs*allocCntPerSize;
+
+//	cprintf("block_size before free %d \n ",get_block_size(startVAs[blockIndex]));
+//	cprintf("block_size-1 before free %d \n ",get_block_size(startVAs[blockIndex-1]));
+
 	free_block(startVAs[blockIndex]);
 	block_size = get_block_size(startVAs[blockIndex-1]) ;
+
+	//cprintf("block_size %d \n ",block_size);
+
 	if (block_size != remainSize + allocSizes[numOfAllocs-1])
 	{
 		is_correct = 0;
@@ -1204,6 +1215,7 @@ void test_realloc_block_FF()
 	if (remainSize <= 0)
 		panic("test_realloc_block_FF is not configured correctly. Consider updating the initial allocated space OR the required allocations");
 
+
 	int idx = 0;
 	void* curVA = (void*) KERNEL_HEAP_START ;
 	uint32 actualSize;
@@ -1300,6 +1312,11 @@ void test_realloc_block_FF()
 	void* expected_va = NULL;
 	//[3.1] reallocate in same place (NO relocate - split)
 	cprintf("	3.1: reallocate in same place (NO relocate - split)\n\n") ;
+
+//	for(int i=0 ;i<7;i++){
+//		cprintf("index %x \n",startVAs[i*allocCntPerSize]);
+//	}
+
 	is_correct = 1;
 	{
 		blockIndex = 4*allocCntPerSize - 1 ;

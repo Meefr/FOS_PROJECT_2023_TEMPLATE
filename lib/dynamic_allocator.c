@@ -354,10 +354,11 @@ void *realloc_block_FF(void* va, uint32 new_size) {
 		if (ptr->prev_next_info.le_next->is_free == 0
 				|| ptr->prev_next_info.le_next == NULL
 				|| (ptr->prev_next_info.le_next->size- sizeOfMetaData() < (new_size - ptr->size))) {
-			cprintf("befor free fun %x \n",(struct BlockMetaData *) ((uint32) ptr + sizeOfMetaData()));
+			cprintf("aaaaa befor free fun %x \n",(struct BlockMetaData *) ((uint32) ptr + sizeOfMetaData()));
 			free_block(((struct BlockMetaData *) ptr + 1));
 			return alloc_block_FF(new_size - sizeOfMetaData());
-		} else if (ptr->prev_next_info.le_next != NULL
+		}
+		else if (ptr->prev_next_info.le_next != NULL
 				&& ptr->prev_next_info.le_next->is_free == 1) {
 			if ((ptr->prev_next_info.le_next->size - sizeOfMetaData()
 					> (new_size - ptr->size))) {
