@@ -113,37 +113,23 @@ void *alloc_block_FF(uint32 size) {
 	{
 		//blk size is found -> allocate
 		if ((blk->size - sizeOfMetaData()) >= size && blk->is_free == 1) {
-//		cprintf("sn: %d , sb: %d \n",(size +sizeOfMetaData()) , blk->size);
-
 			//blk size is not enough to hold data -> no split
 			if ((blk->size - (sizeOfMetaData() + size)) <= sizeOfMetaData()) {
-//				cprintf("---------second if---------");
 				blk->is_free = 0;
-				return (struct BlockMetaData *) ((uint32) blk + sizeOfMetaData());
+				return (void *) ((uint32) blk + sizeOfMetaData());
 			}
 			//blk size is big enough to hold data -> split
 			else {
-//				cprintf("---------else---------");
 				tmpBlk = blk;
 				blk = (struct BlockMetaData *) ((uint32) blk
 						+ (size + sizeOfMetaData()));
 				blk->size = tmpBlk->size - (size + sizeOfMetaData());
 				blk->is_free = 1;
-
-//				cprintf("blk: %x\ntmp: %x\n", blk, tmpBlk);
 				LIST_INSERT_AFTER(&memBlocks, tmpBlk, blk);
 				tmpBlk->size = size + sizeOfMetaData();
 				tmpBlk->is_free = 0;
-				return (struct BlockMetaData *) ((uint32) tmpBlk
+				return (void *) ((uint32) tmpBlk
 						+ sizeOfMetaData());
-//				 tmpBlk = blk;
-//				                struct BlockMetaData *newBlk = (struct BlockMetaData *)((uint32)blk + (size + sizeOfMetaData()));
-//				                newBlk->size = tmpBlk->size - (size + sizeOfMetaData());
-//				                newBlk->is_free = 1;
-//				                LIST_INSERT_AFTER(&memBlocks, tmpBlk, newBlk);
-//				                tmpBlk->size = size + sizeOfMetaData();
-//				                tmpBlk->is_free = 0;
-//				                return (struct BlockMetaData *)((uint32)tmpBlk + sizeOfMetaData());
 			}
 		}
 	}
@@ -153,7 +139,7 @@ void *alloc_block_FF(uint32 size) {
 		tmpBlk = (struct BlockMetaData *) ((uint32) memBlocks.lh_last);
 		tmpBlk->size = size + sizeOfMetaData();
 		tmpBlk->is_free = 0;
-		return (struct BlockMetaData *) ((uint32) tmpBlk + sizeOfMetaData());
+		return (void *) ((uint32) tmpBlk + sizeOfMetaData());
 	}
 	return NULL;
 
@@ -190,14 +176,14 @@ void *alloc_block_BF(uint32 size) {
 			tmpBlk = (struct BlockMetaData *) ((uint32) memBlocks.lh_last);
 			tmpBlk->size = size + sizeOfMetaData();
 			tmpBlk->is_free = 0;
-			return (struct BlockMetaData *) ((uint32) tmpBlk + sizeOfMetaData());
+			return (void *) ((uint32) tmpBlk + sizeOfMetaData());
 		}
 		return NULL;
 	} else {
 		//blk size is not enough to hold data -> no split
 		if ((blkAt->size - (sizeOfMetaData() + size)) < sizeOfMetaData()) {
 			blkAt->is_free = 0;
-			return (struct BlockMetaData *) ((uint32) blkAt + sizeOfMetaData());
+			return (void *) ((uint32) blkAt + sizeOfMetaData());
 		}
 		//blk size is big enough to hold data -> split
 		else {
@@ -211,7 +197,7 @@ void *alloc_block_BF(uint32 size) {
 			LIST_INSERT_AFTER(&memBlocks, tmpBlk, blkAt);
 			tmpBlk->size = size + sizeOfMetaData();
 			tmpBlk->is_free = 0;
-			return (struct BlockMetaData *) ((uint32) tmpBlk + sizeOfMetaData());
+			return (void *) ((uint32) tmpBlk + sizeOfMetaData());
 		}
 	}
 }
@@ -261,8 +247,11 @@ void free_block(void *va) {
 		struct BlockMetaData *tmp = ptr->prev_next_info.le_next;
 		LIST_REMOVE(&memBlocks, tmp);
 		LIST_REMOVE(&memBlocks, ptr);
+<<<<<<< HEAD
 //				LIST_REMOVE(&memBlocks, ptr->prev_next_info.le_next);
 //				LIST_REMOVE(&memBlocks, ptr);
+=======
+>>>>>>> meefr
 	}
 	// neither next or prev meta data is free
 	else if (ptr->prev_next_info.le_prev != NULL
@@ -279,6 +268,10 @@ void free_block(void *va) {
 		ptr->size = 0;
 		ptr->is_free = 0;
 		LIST_REMOVE(&memBlocks, ptr);
+<<<<<<< HEAD
+=======
+
+>>>>>>> meefr
 	}
 	// next meta data is free only
 	else if (ptr->prev_next_info.le_next != NULL
@@ -321,7 +314,15 @@ void *realloc_block_FF(void* va, uint32 new_size) {
 	new_size += sizeOfMetaData();
 	struct BlockMetaData *ptr = ((struct BlockMetaData *) va - 1), *tmpBlk;
 	if (new_size < ptr->size) {
-		tmpBlk = ptr;
+		/*
+		 * [ for testing function ]
+		 * -- test next = NULL --
+		 * -- text next.isFree == 1 --
+		 */
+//		if(ptr->prev_next_info.le_next != NULL){
+//			return ptr+1;
+//		}
+	 	tmpBlk = ptr;
 		if (ptr->size - new_size >= sizeOfMetaData()) {
 			ptr = (struct BlockMetaData *) ((uint32) ptr + (new_size));
 			ptr->size = tmpBlk->size - (new_size);
@@ -331,6 +332,7 @@ void *realloc_block_FF(void* va, uint32 new_size) {
 			 * take care if he can reallocate a free block of data so
 			 * free function will change the needed size
 			 */
+			LIST_INSERT_AFTER(&memBlocks, tmpBlk, ptr);
 			if (tmpBlk->is_free == 1) {
 				tmpBlk->is_free = 0;
 				free_block(
@@ -342,9 +344,8 @@ void *realloc_block_FF(void* va, uint32 new_size) {
 						(struct BlockMetaData *) ((uint32) ptr
 								+ sizeOfMetaData()));
 			}
-			LIST_INSERT_AFTER(&memBlocks, tmpBlk, ptr);
 		}
-		return (struct BlockMetaData *) ((uint32) tmpBlk + sizeOfMetaData());
+		return (void *) ((uint32) tmpBlk + sizeOfMetaData());
 	} else if (new_size > ptr->size) {
 		//This if not handeled in test
 		// no check if the next is free or not
@@ -354,9 +355,11 @@ void *realloc_block_FF(void* va, uint32 new_size) {
 		if (ptr->prev_next_info.le_next->is_free == 0
 				|| ptr->prev_next_info.le_next == NULL
 				|| (ptr->prev_next_info.le_next->size- sizeOfMetaData() < (new_size - ptr->size))) {
-			cprintf("aaaaa befor free fun %x \n",(struct BlockMetaData *) ((uint32) ptr + sizeOfMetaData()));
+
+			//cprintf("aaaaa befor free fun %x \n",(struct BlockMetaData *) ((uint32) ptr + sizeOfMetaData()));
 			free_block(((struct BlockMetaData *) ptr + 1));
 			return alloc_block_FF(new_size - sizeOfMetaData());
+
 		}
 		else if (ptr->prev_next_info.le_next != NULL
 				&& ptr->prev_next_info.le_next->is_free == 1) {
@@ -366,6 +369,7 @@ void *realloc_block_FF(void* va, uint32 new_size) {
 				struct BlockMetaData * tmpPtr = ptr->prev_next_info.le_next;
 				tmpPtr->is_free = 0;
 				tmpPtr->size = 0;
+				LIST_REMOVE(&memBlocks, tmpPtr);
 				tmpPtr = (struct BlockMetaData *) ((uint32) tmpPtr
 						+ (new_size - ptr->size));
 				tmpPtr->size = tmpsize - (new_size - ptr->size);
@@ -382,8 +386,10 @@ void *realloc_block_FF(void* va, uint32 new_size) {
 				ptr->size = new_size;
 				ptr->prev_next_info.le_next->is_free = 0;
 				ptr->prev_next_info.le_next->size = 0;
+				struct BlockMetaData * tmpPtr = ptr->prev_next_info.le_next;
+				LIST_REMOVE(&memBlocks, tmpPtr);
 			}
-			return (struct BlockMetaData *) ((uint32) ptr + sizeOfMetaData());
+			return (void *) ((uint32) ptr + sizeOfMetaData());
 		}
 	} else if (new_size == ptr->size) {
 		return va;
