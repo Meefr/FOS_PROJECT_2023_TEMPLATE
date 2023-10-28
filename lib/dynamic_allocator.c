@@ -247,11 +247,6 @@ void free_block(void *va) {
 		struct BlockMetaData *tmp = ptr->prev_next_info.le_next;
 		LIST_REMOVE(&memBlocks, tmp);
 		LIST_REMOVE(&memBlocks, ptr);
-<<<<<<< HEAD
-//				LIST_REMOVE(&memBlocks, ptr->prev_next_info.le_next);
-//				LIST_REMOVE(&memBlocks, ptr);
-=======
->>>>>>> meefr
 	}
 	// neither next or prev meta data is free
 	else if (ptr->prev_next_info.le_prev != NULL
@@ -268,10 +263,6 @@ void free_block(void *va) {
 		ptr->size = 0;
 		ptr->is_free = 0;
 		LIST_REMOVE(&memBlocks, ptr);
-<<<<<<< HEAD
-=======
-
->>>>>>> meefr
 	}
 	// next meta data is free only
 	else if (ptr->prev_next_info.le_next != NULL

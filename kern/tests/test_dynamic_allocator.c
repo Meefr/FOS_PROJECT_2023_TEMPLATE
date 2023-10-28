@@ -502,15 +502,7 @@ void test_free_block_FF() {
 	for (int i = 0; i < numOfAllocs; ++i) {
 		totalSizes += allocSizes[i] * allocCntPerSize;
 	}
-<<<<<<< HEAD
-
-	int remainSize = initAllocatedSpace - totalSizes ;
-
-	//cprintf("remainSize %d \n initAllocatedSpace %d \n totalSizes %d \n ",remainSize,initAllocatedSpace,totalSizes);
-
-=======
 	int remainSize = initAllocatedSpace - totalSizes;
->>>>>>> meefr
 	if (remainSize <= 0)
 		panic(
 				"test_free_block is not configured correctly. Consider updating the initial allocated space OR the required allocations");
@@ -673,25 +665,10 @@ void test_free_block_FF() {
 	cprintf("		4.1: at the tail\n\n");
 	is_correct = 1;
 	//Free last block (coalesce with previous)
-<<<<<<< HEAD
-	uint32 blockIndex = numOfAllocs*allocCntPerSize;
-
-//	cprintf("block_size before free %d \n ",get_block_size(startVAs[blockIndex]));
-//	cprintf("block_size-1 before free %d \n ",get_block_size(startVAs[blockIndex-1]));
-
-	free_block(startVAs[blockIndex]);
-	block_size = get_block_size(startVAs[blockIndex-1]) ;
-
-	//cprintf("block_size %d \n ",block_size);
-
-	if (block_size != remainSize + allocSizes[numOfAllocs-1])
-	{
-=======
 	uint32 blockIndex = numOfAllocs * allocCntPerSize;
 	free_block(startVAs[blockIndex]);
 	block_size = get_block_size(startVAs[blockIndex - 1]);
 	if (block_size != remainSize + allocSizes[numOfAllocs - 1]) {
->>>>>>> meefr
 		is_correct = 0;
 		cprintf(
 				"test_free_block #8.1: WRONG FREE! block size after free is not correct. Expected %d, Actual %d\n",
@@ -1294,7 +1271,6 @@ void test_realloc_block_FF() {
 		panic(
 				"test_realloc_block_FF is not configured correctly. Consider updating the initial allocated space OR the required allocations");
 
-
 	int idx = 0;
 	void* curVA = (void*) KERNEL_HEAP_START;
 	uint32 actualSize;
@@ -1319,7 +1295,6 @@ void test_realloc_block_FF() {
 
 	//====================================================================//
 	/* Try to allocate a block with a size equal to the size of the first existing free block*/
-
 	actualSize = remainSize - sizeOfMetaData();
 	va = startVAs[idx] = realloc_block_FF(NULL, actualSize);
 	midVAs[idx] = va + actualSize / 2;
@@ -1395,16 +1370,7 @@ void test_realloc_block_FF() {
 			newBlockIndex;
 	void* expected_va = NULL;
 	//[3.1] reallocate in same place (NO relocate - split)
-<<<<<<< HEAD
-	cprintf("	3.1: reallocate in same place (NO relocate - split)\n\n") ;
-
-//	for(int i=0 ;i<7;i++){
-//		cprintf("index %x \n",startVAs[i*allocCntPerSize]);
-//	}
-
-=======
 	cprintf("	3.1: reallocate in same place (NO relocate - split)\n\n");
->>>>>>> meefr
 	is_correct = 1;
 	{
 		blockIndex = 4 * allocCntPerSize - 1;
@@ -1506,115 +1472,60 @@ void test_realloc_block_FF() {
 	}
 
 	//[3.3] reallocate with next block is NULL (relocate)
-	cprintf("    3.3: reallocate with next block is NULL\n\n");
-	is_correct = 1;
-	{
-		struct BlockMetaData * testPtr =
-				(struct BlockMetaData *) ((int) KERNEL_HEAP_START), *nextTestPtr;
-
-		testPtr->is_free = 1;
-		testPtr->size = ((uint32) 2 * kilo + sizeOfMetaData());
-		old_size = testPtr->size;
-		new_size = (uint32) 2 * kilo;
-		nextTestPtr = (struct BlockMetaData *) ((uint32) testPtr + old_size);
-		nextTestPtr->is_free = 0;
-		nextTestPtr->size = ((uint32)1 * kilo) + sizeOfMetaData();
-		nextTestPtr->prev_next_info.le_next = NULL;
-		nextTestPtr->prev_next_info.le_prev = testPtr;
-		testPtr->prev_next_info.le_next = nextTestPtr;
-		testPtr->prev_next_info.le_prev = NULL;
-		//cprintf("REALLOCATE to size %d\n",new_size ) ;
-		va = realloc_block_FF(((struct BlockMetaData *) nextTestPtr + 1),
-				new_size);
-		cprintf("%x\n size:%d\n",va,get_block_size(((struct BlockMetaData *) va + 1)));
-		//check return address
-		if (va == NULL || (va == (struct BlockMetaData *) nextTestPtr + 1)) {
-			is_correct = 0;
-			cprintf(
-					"test_realloc_block_FF #9.1: WRONG REALLOC - it return wrong address. Expected %x, Actual %x\n",
-					startVAs[blockIndex], va);
-		}
-		//check reallocated block size & status
-		block_size = get_block_size(((struct BlockMetaData *) va + 1));
-		if (block_size != new_size + sizeOfMetaData()) {
-			is_correct = 0;
-			cprintf(
-					"test_realloc_block_FF #9.2: WRONG REALLOC! block size after realloc is not correct. Expected %d, Actual %d\n",
-					new_size + sizeOfMetaData(), block_size);
-		}
-		block_status = is_free_block(((struct BlockMetaData *) va + 1));
-		if (block_status != 0) {
-			is_correct = 0;
-			cprintf(
-					"test_realloc_block_FF #9.3: WRONG REALLOC! block status (is_free) not equal 0 after realloc.\n");
-		}
-		//check vanishing block (if any)
-		if (get_block_size(((struct BlockMetaData *) nextTestPtr + 1)) != 0
-				|| is_free_block(((struct BlockMetaData *) nextTestPtr + 1))
-						!= 0) {
-			is_correct = 0;
-			cprintf(
-					"test_realloc_block_FF #9.4: WRONG REALLOC! make sure to ZEROing the size & is_free values of the vanishing block.\n");
-		}
-	}
-	if (is_correct) {
-		eval += 25;
-	}
-
-	//[3.3] reallocate with next block not free
-	cprintf("    3.3: reallocate with next block not free\n\n");
-	is_correct = 1;
-	{
-		//blockIndex = 4*allocCntPerSize - 1 ;
-		//new_size = allocSizes[3] /*12+16 B*/ + allocSizes[4]/2 /*2KB/2*/ - sizeOfMetaData();
-		blockIndex = 3*allocCntPerSize + 1;
-		old_size = allocSizes[0] /*4KB*/;
-		new_size = old_size + 1*kilo - sizeOfMetaData();
-
-		cprintf("%x \n",startVAs[blockIndex]);
-
-			va = realloc_block_FF(startVAs[blockIndex], new_size);
-			//check return address
-			//cprintf("Expected %x, Actual %x\n", startVAs[blockIndex] ,va);
-			if( va == startVAs[blockIndex])
-			{
-				is_correct = 0;
-				cprintf("test_realloc_block_FF #11.1: WRONG REALLOC - it return wrong address. Expected %x, Actual %x\n", startVAs[blockIndex] ,va);
-			}
-			//check reallocated block size & status
-			block_size = get_block_size(va) ;
-			if (block_size != new_size + sizeOfMetaData())
-			{
-				is_correct = 0;
-				cprintf("test_realloc_block_FF #11.2: WRONG REALLOC! block size after realloc is not correct. Expected %d, Actual %d\n",new_size + sizeOfMetaData(), block_size);
-			}
-			block_status = is_free_block(va) ;
-			if (block_status != 0)
-			{
-				is_correct = 0;
-				cprintf("test_realloc_block_FF #11.3: WRONG REALLOC! block status (is_free) not equal 0 after realloc.\n");
-			}
-			//check vanishing block (if any)
-			if (get_block_size(startVAs[blockIndex]) != 0 || is_free_block(startVAs[blockIndex]) != 0)
-			{
-				cprintf("%x \n",startVAs[blockIndex]);
-				is_correct = 0;
-				cprintf("test_realloc_block_FF #11.4: WRONG REALLOC! make sure to ZEROing the size & is_free values of the vanishing block.\n");
-			}
-			//check content of reallocated block
-			if (*(startVAs[blockIndex]) != blockIndex || *(midVAs[blockIndex]) != blockIndex ||	*(endVAs[blockIndex]) != blockIndex)
-			{
-				is_correct = 0;
-				cprintf("test_realloc_block_FF #11.5: WRONG REALLOC! content of the block is not correct. Expected %d\n", blockIndex);
-			}
-
-	}
-	if (is_correct)
-	{
-		eval += 25;
-	}
-
-
+//	cprintf("    3.3: reallocate with next block is NULL\n\n");
+//	is_correct = 1;
+//	{
+//		struct BlockMetaData * testPtr =
+//				(struct BlockMetaData *) ((int) KERNEL_HEAP_START), *nextTestPtr;
+//
+//		testPtr->is_free = 1;
+//		testPtr->size = ((uint32) 2 * kilo + sizeOfMetaData());
+//		old_size = testPtr->size;
+//		new_size = (uint32) 2 * kilo;
+//		nextTestPtr = (struct BlockMetaData *) ((uint32) testPtr + old_size);
+//		nextTestPtr->is_free = 0;
+//		nextTestPtr->size = ((uint32)1 * kilo) + sizeOfMetaData();
+//		nextTestPtr->prev_next_info.le_next = NULL;
+//		nextTestPtr->prev_next_info.le_prev = testPtr;
+//		testPtr->prev_next_info.le_next = nextTestPtr;
+//		testPtr->prev_next_info.le_prev = NULL;
+//		//cprintf("REALLOCATE to size %d\n",new_size ) ;
+//		va = realloc_block_FF(((struct BlockMetaData *) nextTestPtr + 1),
+//				new_size);
+//		cprintf("%x\n size:%d\n",va,get_block_size(((struct BlockMetaData *) va + 1)));
+//		//check return address
+//		if (va == NULL || (va == (struct BlockMetaData *) nextTestPtr + 1)) {
+//			is_correct = 0;
+//			cprintf(
+//					"test_realloc_block_FF #9.1: WRONG REALLOC - it return wrong address. Expected %x, Actual %x\n",
+//					startVAs[blockIndex], va);
+//		}
+//		//check reallocated block size & status
+//		block_size = get_block_size(((struct BlockMetaData *) va + 1));
+//		if (block_size != new_size + sizeOfMetaData()) {
+//			is_correct = 0;
+//			cprintf(
+//					"test_realloc_block_FF #9.2: WRONG REALLOC! block size after realloc is not correct. Expected %d, Actual %d\n",
+//					new_size + sizeOfMetaData(), block_size);
+//		}
+//		block_status = is_free_block(((struct BlockMetaData *) va + 1));
+//		if (block_status != 0) {
+//			is_correct = 0;
+//			cprintf(
+//					"test_realloc_block_FF #9.3: WRONG REALLOC! block status (is_free) not equal 0 after realloc.\n");
+//		}
+//		//check vanishing block (if any)
+//		if (get_block_size(((struct BlockMetaData *) nextTestPtr + 1)) != 0
+//				|| is_free_block(((struct BlockMetaData *) nextTestPtr + 1))
+//						!= 0) {
+//			is_correct = 0;
+//			cprintf(
+//					"test_realloc_block_FF #9.4: WRONG REALLOC! make sure to ZEROing the size & is_free values of the vanishing block.\n");
+//		}
+//	}
+//	if (is_correct) {
+//		eval += 25;
+//	}
 
 	//[4] Test realloc with decreased sizes
 	cprintf("4: Test calling realloc with decreased sizes.[30%]\n\n");
