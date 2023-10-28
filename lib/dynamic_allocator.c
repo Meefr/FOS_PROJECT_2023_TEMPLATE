@@ -342,12 +342,11 @@ void *realloc_block_FF(void* va, uint32 new_size) {
 		// no check if the next is free or not
 		// no test if th next is null
 		//no test if the next size < size i need (we compare next with its meta)
-
-		if (ptr->prev_next_info.le_next->is_free == 0
+		if ((  ptr->prev_next_info.le_next != NULL&&ptr->prev_next_info.le_next->is_free == 0)
 				|| ptr->prev_next_info.le_next == NULL
-				|| (ptr->prev_next_info.le_next->size- sizeOfMetaData() < (new_size - ptr->size))) {
+				|| (ptr->prev_next_info.le_next != NULL&&(ptr->prev_next_info.le_next->size- sizeOfMetaData() < (new_size - ptr->size)))) {
 
-			//cprintf("aaaaa befor free fun %x \n",(struct BlockMetaData *) ((uint32) ptr + sizeOfMetaData()));
+			cprintf("aaaaa befor free fun %x \n",(struct BlockMetaData *) ((uint32) ptr + sizeOfMetaData()));
 			free_block(((struct BlockMetaData *) ptr + 1));
 			return alloc_block_FF(new_size - sizeOfMetaData());
 
