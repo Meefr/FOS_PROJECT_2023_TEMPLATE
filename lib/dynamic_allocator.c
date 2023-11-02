@@ -369,6 +369,7 @@ void *realloc_block_FF(void* va, uint32 new_size) {
 				ptr->size = new_size;
 				ptr->prev_next_info.le_next->is_free = 0;
 				ptr->prev_next_info.le_next->size = 0;
+				cprintf("tsssst----------");
 			}
 			return (struct BlockMetaData *) ((uint32) ptr + sizeOfMetaData());
 		} else if ((ptr->prev_next_info.le_next->is_free == 0 || ptr->prev_next_info.le_next == NULL)
