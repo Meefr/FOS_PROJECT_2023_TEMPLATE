@@ -325,9 +325,6 @@ char* str2lower(char *dst, const char *src)
 		dst[i] = tmp;
 
 	}
-//	cprintf("%c\n",dst[string_Size]);
-//	cprintf("%c\n",dst[string_Size+1]);
-//	cprintf("%c\n",dst[string_Size+2]);
 	dst[string_Size ] = '\0';
 	return dst;
 }

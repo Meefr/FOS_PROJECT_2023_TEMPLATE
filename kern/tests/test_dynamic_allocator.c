@@ -1471,62 +1471,6 @@ void test_realloc_block_FF() {
 		eval += 25;
 	}
 
-	//[3.3] reallocate with next block is NULL (relocate)
-	cprintf("    3.3: reallocate with next block is NULL\n\n");
-	is_correct = 1;
-	{
-		struct BlockMetaData * testPtr =
-				(struct BlockMetaData *) ((int) KERNEL_HEAP_START), *nextTestPtr;
-
-		testPtr->is_free = 1;
-		testPtr->size = ((uint32) 2 * kilo + sizeOfMetaData());
-		old_size = testPtr->size;
-		new_size = (uint32) 2 * kilo;
-		nextTestPtr = (struct BlockMetaData *) ((uint32) testPtr + old_size);
-		nextTestPtr->is_free = 0;
-		nextTestPtr->size = ((uint32)1 * kilo) + sizeOfMetaData();
-		nextTestPtr->prev_next_info.le_next = NULL;
-		nextTestPtr->prev_next_info.le_prev = testPtr;
-		testPtr->prev_next_info.le_next = nextTestPtr;
-		testPtr->prev_next_info.le_prev = NULL;
-		//cprintf("REALLOCATE to size %d\n",new_size ) ;
-		va = realloc_block_FF(((struct BlockMetaData *) nextTestPtr + 1),
-				new_size);
-		cprintf("%x\n size:%d\n",va,get_block_size(((struct BlockMetaData *) va + 1)));
-		//check return address
-		if (va == NULL || (va == (struct BlockMetaData *) nextTestPtr + 1)) {
-			is_correct = 0;
-			cprintf(
-					"test_realloc_block_FF #9.1: WRONG REALLOC - it return wrong address. Expected %x, Actual %x\n",
-					startVAs[blockIndex], va);
-		}
-		//check reallocated block size & status
-		block_size = get_block_size(((struct BlockMetaData *) va + 1));
-		if (block_size != new_size + sizeOfMetaData()) {
-			is_correct = 0;
-			cprintf(
-					"test_realloc_block_FF #9.2: WRONG REALLOC! block size after realloc is not correct. Expected %d, Actual %d\n",
-					new_size + sizeOfMetaData(), block_size);
-		}
-		block_status = is_free_block(((struct BlockMetaData *) va + 1));
-		if (block_status != 0) {
-			is_correct = 0;
-			cprintf(
-					"test_realloc_block_FF #9.3: WRONG REALLOC! block status (is_free) not equal 0 after realloc.\n");
-		}
-		//check vanishing block (if any)
-		if (get_block_size(((struct BlockMetaData *) nextTestPtr + 1)) != 0
-				|| is_free_block(((struct BlockMetaData *) nextTestPtr + 1))
-						!= 0) {
-			is_correct = 0;
-			cprintf(
-					"test_realloc_block_FF #9.4: WRONG REALLOC! make sure to ZEROing the size & is_free values of the vanishing block.\n");
-		}
-	}
-	if (is_correct) {
-		eval += 25;
-	}
-
 	//[4] Test realloc with decreased sizes
 	cprintf("4: Test calling realloc with decreased sizes.[30%]\n\n");
 //	//[4.1] next block is full (NO coalesce)

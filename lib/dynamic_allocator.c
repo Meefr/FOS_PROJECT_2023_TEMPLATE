@@ -230,7 +230,6 @@ void free_block(void *va) {
 	// ptr need to free is free -> no need to do anything
 	// invalid address -> no need to do anything
 	// check corners
-	cprintf("in free %x \n ",ptr);
 	ptr->is_free = 1;
 	// next and prev meta data is free
 	if (ptr->prev_next_info.le_prev != NULL
@@ -305,14 +304,6 @@ void *realloc_block_FF(void* va, uint32 new_size) {
 	new_size += sizeOfMetaData();
 	struct BlockMetaData *ptr = ((struct BlockMetaData *) va - 1), *tmpBlk;
 	if (new_size < ptr->size) {
-		/*
-		 * [ for testing function ]
-		 * -- test next = NULL --
-		 * -- text next.isFree == 1 --
-		 */
-//		if(ptr->prev_next_info.le_next != NULL){
-//			return ptr+1;
-//		}
 	 	tmpBlk = ptr;
 		if (ptr->size - new_size >= sizeOfMetaData()) {
 			ptr = (struct BlockMetaData *) ((uint32) ptr + (new_size));
@@ -346,7 +337,6 @@ void *realloc_block_FF(void* va, uint32 new_size) {
 				|| ptr->prev_next_info.le_next == NULL
 				|| (ptr->prev_next_info.le_next != NULL&&(ptr->prev_next_info.le_next->size- sizeOfMetaData() < (new_size - ptr->size)))) {
 
-			cprintf("aaaaa befor free fun %x \n",(struct BlockMetaData *) ((uint32) ptr + sizeOfMetaData()));
 			free_block(((struct BlockMetaData *) ptr + 1));
 			return alloc_block_FF(new_size - sizeOfMetaData());
 
