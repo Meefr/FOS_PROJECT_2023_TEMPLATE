@@ -77,7 +77,7 @@ void print_blocks_list(struct MemBlock_LIST list) {
 //==================================================================================//
 //============================ REQUIRED FUNCTIONS ==================================//
 //==================================================================================//
-
+bool is_initialized=0;
 //==================================
 // [1] INITIALIZE DYNAMIC ALLOCATOR:
 //==================================
@@ -108,6 +108,8 @@ void *alloc_block_FF(uint32 size) {
 	//	panic("alloc_block_FF is not implemented yet");
 	if (size == 0)
 		return NULL;
+
+	// code update for MS2
 	if (!is_initialized)
 	{
 	uint32 required_size = size + sizeOfMetaData();
@@ -117,29 +119,44 @@ void *alloc_block_FF(uint32 size) {
 	initialize_dynamic_allocator(da_start, da_break - da_start);
 	}
 
+
 	struct BlockMetaData *blk, *tmpBlk;
 	//	tmpBlk->size = 0;
 	LIST_FOREACH(blk, &memBlocks)
 	{
 		//blk size is found -> allocate
 		if ((blk->size - sizeOfMetaData()) >= size && blk->is_free == 1) {
+//		cprintf("sn: %d , sb: %d \n",(size +sizeOfMetaData()) , blk->size);
+
 			//blk size is not enough to hold data -> no split
 			if ((blk->size - (sizeOfMetaData() + size)) <= sizeOfMetaData()) {
+//				cprintf("---------second if---------");
 				blk->is_free = 0;
-				return (void *) ((uint32) blk + sizeOfMetaData());
+				return (struct BlockMetaData *) ((uint32) blk + sizeOfMetaData());
 			}
 			//blk size is big enough to hold data -> split
 			else {
+//				cprintf("---------else---------");
 				tmpBlk = blk;
 				blk = (struct BlockMetaData *) ((uint32) blk
 						+ (size + sizeOfMetaData()));
 				blk->size = tmpBlk->size - (size + sizeOfMetaData());
 				blk->is_free = 1;
+
+//				cprintf("blk: %x\ntmp: %x\n", blk, tmpBlk);
 				LIST_INSERT_AFTER(&memBlocks, tmpBlk, blk);
 				tmpBlk->size = size + sizeOfMetaData();
 				tmpBlk->is_free = 0;
-				return (void *) ((uint32) tmpBlk
+				return (struct BlockMetaData *) ((uint32) tmpBlk
 						+ sizeOfMetaData());
+//				 tmpBlk = blk;
+//				                struct BlockMetaData *newBlk = (struct BlockMetaData *)((uint32)blk + (size + sizeOfMetaData()));
+//				                newBlk->size = tmpBlk->size - (size + sizeOfMetaData());
+//				                newBlk->is_free = 1;
+//				                LIST_INSERT_AFTER(&memBlocks, tmpBlk, newBlk);
+//				                tmpBlk->size = size + sizeOfMetaData();
+//				                tmpBlk->is_free = 0;
+//				                return (struct BlockMetaData *)((uint32)tmpBlk + sizeOfMetaData());
 			}
 		}
 	}
@@ -149,7 +166,7 @@ void *alloc_block_FF(uint32 size) {
 		tmpBlk = (struct BlockMetaData *) ((uint32) memBlocks.lh_last);
 		tmpBlk->size = size + sizeOfMetaData();
 		tmpBlk->is_free = 0;
-		return (void *) ((uint32) tmpBlk + sizeOfMetaData());
+		return (struct BlockMetaData *) ((uint32) tmpBlk + sizeOfMetaData());
 	}
 	return NULL;
 
