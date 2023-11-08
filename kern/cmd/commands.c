@@ -18,7 +18,6 @@
 #include "../mem/memory_manager.h"
 #include "../tests/tst_handler.h"
 #include "../tests/utilities.h"
-#include "../../inc/dynamic_allocator.h"
 
 
 //Array of commands. (initialized)
@@ -65,12 +64,13 @@ struct Command commands[] =
 		{"lru", "set replacement algorithm to LRU", command_set_page_rep_LRU, 1},
 		{"nclock", "set replacement algorithm to Nth chance CLOCK", command_set_page_rep_nthCLOCK, 1},
 		{"modbufflength", "set the length of the modified buffer", command_set_modified_buffer_length, 1},
+
 		//******************************//
 		/* COMMANDS WITH TWO ARGUMENTS */
 		//******************************//
 		{ "wm", "writes one byte to specific physical location" ,command_writemem_k, 2},
 		{ "schedBSD", "switch the scheduler to BSD with given # queues & quantum", command_sch_BSD, 2},
-		{"str2lower","",command_str2lower,2},
+
 		//********************************//
 		/* COMMANDS WITH THREE ARGUMENTS */
 		//********************************//
@@ -398,11 +398,13 @@ struct Env * CreateEnv(int number_of_arguments, char **arguments)
 
 			break;
 		}
+#if USE_KHEAP == 0
 		if(pageWSSize > __PWS_MAX_SIZE)
 		{
 			cprintf("ERROR: size of WS must be less than or equal to %d... aborting", __PWS_MAX_SIZE);
 			return NULL;
 		}
+#endif
 		if(isPageReplacmentAlgorithmLRU(PG_REP_LRU_LISTS_APPROX))
 		{
 			if (LRUSecondListSize > pageWSSize - 1)
@@ -490,6 +492,7 @@ int command_run_all(int number_of_arguments, char **arguments)
 int command_print_all(int number_of_arguments, char **arguments)
 {
 	sched_print_all();
+
 	return 0 ;
 }
 
@@ -822,13 +825,6 @@ int command_set_modified_buffer_length(int number_of_arguments, char **arguments
 	cprintf("Modified buffer length updated = %d\n", getModifiedBufferLength());
 	return 0;
 }
-
-int command_alloc_block_FF(int number_of_arguments, char **arguments){
-//	int size = strtol(arguments[1],NULL,10);
-//	alloc_block_FF((uint32)size);
-	return 0;
-}
-
 
 int command_get_modified_buffer_length(int number_of_arguments, char **arguments)
 {
