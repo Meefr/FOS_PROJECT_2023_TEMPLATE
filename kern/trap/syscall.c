@@ -512,7 +512,10 @@ void* sys_sbrk(int increment)
 	uint32 hardLimit = env->hardLimit;
 	uint32 segmentBreak = env->segBreak;
 
-	if(increment > 0 && (increment+env->segBreak) <= hardLimit) {
+	if((increment+env->segBreak) > hardLimit){
+		return (void*)-1;
+	}
+	if(increment > 0) {
 
 		if(increment % (4 * kilo) == 0) {
 			env->segBreak += increment;
@@ -520,13 +523,20 @@ void* sys_sbrk(int increment)
 			env->segBreak += (((increment/(4*kilo))*(4*kilo)) + (4 * kilo));
 		}
 
-		return (void*)segmentBreak;
-	} else if(increment == 0) {
-		return (void*) segmentBreak;
-	} else {
-
+	} else if(increment < 0) {
+		if(segmentBreak + increment < env->start)
+			return (void*)-1;
+		while(increment <= (-4 * kilo)){
+			// moving the segment break by page boundary
+			segmentBreak -=(4 * kilo);
+			// deallocate page entry
+			unmap_frame(env->env_page_directory,segmentBreak);
+			//move to the next page.
+			increment += (4 * kilo);
+		}
+		env->segBreak = segmentBreak;
 	}
-
+	return (void *)segmentBreak;
 }
 
 uint32 sys_get_hard_limit(uint32 hardLimit) {
