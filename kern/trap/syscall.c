@@ -484,7 +484,7 @@ void* sys_sbrk(int increment)
 {
 	//TODO: [PROJECT'23.MS2 - #08] [2] USER HEAP - Block Allocator - sys_sbrk() [Kernel Side]
 	//MS2: COMMENT THIS LINE BEFORE START CODING====
-	return (void*)-1 ;
+	//return (void*)-1 ;
 	//====================================================
 
 	/*2023*/
@@ -509,7 +509,7 @@ void* sys_sbrk(int increment)
 	struct Env* env = curenv; //the current running Environment to adjust its break limit
 
 	//getting the hard limit of the environment
-	uint32 hardLimit = syscall(SYS_get_hard_limit, (uint32) env, 0, 0, 0, 0);
+	uint32 hardLimit = env->hardLimit;
 	uint32 segmentBreak = env->segBreak;
 
 	if(increment > 0 && (increment+env->segBreak) <= hardLimit) {
@@ -517,16 +517,20 @@ void* sys_sbrk(int increment)
 		if(increment % (4 * kilo) == 0) {
 			env->segBreak += increment;
 		} else {
-			env->segBreak += (increment + (4 * kilo));
+			env->segBreak += (((increment/(4*kilo))*(4*kilo)) + (4 * kilo));
 		}
 
 		return (void*)segmentBreak;
+	} else if(increment == 0) {
+		return (void*) segmentBreak;
+	} else {
+
 	}
 
 }
 
-uint32 sys_get_hard_limit(struct Env* e) {
-	return e->hardLimit;
+uint32 sys_get_hard_limit(uint32 hardLimit) {
+	return hardLimit;
 }
 
 /**************************************************************************/
@@ -544,7 +548,7 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4, uin
 
 	//=====================================================================
 	case SYS_get_hard_limit:
-		return sys_get_hard_limit((struct Env*) a1);
+		return sys_get_hard_limit(a1);
 		break;
 	case SYS_sbrk:
 		return (uint32)sys_sbrk(a1);
