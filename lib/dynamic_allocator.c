@@ -87,6 +87,7 @@ void initialize_dynamic_allocator(uint32 daStart,
 	//DON'T CHANGE THESE LINES=================
 	if (initSizeOfAllocatedSpace == 0)
 		return;
+
 	is_initialized=1;
 	//=========================================
 	//=========================================
@@ -275,7 +276,6 @@ void free_block(void *va) {
 		ptr->size = 0;
 		ptr->is_free = 0;
 		LIST_REMOVE(&memBlocks, ptr);
-
 	}
 	// next meta data is free only
 	else if (ptr->prev_next_info.le_next != NULL
@@ -318,14 +318,6 @@ void *realloc_block_FF(void* va, uint32 new_size) {
 	new_size += sizeOfMetaData();
 	struct BlockMetaData *ptr = ((struct BlockMetaData *) va - 1), *tmpBlk;
 	if (new_size < ptr->size) {
-		/*
-		 * [ for testing function ]
-		 * -- test next = NULL --
-		 * -- text next.isFree == 1 --
-		 */
-//		if(ptr->prev_next_info.le_next != NULL){
-//			return ptr+1;
-//		}
 	 	tmpBlk = ptr;
 		if (ptr->size - new_size >= sizeOfMetaData()) {
 			ptr = (struct BlockMetaData *) ((uint32) ptr + (new_size));
@@ -355,14 +347,15 @@ void *realloc_block_FF(void* va, uint32 new_size) {
 		// no check if the next is free or not
 		// no test if th next is null
 		//no test if the next size < size i need (we compare next with its meta)
-
-		if (ptr->prev_next_info.le_next->is_free == 0
+		if ((  ptr->prev_next_info.le_next != NULL&&ptr->prev_next_info.le_next->is_free == 0)
 				|| ptr->prev_next_info.le_next == NULL
-				|| (ptr->prev_next_info.le_next->size - sizeOfMetaData()
-						< (new_size - ptr->size))) {
-			free_block((void *)((struct BlockMetaData *) ptr + 1));
+				|| (ptr->prev_next_info.le_next != NULL&&(ptr->prev_next_info.le_next->size- sizeOfMetaData() < (new_size - ptr->size)))) {
+
+			free_block(((struct BlockMetaData *) ptr + 1));
 			return alloc_block_FF(new_size - sizeOfMetaData());
-		} else if (ptr->prev_next_info.le_next != NULL
+
+		}
+		else if (ptr->prev_next_info.le_next != NULL
 				&& ptr->prev_next_info.le_next->is_free == 1) {
 			if ((ptr->prev_next_info.le_next->size - sizeOfMetaData()
 					> (new_size - ptr->size))) {
