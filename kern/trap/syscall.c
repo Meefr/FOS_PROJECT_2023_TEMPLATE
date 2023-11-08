@@ -17,6 +17,8 @@
 #include <kern/tests/utilities.h>
 #include <kern/tests/test_working_set.h>
 
+#define kilo 1024
+
 extern uint8 bypassInstrLength ;
 
 /*******************************/
@@ -506,7 +508,20 @@ void* sys_sbrk(int increment)
 	 */
 	struct Env* env = curenv; //the current running Environment to adjust its break limit
 
+	//getting the hard limit of the environment
+	uint32 hardLimit = syscall(SYS_get_hard_limit, (uint32) env, 0, 0, 0, 0);
+	uint32 segmentBreak = env->segBreak;
 
+	if(increment > 0 && (increment+env->segBreak) <= hardLimit) {
+
+		if(increment % (4 * kilo) == 0) {
+			env->segBreak += increment;
+		} else {
+			env->segBreak += (increment + (4 * kilo));
+		}
+
+		return (void*)segmentBreak;
+	}
 
 }
 
@@ -529,7 +544,7 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4, uin
 
 	//=====================================================================
 	case SYS_get_hard_limit:
-		return sys_get_hard_limit((struct ENV*) a1);
+		return sys_get_hard_limit((struct Env*) a1);
 		break;
 	case SYS_sbrk:
 		return (uint32)sys_sbrk(a1);

@@ -111,7 +111,7 @@ struct Env {
 
     uint32 start;
     uint32 hardLimit;
-    uint32* segBreak;
+    uint32 segBreak;
 
 	//==================================================================================
 
