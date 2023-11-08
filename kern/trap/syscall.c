@@ -507,6 +507,11 @@ void* sys_sbrk(int increment)
 	struct Env* env = curenv; //the current running Environment to adjust its break limit
 
 
+
+}
+
+uint32 sys_get_hard_limit(struct Env* e) {
+	return e->hardLimit;
 }
 
 /**************************************************************************/
@@ -523,7 +528,9 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4, uin
 	//TODO: [PROJECT'23.MS1 - #4] [2] SYSTEM CALLS - Add suitable code here
 
 	//=====================================================================
-
+	case SYS_get_hard_limit:
+		return sys_get_hard_limit((struct ENV*) a1);
+		break;
 	case SYS_sbrk:
 		return (uint32)sys_sbrk(a1);
 		break;
