@@ -7,29 +7,32 @@
 
 int initialize_kheap_dynamic_allocator(uint32 daStart, uint32 initSizeToAllocate, uint32 daLimit)
 {
+
 	start =daStart;
 	hLimit=daLimit;
 	segmentbrk=start+initSizeToAllocate;
 	segmentbrk=ROUNDUP(segmentbrk,PAGE_SIZE);
+
 	if((initSizeToAllocate>daLimit)||((daStart + initSizeToAllocate)>daLimit))
 		return E_NO_MEM;
 	// handle if size = limit > sbrk
 	// 0-4 // 4-8 // 8-12
-	for(uint32 i=daStart;i<initSizeToAllocate;i+=4){
+	for(uint32 i=daStart;i<daStart+initSizeToAllocate;i+=PAGE_SIZE){
 //		uint32 *pageTable;
 //		struct Frame_Info *ptr=get_frame_info(ptr_page_directory,(void*)i,&pageTable);
 //		if(ptr!=NULL){
 //			continue;
 //		}
-		struct Frame_Info* ptrr=NULL;
-		int ret=allocate_frame((void*)&ptrr);
+		struct FrameInfo* ptrr;
+		int ret=allocate_frame(&ptrr);
 		if(ret==E_NO_MEM)
 		{
 			return E_NO_MEM;
 		}
-		map_frame(ptr_page_directory,(void*)ptrr,i,PERM_USER|PERM_WRITEABLE);
+		map_frame(ptr_page_directory,ptrr,i,PERM_WRITEABLE);
 
 	}
+	// access null in this fun call
 	initialize_dynamic_allocator(daStart,initSizeToAllocate);
 	return 0;
 }
@@ -63,7 +66,7 @@ void* sbrk(int increment)
 		if(segmentbrk+increment<=hLimit){
 			segmentbrk+=increment;
 
-			for(uint32 i=prevSbrk;i<segmentbrk;i+=4){
+			for(uint32 i=prevSbrk;i<segmentbrk;i+=(PAGE_SIZE)){
 				struct Frame_Info* ptrr=NULL;
 				int ret=allocate_frame((void*)&ptrr);
 				if(ret==E_NO_MEM)
@@ -92,7 +95,7 @@ void* sbrk(int increment)
 		if(newSbrk<start){
 			panic("in sbrk func increment<0 and newSbrk<start");
 		}
-		for(uint32 i=segmentbrk;i>newSbrk;i-=4){
+		for(uint32 i=segmentbrk;i>newSbrk;i-=(PAGE_SIZE)){
 			unmap_frame(ptr_page_directory,i);
 			free_frame((struct FrameInfo*)i);
 		}
@@ -112,14 +115,33 @@ void* kmalloc(unsigned int size)
 //	kpanic_into_prompt("kmalloc() is not implemented yet...!!");
 	// 16
 
-//	if(size<DYN_ALLOC_MAX_BLOCK_SIZE)
+	//here we need to know roundUp where ?
+//	if(size<=DYN_ALLOC_MAX_BLOCK_SIZE)
 //	{
-//		//
+//		if(isKHeapPlacementStrategyFIRSTFIT()){
+//			// here we need type cast;
+//			alloc_block_FF(size);
+//		}
+//		if(isKHeapPlacementStrategyBESTFIT()){
+//			alloc_block_BF(size);
+//		}
 //	}
 //	else
 //	{
-//		size=ROUNDUP(size,PAGE_SIZE);
-//		//
+//		//need cast ?
+//		uint32 new_size=ROUNDUP(size,PAGE_SIZE);
+//		// need to rev?
+//		for(uint32 i=0;i<new_size;i+=(PAGE_SIZE)){
+//			struct Frame_Info* ptrr=NULL;
+//			int ret=allocate_frame((void*)&ptrr);
+//			if(ret==E_NO_MEM)
+//			{
+//				return (void*)E_NO_MEM;
+//			}
+//			map_frame(ptr_page_directory,(void*)ptrr,i,PERM_USER|PERM_WRITEABLE);
+//
+//		}
+//
 //	}
 
 
@@ -140,7 +162,6 @@ unsigned int kheap_virtual_address(unsigned int physical_address)
 	//refer to the project presentation and documentation for details
 	// Write your code here, remove the panic and write your code
 	panic("kheap_virtual_address() is not implemented yet...!!");
-
 	//EFFICIENT IMPLEMENTATION ~O(1) IS REQUIRED ==================
 
 	//change this "return" according to your answer
@@ -152,9 +173,16 @@ unsigned int kheap_physical_address(unsigned int virtual_address)
 	//TODO: [PROJECT'23.MS2 - #06] [1] KERNEL HEAP - kheap_physical_address()
 	//refer to the project presentation and documentation for details
 	// Write your code here, remove the panic and write your code
-	panic("kheap_physical_address() is not implemented yet...!!");
+	//panic("kheap_physical_address() is not implemented yet...!!");
 
 	//change this "return" according to your answer
+
+//	uint32* ptr=NULL;
+//	get_page_table(ptr_page_directory,(void*)virtual_address,&ptr);
+//	unsigned int carry=ptr[PTX(virtual_address)]>>12;
+//	if(ptr !=NULL){
+//		return carry*PAGE_SIZE;
+//	}
 	return 0;
 }
 
