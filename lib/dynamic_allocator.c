@@ -161,6 +161,8 @@ void *alloc_block_FF(uint32 size) {
 	}
 	//no free space for required size -> no allocate + no space
 	uint32* ptr = (uint32 *) sbrk((size + sizeOfMetaData()));
+	//create block
+
 	if (ptr != (uint32 *) -1) {
 		tmpBlk = (struct BlockMetaData *) ((uint32) memBlocks.lh_last);
 		tmpBlk->size = size + sizeOfMetaData();
