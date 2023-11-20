@@ -164,7 +164,7 @@ void *alloc_block_FF(uint32 size) {
 	//create block
 
 	if (ptr != (uint32 *) -1) {
-		tmpBlk = (struct BlockMetaData *) ((uint32) memBlocks.lh_last);
+		tmpBlk = (struct BlockMetaData *) ptr;
 		tmpBlk->size = size + sizeOfMetaData();
 		tmpBlk->is_free = 0;
 		return (struct BlockMetaData *) ((uint32) tmpBlk + sizeOfMetaData());
@@ -201,7 +201,7 @@ void *alloc_block_BF(uint32 size) {
 	if (minSize == -1) {
 		uint32* ptr = (uint32 *) sbrk((size + sizeOfMetaData()));
 		if (ptr != (uint32 *) -1) {
-			tmpBlk = (struct BlockMetaData *) ((uint32) memBlocks.lh_last);
+			tmpBlk = (struct BlockMetaData *) ((uint32) ptr);
 			tmpBlk->size = size + sizeOfMetaData();
 			tmpBlk->is_free = 0;
 			return (void *) ((uint32) tmpBlk + sizeOfMetaData());

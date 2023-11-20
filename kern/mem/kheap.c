@@ -4,7 +4,10 @@
 #include <inc/dynamic_allocator.h>
 #include "memory_manager.h"
 
+int initialize_kheap_dynamic_allocator(uint32 daStart,
+		uint32 initSizeToAllocate, uint32 daLimit) {
 
+<<<<<<< HEAD
 int initialize_kheap_dynamic_allocator(uint32 daStart, uint32 initSizeToAllocate, uint32 daLimit)
 {
 
@@ -14,31 +17,37 @@ int initialize_kheap_dynamic_allocator(uint32 daStart, uint32 initSizeToAllocate
 	//segmentbrk=ROUNDUP(segmentbrk,PAGE_SIZE);
 
 	if((initSizeToAllocate>daLimit)||((daStart + initSizeToAllocate)>daLimit))
+=======
+	start = daStart;
+	hLimit = daLimit;
+	segmentbrk = start + initSizeToAllocate;
+	segmentbrk = ROUNDUP(segmentbrk, PAGE_SIZE);
+	if ((initSizeToAllocate > daLimit)
+			|| ((daStart + initSizeToAllocate) > daLimit))
+>>>>>>> meefr
 		return E_NO_MEM;
 	// handle if size = limit > sbrk
 	// 0-4 // 4-8 // 8-12
-	for(uint32 i=daStart;i<daStart+initSizeToAllocate;i+=PAGE_SIZE){
+	for (uint32 i = daStart; i < daStart + initSizeToAllocate; i += PAGE_SIZE) {
 //		uint32 *pageTable;
 //		struct Frame_Info *ptr=get_frame_info(ptr_page_directory,(void*)i,&pageTable);
 //		if(ptr!=NULL){
 //			continue;
 //		}
 		struct FrameInfo* ptrr;
-		int ret=allocate_frame(&ptrr);
-		if(ret==E_NO_MEM)
-		{
+		int ret = allocate_frame(&ptrr);
+		if (ret == E_NO_MEM) {
 			return E_NO_MEM;
 		}
-		map_frame(ptr_page_directory,ptrr,i,PERM_WRITEABLE);
+		map_frame(ptr_page_directory, ptrr, i, PERM_WRITEABLE);
 
 	}
 	// access null in this fun call
-	initialize_dynamic_allocator(daStart,initSizeToAllocate);
+	initialize_dynamic_allocator(daStart, initSizeToAllocate);
 	return 0;
 }
 
-void* sbrk(int increment)
-{
+void* sbrk(int increment) {
 	//TODO: [PROJECT'23.MS2 - #02] [1] KERNEL HEAP - sbrk()
 	/* increment > 0: move the segment break of the kernel to increase the size of its heap,
 	 * 				you should allocate pages and map them into the kernel virtual address space as necessary,
@@ -56,11 +65,11 @@ void* sbrk(int increment)
 	 */
 
 	//MS2: COMMENT THIS LINE BEFORE START CODING====
-   // edit in ms1 not finished yet
-	if(increment>0)
-	{
+	// edit in ms1 not finished yet
+	if (increment > 0) {
 		// roundup then check if in the hard boundries
 		// should i pass page_size or just 4
+<<<<<<< HEAD
 		// maybe
 		segmentbrk=ROUNDUP(segmentbrk,PAGE_SIZE);
 
@@ -80,22 +89,33 @@ void* sbrk(int increment)
 					return (void*)E_NO_MEM;
 				}
 				map_frame(ptr_page_directory,ptrr,i,PERM_WRITEABLE);
+=======
+		increment = ROUNDUP(increment, PAGE_SIZE);
+		uint32 prevSbrk = segmentbrk;
+		if (segmentbrk + increment <= hLimit) {
+			segmentbrk += increment;
+
+			for (uint32 i = prevSbrk; i < segmentbrk; i += (PAGE_SIZE)) {
+				struct FrameInfo* ptrr;
+				int ret = allocate_frame(&ptrr);
+				ptrr->va = i;
+				if (ret == E_NO_MEM) {
+					return (void*) E_NO_MEM;
+				}
+				map_frame(ptr_page_directory, ptrr, i, PERM_WRITEABLE);
+>>>>>>> meefr
 
 			}
-		}
-		else{
+		} else {
 			panic("in sbrk func increment>0");
 		}
-		return (void*)prevSbrk;
-	}
-	else if(increment==0)
-	{
-		return (void*)segmentbrk;
-	}
-	else if(increment<0)
-	{
+		return (void*) prevSbrk;
+	} else if (increment == 0) {
+		return (void*) segmentbrk;
+	} else if (increment < 0) {
 		// dec sbrk to increment
 		// if inc=10 , should i free 3 pages (12) or only 2 pages(8)
+<<<<<<< HEAD
 		increment=ROUNDUP(-increment,PAGE_SIZE);
 		uint32 newSbrk=segmentbrk-increment;
 
@@ -108,13 +128,25 @@ void* sbrk(int increment)
 		}
 		segmentbrk-=increment;
 		return (void*)newSbrk;
+=======
+		//increment = ROUNDUP(-increment, PAGE_SIZE);
+		uint32 newSbrk = segmentbrk - ((increment / PAGE_SIZE) * PAGE_SIZE);
+		if (newSbrk < start) {
+			panic("in sbrk func increment<0 and newSbrk<start");
+		}
+		for (uint32 i = segmentbrk; i > newSbrk; i -= (PAGE_SIZE)) {
+			unmap_frame(ptr_page_directory, i);
+			free_frame((struct FrameInfo*) i);
+		}
+		segmentbrk -= ((increment / PAGE_SIZE) * PAGE_SIZE);
+		return (void*) newSbrk;
+>>>>>>> meefr
 	}
-	return (void*)-1 ;
+	return (void*) -1;
 
 }
 
-void* kmalloc(unsigned int size)
-{
+void* kmalloc(unsigned int size) {
 	//TODO: [PROJECT'23.MS2 - #03] [1] KERNEL HEAP - kmalloc()
 	//refer to the project presentation and documentation for details
 	// use "isKHeapPlacementStrategyFIRSTFIT() ..." functions to check the current strategy
@@ -124,6 +156,7 @@ void* kmalloc(unsigned int size)
 	// 16
 
 	//here we need to know roundUp where ?
+<<<<<<< HEAD
 	if(size<=DYN_ALLOC_MAX_BLOCK_SIZE)
 	{
 		if(isKHeapPlacementStrategyFIRSTFIT()){
@@ -152,68 +185,153 @@ void* kmalloc(unsigned int size)
 		}
 
 	}
+=======
+	if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
+		if (isKHeapPlacementStrategyFIRSTFIT()) {
+			// here we need type cast;
+			return alloc_block_FF(size);
+		}
+		if (isKHeapPlacementStrategyBESTFIT()) {
+			return alloc_block_BF(size);
+		}
+	} else {
+		//need cast ?
+		uint32 new_size = ROUNDUP(size, PAGE_SIZE);
+		int number_of_pages = new_size / PAGE_SIZE;
+		int count = 0;
+		struct FrameInfo * ptr_fram_Info;
+		uint32 *pageTable;
+		uint32 address;
+		// need to rev?
+		for (uint32 i = (hLimit + PAGE_SIZE); i < KERNEL_HEAP_MAX; i +=
+				(PAGE_SIZE)) {
+>>>>>>> meefr
 
+//			ptr_fram_Info = get_frame_info(&ptr_page_directory, &i,
+//					&pageTable);
+			ptr_fram_Info = get_frame_info(ptr_page_directory, i, &pageTable);
+			uint32 page_table_entry = pageTable[PTX(i)];
+			uint32 presentBit = page_table_entry;
+			presentBit << 31;
+			presentBit >> 31;
+			if (!(presentBit & PERM_PRESENT))
+				count++;
+			else
+				count = 0;
+
+			if (count == number_of_pages) {
+				i = i - ((number_of_pages - 1) * PAGE_SIZE);
+				address = i;
+				for (uint32 j = 0; j < number_of_pages; j++) {
+					struct FrameInfo* ptrr;
+					int ret = allocate_frame(&ptrr);
+					ptrr->va = i;
+					if (ret == E_NO_MEM) {
+						return (void*) E_NO_MEM;
+					}
+					map_frame(ptr_page_directory, ptrr, i,
+					PERM_WRITEABLE);
+					i += PAGE_SIZE;
+				}
+//				struct vmBlock *ptr;
+//				LIST_INSERT_HEAD(&vmBlocks, ptr);
+				for (int j = 0; j < 1000; j++) {
+					if (vmS[j] == 0) {
+						vmS[j] = address;
+						numOfPages[j] = number_of_pages;
+						break;
+					}
+				}
+				return (void *) address;
+			}
+		}
+	}
 
 	return NULL;
 }
 
-void kfree(void* virtual_address)
-{
+void kfree(void* virtual_address) {
 	//TODO: [PROJECT'23.MS2 - #04] [1] KERNEL HEAP - kfree()
 	//refer to the project presentation and documentation for details
 	// Write your code here, remove the panic and write your code
-	panic("kfree() is not implemented yet...!!");
+	//panic("kfree() is not implemented yet...!!");
+	if ((uint32) virtual_address >= start
+			&& (uint32) virtual_address < hLimit) {
+		free_block(virtual_address);
+	} else {
+		for (int i = 0; i < 1000; i++) {
+			if (vmS[i] == (uint32) virtual_address) {
+				for (int j = 0; j < numOfPages[i]; j++) {
+					unmap_frame(ptr_page_directory, (vmS[i] + (PAGE_SIZE * j)));
+				}
+//				struct FrameInfo * ptr_frame_info;
+//				uint32* tmp;
+//				ptr_frame_info = get_frame_info(ptr_page_directory,vmS[i],&tmp);
+//				ptr_frame_info->va = (uint32) NULL;
+				vmS[i] = 0;
+				numOfPages[i] = 0;
+				return;
+			}
+		}
+		panic("invalid virtual address");
+	}
+
 }
 
-unsigned int kheap_virtual_address(unsigned int physical_address)
-{
+unsigned int kheap_virtual_address(unsigned int physical_address) {
 	//TODO: [PROJECT'23.MS2 - #05] [1] KERNEL HEAP - kheap_virtual_address()
 	//refer to the project presentation and documentation for details
 	// Write your code here, remove the panic and write your code
-	panic("kheap_virtual_address() is not implemented yet...!!");
+	//panic("kheap_virtual_address() is not implemented yet...!!");
 	//EFFICIENT IMPLEMENTATION ~O(1) IS REQUIRED ==================
 
+	uint32 frame_num = physical_address;
+	frame_num >> 12;
+	if (frames_info[frame_num].va == (uint32)NULL)
+		return frames_info[frame_num].va;
 	//change this "return" according to your answer
 	return 0;
 }
 
-unsigned int kheap_physical_address(unsigned int virtual_address)
-{
+unsigned int kheap_physical_address(unsigned int virtual_address) {
 	//TODO: [PROJECT'23.MS2 - #06] [1] KERNEL HEAP - kheap_physical_address()
 	//refer to the project presentation and documentation for details
 	// Write your code here, remove the panic and write your code
 	//panic("kheap_physical_address() is not implemented yet...!!");
 
 	//change this "return" according to your answer
+//	ptr_fram_Info = get_frame_info(ptr_page_directory,i,&pageTable);
+//	uint32 page_table_entry = pageTable[PTX(i)];
+//	uint32 presentBit = page_table_entry;
+//	presentBit << 31;
+//	presentBit >> 31;
 
-//	uint32* ptr=NULL;
-//	get_page_table(ptr_page_directory,(void*)virtual_address,&ptr);
-//	unsigned int carry=ptr[PTX(virtual_address)]>>12;
-//	if(ptr !=NULL){
-//		return carry*PAGE_SIZE;
-//	}
+	uint32* ptr;
+	int check = get_page_table(ptr_page_directory, virtual_address, &ptr);
+
+	if (check == TABLE_IN_MEMORY) {
+		uint32 entry = ptr[PTX(virtual_address)];
+		//uint32 offset=entry%PAGE_SIZE;
+		uint32 ans = ((entry >> 12) * PAGE_SIZE)
+				+ (virtual_address & 0x00000FFF);
+		//cprintf("the pa is %x",ans);
+		return (int) (ans);
+	}
 	return 0;
 }
 
-
-void kfreeall()
-{
+void kfreeall() {
 	panic("Not implemented!");
 
 }
 
-void kshrink(uint32 newSize)
-{
+void kshrink(uint32 newSize) {
 	panic("Not implemented!");
 }
 
-void kexpand(uint32 newSize)
-{
+void kexpand(uint32 newSize) {
 	panic("Not implemented!");
 }
-
-
-
 
 //=================================================================================//
 //============================== BONUS FUNCTION ===================================//
@@ -228,8 +346,7 @@ void kexpand(uint32 newSize)
 //	A call with virtual_address = null is equivalent to kmalloc().
 //	A call with new_size = zero is equivalent to kfree().
 
-void *krealloc(void *virtual_address, uint32 new_size)
-{
+void *krealloc(void *virtual_address, uint32 new_size) {
 	//TODO: [PROJECT'23.MS2 - BONUS#1] [1] KERNEL HEAP - krealloc()
 	// Write your code here, remove the panic and write your code
 	return NULL;
