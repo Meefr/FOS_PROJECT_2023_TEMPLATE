@@ -85,7 +85,7 @@ get_frame_info();
 					uint32 page_table_entry = pageTable[PTX(va)];
 					if(page_table_entry & PERM_AVAILABLE != 0) {
 						page_table_entry = ~page_table_entry;
-						allocate_user_mem(env, va, size);
+						//allocate_user_mem(env, va, size);
 						break;
 					}
 				}
