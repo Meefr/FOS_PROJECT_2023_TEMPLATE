@@ -4,7 +4,6 @@
 #include <inc/dynamic_allocator.h>
 #include "memory_manager.h"
 
-
 int initialize_kheap_dynamic_allocator(uint32 daStart,
 		uint32 initSizeToAllocate, uint32 daLimit) {
 
@@ -12,7 +11,6 @@ int initialize_kheap_dynamic_allocator(uint32 daStart,
 	hLimit = daLimit;
 	segmentbrk = start + initSizeToAllocate;
 	segmentbrk = ROUNDUP(segmentbrk, PAGE_SIZE);
-
 	if ((initSizeToAllocate > daLimit)
 			|| ((daStart + initSizeToAllocate) > daLimit))
 		return E_NO_MEM;
@@ -67,7 +65,7 @@ void* sbrk(int increment) {
 			for (uint32 i = prevSbrk; i < segmentbrk; i += (PAGE_SIZE)) {
 				struct FrameInfo* ptrr;
 				int ret = allocate_frame(&ptrr);
-				ptrr->va=i;
+				ptrr->va = i;
 				if (ret == E_NO_MEM) {
 					return (void*) E_NO_MEM;
 				}
@@ -83,8 +81,8 @@ void* sbrk(int increment) {
 	} else if (increment < 0) {
 		// dec sbrk to increment
 		// if inc=10 , should i free 3 pages (12) or only 2 pages(8)
-		increment = ROUNDUP(-increment, PAGE_SIZE);
-		uint32 newSbrk = segmentbrk - increment;
+		//increment = ROUNDUP(-increment, PAGE_SIZE);
+		uint32 newSbrk = segmentbrk - ((increment/PAGE_SIZE) * PAGE_SIZE);
 		if (newSbrk < start) {
 			panic("in sbrk func increment<0 and newSbrk<start");
 		}
@@ -92,7 +90,7 @@ void* sbrk(int increment) {
 			unmap_frame(ptr_page_directory, i);
 			free_frame((struct FrameInfo*) i);
 		}
-		segmentbrk -= increment;
+		segmentbrk -= ((increment/PAGE_SIZE) * PAGE_SIZE);
 		return (void*) newSbrk;
 	}
 	return (void*) -1;
@@ -132,7 +130,7 @@ void* kmalloc(unsigned int size) {
 
 //			ptr_fram_Info = get_frame_info(&ptr_page_directory, &i,
 //					&pageTable);
-			ptr_fram_Info = get_frame_info(ptr_page_directory,i,&pageTable);
+			ptr_fram_Info = get_frame_info(ptr_page_directory, i, &pageTable);
 			uint32 page_table_entry = pageTable[PTX(i)];
 			uint32 presentBit = page_table_entry;
 			presentBit << 31;
@@ -153,18 +151,18 @@ void* kmalloc(unsigned int size) {
 					}
 					map_frame(ptr_page_directory, ptrr, i,
 					PERM_WRITEABLE);
-					i+=PAGE_SIZE;
+					i += PAGE_SIZE;
 				}
 //				struct vmBlock *ptr;
 //				LIST_INSERT_HEAD(&vmBlocks, ptr);
-				for(int i = 0 ; i < number_of_all_pages; i++){
-					if(vmS[i] == NULL){
+				for (int i = 0; i < (unsigned int) 4294963200 / 4096; i++) {
+					if (vmS[i] == (uint32) NULL) {
 						vmS[i] = address;
 						numOfPages[i] = number_of_pages;
 						break;
 					}
 				}
-				return (void *)address;
+				return (void *) address;
 			}
 		}
 	}
@@ -177,19 +175,22 @@ void kfree(void* virtual_address) {
 	//refer to the project presentation and documentation for details
 	// Write your code here, remove the panic and write your code
 	//panic("kfree() is not implemented yet...!!");
-	if (virtual_address >= start&& virtual_address < hLimit) {
-			free_block(virtual_address);
-		} else {
-			for(int i = 0 ; i < number_of_all_pages ; i++){
-				if(vmS[i] == virtual_address){
-					for(int j = 0 ; j < numOfPages[i];j++){
-						unmap_frame(ptr_page_directory,(void *)(vmS[i]+(PAGE_SIZE * j)));
-					}
-					return ;
+	if ((uint32) virtual_address >= start
+			&& (uint32) virtual_address < hLimit) {
+		free_block(virtual_address);
+	} else {
+		for (int i = 0; i < (unsigned int) 4294963200 / 4096; i++) {
+			if (vmS[i] == (uint32) virtual_address) {
+				for (int j = 0; j < numOfPages[i]; j++) {
+					unmap_frame(ptr_page_directory, (vmS[i] + (PAGE_SIZE * j)));
 				}
+				vmS[i] = (uint32)NULL;
+				numOfPages[i] = 0;
+				return;
 			}
-			panic("invalid virtual address");
 		}
+		panic("invalid virtual address");
+	}
 
 }
 
@@ -217,16 +218,16 @@ unsigned int kheap_physical_address(unsigned int virtual_address) {
 //	presentBit << 31;
 //	presentBit >> 31;
 
-
 	uint32* ptr;
-	int check=get_page_table(ptr_page_directory,virtual_address,&ptr);
+	int check = get_page_table(ptr_page_directory, virtual_address, &ptr);
 
-	if(check ==TABLE_IN_MEMORY){
-		uint32 entry=ptr[PTX(virtual_address)];
+	if (check == TABLE_IN_MEMORY) {
+		uint32 entry = ptr[PTX(virtual_address)];
 		//uint32 offset=entry%PAGE_SIZE;
-		uint32 ans=((entry>>12)*PAGE_SIZE)+( virtual_address& 0x00000FFF);
+		uint32 ans = ((entry >> 12) * PAGE_SIZE)
+				+ (virtual_address & 0x00000FFF);
 		//cprintf("the pa is %x",ans);
-		return (int)(ans);
+		return (int) (ans);
 	}
 	return 0;
 }
