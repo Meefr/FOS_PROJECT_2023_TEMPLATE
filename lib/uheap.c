@@ -1,4 +1,6 @@
 #include <inc/lib.h>
+#include <inc/syscall.h>
+#include <lib/syscall.c>
 
 //==================================================================================//
 //============================== GIVEN FUNCTIONS ===================================//
@@ -41,29 +43,31 @@ void* malloc(uint32 size) {
 	//TODO: [PROJECT'23.MS2 - #09] [2] USER HEAP - malloc() [User Side]
 	// Write your code here, remove the panic and write your code
 //	panic("malloc() is not implemented yet...!!");
-get_frame_info();
 
 	// to check the first fit Strategy or not ?
 	if (sys_isUHeapPlacementStrategyFIRSTFIT()) {
 		if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
 			return alloc_block_FF(size);
 		} else {
-			uint32 hardLimit = sys_get_hard_limit(curenv);
-			uint32 ptr = hardLimit + (4 * kilo);
-			while (ptr != (uint32) NULL && ptr != (uint32) USER_HEAP_MAX) {
+			uint32 hardLimit = sys_get_hard_limit();
+			uint32 ptr = (hardLimit + (4 * kilo));
+			while (ptr != (uint32) NULL && ptr != USER_HEAP_MAX) {
 				/*
 				 * check the max size i can hold
 				 * so if (user_heap_max - ptr which mean the rest of free size) >= needed size / 4
 				 * (means how many (4 kilo) I can hold )
 				 * */
-				if (ptr != USER_HEAP_MAX && (USER_HEAP_MAX - ptr) < size)
+				if ((USER_HEAP_MAX - ptr) < size)
 					return NULL;
+				else {
+
+				}
 
 				/*
 				 * the way to check depends on the way of marking in
 				 * alloc_user_mem function
 				 * */
-				if (ptr == NULL) {
+				if (ptr == (uint32) NULL) {
 					sys_allocate_user_mem(ptr, size);
 					size -= (4 * kilo);
 					while (size >= (4 * kilo)) {
@@ -71,23 +75,11 @@ get_frame_info();
 						ptr += (4 * kilo);
 						size -= (4 * kilo);
 					}
-					return ptr;
+					return (void*) ptr;
 				}
 				ptr += (4 * kilo);
 
-				struct Env* env = curenv;
 
-				uint32* pageDir = env->env_page_directory;
-				uint32* pageTable = NULL;
-				for(uint32 va = (uint32) pageDir; va <= USER_HEAP_MAX; va += 4 * kilo) {
-					uint32 dir_frame = get_frame_info(pageDir, va, &pageTable);
-					uint32 page_table_entry = pageTable[PTX(va)];
-					if(page_table_entry & PERM_AVAILABLE != 0) {
-						page_table_entry = ~page_table_entry;
-						//allocate_user_mem(env, va, size);
-						break;
-					}
-				}
 
 			}
 		}
@@ -106,16 +98,16 @@ get_frame_info();
 void free(void* virtual_address) {
 	//TODO: [PROJECT'23.MS2 - #11] [2] USER HEAP - free() [User Side]
 	// Write your code here, remove the panic and write your code
-//	panic("free() is not implemented yet...!!");
-	uint32 hardLimit = syscall(SYS_get_hard_limit, hardLimit, 0, 0, 0,
-						0);
-	if(virtual_address >= (void *)USER_HEAP_START && virtual_address <= (void *)hardLimit){
-		free_block(virtual_address);
-	}else if(virtual_address >= (void *)(hardLimit + (4*kilo)) && virtual_address <= (void *)USER_HEAP_MAX){
-
-	}else {
-		panic("invalid address...!!");
-	}
+	panic("free() is not implemented yet...!!");
+//	uint32 hardLimit = syscall(SYS_get_hard_limit, hardLimit, 0, 0, 0,
+//						0);
+//	if(virtual_address >= (void *)USER_HEAP_START && virtual_address <= (void *)hardLimit){
+//		free_block(virtual_address);
+//	}else if(virtual_address >= (void *)(hardLimit + (4*kilo)) && virtual_address <= (void *)USER_HEAP_MAX){
+//
+//	}else {
+//		panic("invalid address...!!");
+//	}
 }
 
 //=================================

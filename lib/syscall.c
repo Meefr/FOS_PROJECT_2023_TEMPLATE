@@ -355,9 +355,9 @@ void sys_allocate_user_mem(uint32 virtual_address, uint32 size)
 	//panic("not implemented yet");
 }
 
-uint32 sys_get_hard_limit(struct Env* e)
+uint32 sys_get_hard_limit()
 {
-	return syscall(SYS_get_hard_limit, e->hardLimit, 0, 0, 0, 0);
+	return syscall(SYS_get_hard_limit, 0, 0, 0, 0, 0);
 	//Comment the following line before start coding...
 	//panic("not implemented yet");
 }

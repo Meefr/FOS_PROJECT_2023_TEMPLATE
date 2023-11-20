@@ -558,7 +558,7 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4, uin
 
 	//=====================================================================
 	case SYS_get_hard_limit:
-		return sys_get_hard_limit(a1);
+		return sys_get_hard_limit(curenv->hardLimit);
 		break;
 	case SYS_sbrk:
 		return (uint32)sys_sbrk(a1);

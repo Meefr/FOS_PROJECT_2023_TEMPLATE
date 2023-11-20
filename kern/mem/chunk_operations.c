@@ -12,6 +12,8 @@
 #include <inc/queue.h>
 #include <kern/tests/utilities.h>
 
+#define kilo 1024
+
 //extern void inctst();
 
 /******************************/
@@ -119,10 +121,21 @@ void allocate_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
 {
 	/*=============================================================================*/
 	//TODO: [PROJECT'23.MS2 - #10] [2] USER HEAP - allocate_user_mem() [Kernel Side]
-	/*REMOVE THESE LINES BEFORE START CODING */
-	inctst();
-	return;
-	/*=============================================================================*/
+	uint32* pageDir = e->env_page_directory;
+	uint32* pageTable = NULL;
+
+	//uint32 dir_frame = get_frame_info(pageDir, va, &pageTable);
+	int getPage = get_page_table(pageDir, virtual_address, &pageTable);
+
+	for(uint32 va = (uint32) pageDir; va <= USER_HEAP_MAX; va += 4 * kilo) {
+		//uint32 dir_frame = get_frame_info(pageDir, va, &pageTable);
+		uint32 page_table_entry = pageTable[PTX(va)];
+		if((page_table_entry & PERM_AVAILABLE) != 0) {
+			page_table_entry = ~page_table_entry;
+			//allocate_user_mem(env, va, size);
+			break;
+		}
+	}
 
 	// Write your code here, remove the panic and write your code
 	panic("allocate_user_mem() is not implemented yet...!!");
