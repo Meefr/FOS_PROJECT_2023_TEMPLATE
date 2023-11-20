@@ -82,7 +82,7 @@ void* sbrk(int increment) {
 		// dec sbrk to increment
 		// if inc=10 , should i free 3 pages (12) or only 2 pages(8)
 		//increment = ROUNDUP(-increment, PAGE_SIZE);
-		uint32 newSbrk = segmentbrk - ((increment/PAGE_SIZE) * PAGE_SIZE);
+		uint32 newSbrk = segmentbrk - ((increment / PAGE_SIZE) * PAGE_SIZE);
 		if (newSbrk < start) {
 			panic("in sbrk func increment<0 and newSbrk<start");
 		}
@@ -90,7 +90,7 @@ void* sbrk(int increment) {
 			unmap_frame(ptr_page_directory, i);
 			free_frame((struct FrameInfo*) i);
 		}
-		segmentbrk -= ((increment/PAGE_SIZE) * PAGE_SIZE);
+		segmentbrk -= ((increment / PAGE_SIZE) * PAGE_SIZE);
 		return (void*) newSbrk;
 	}
 	return (void*) -1;
@@ -123,7 +123,6 @@ void* kmalloc(unsigned int size) {
 		struct FrameInfo * ptr_fram_Info;
 		uint32 *pageTable;
 		uint32 address;
-		struct vmBlock *ptr;
 		// need to rev?
 		for (uint32 i = (hLimit + PAGE_SIZE); i < KERNEL_HEAP_MAX; i +=
 				(PAGE_SIZE)) {
@@ -146,6 +145,7 @@ void* kmalloc(unsigned int size) {
 				for (uint32 j = 0; j < number_of_pages; j++) {
 					struct FrameInfo* ptrr;
 					int ret = allocate_frame(&ptrr);
+					ptrr->va = i;
 					if (ret == E_NO_MEM) {
 						return (void*) E_NO_MEM;
 					}
@@ -155,10 +155,10 @@ void* kmalloc(unsigned int size) {
 				}
 //				struct vmBlock *ptr;
 //				LIST_INSERT_HEAD(&vmBlocks, ptr);
-				for (int i = 0; i < (unsigned int) 4294963200 / 4096; i++) {
-					if (vmS[i] == (uint32) NULL) {
-						vmS[i] = address;
-						numOfPages[i] = number_of_pages;
+				for (int j = 0; j < 1000; j++) {
+					if (vmS[j] == 0) {
+						vmS[j] = address;
+						numOfPages[j] = number_of_pages;
 						break;
 					}
 				}
@@ -179,12 +179,16 @@ void kfree(void* virtual_address) {
 			&& (uint32) virtual_address < hLimit) {
 		free_block(virtual_address);
 	} else {
-		for (int i = 0; i < (unsigned int) 4294963200 / 4096; i++) {
+		for (int i = 0; i < 1000; i++) {
 			if (vmS[i] == (uint32) virtual_address) {
 				for (int j = 0; j < numOfPages[i]; j++) {
 					unmap_frame(ptr_page_directory, (vmS[i] + (PAGE_SIZE * j)));
 				}
-				vmS[i] = (uint32)NULL;
+//				struct FrameInfo * ptr_frame_info;
+//				uint32* tmp;
+//				ptr_frame_info = get_frame_info(ptr_page_directory,vmS[i],&tmp);
+//				ptr_frame_info->va = (uint32) NULL;
+				vmS[i] = 0;
 				numOfPages[i] = 0;
 				return;
 			}
@@ -201,6 +205,10 @@ unsigned int kheap_virtual_address(unsigned int physical_address) {
 	//panic("kheap_virtual_address() is not implemented yet...!!");
 	//EFFICIENT IMPLEMENTATION ~O(1) IS REQUIRED ==================
 
+	uint32 frame_num = physical_address;
+	frame_num >> 12;
+	if (frames_info[frame_num].va == (uint32)NULL)
+		return frames_info[frame_num].va;
 	//change this "return" according to your answer
 	return 0;
 }

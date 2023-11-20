@@ -73,8 +73,8 @@ int numOfKheapVACalls;
 //TODO: [PROJECT'23.MS2 - #01] [1] KERNEL HEAP - initialization: add suitable code here
 uint32 start, segmentbrk, hLimit;
 
-int numOfPages[(unsigned int)4294963200/4096];
-uint32 vmS[(unsigned int)4294963200/4096];
+int numOfPages[10];
+uint32 vmS[10];
 //====================================================================================
 
 #endif // FOS_KERN_KHEAP_H_
