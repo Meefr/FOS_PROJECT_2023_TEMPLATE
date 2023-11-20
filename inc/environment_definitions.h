@@ -100,7 +100,6 @@ struct Env {
 	uint32* disk_env_pgdir;
 	//2016
 	unsigned int disk_env_pgdir_PA;
-	PERM_USER;
 
 	//for table file management
 	uint32* disk_env_tabledir;

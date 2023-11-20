@@ -48,10 +48,9 @@ get_frame_info();
 		if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
 			return alloc_block_FF(size);
 		} else {
-			uint32 hardLimit = syscall(SYS_get_hard_limit, hardLimit, 0, 0, 0,
-					0);
+			uint32 hardLimit = sys_get_hard_limit(curenv);
 			uint32 ptr = hardLimit + (4 * kilo);
-			while (ptr != NULL && ptr != USER_HEAP_MAX) {
+			while (ptr != (uint32) NULL && ptr != (uint32) USER_HEAP_MAX) {
 				/*
 				 * check the max size i can hold
 				 * so if (user_heap_max - ptr which mean the rest of free size) >= needed size / 4
