@@ -41,7 +41,7 @@ void* malloc(uint32 size) {
 	//TODO: [PROJECT'23.MS2 - #09] [2] USER HEAP - malloc() [User Side]
 	// Write your code here, remove the panic and write your code
 //	panic("malloc() is not implemented yet...!!");
-
+get_frame_info();
 
 	// to check the first fit Strategy or not ?
 	if (sys_isUHeapPlacementStrategyFIRSTFIT()) {
@@ -57,7 +57,7 @@ void* malloc(uint32 size) {
 				 * so if (user_heap_max - ptr which mean the rest of free size) >= needed size / 4
 				 * (means how many (4 kilo) I can hold )
 				 * */
-				if (ptr != USER_HEAP_MAX && (USER_HEAP_MAX - ptr) >= size / 4)
+				if (ptr != USER_HEAP_MAX && (USER_HEAP_MAX - ptr) < size)
 					return NULL;
 
 				/*
@@ -75,6 +75,21 @@ void* malloc(uint32 size) {
 					return ptr;
 				}
 				ptr += (4 * kilo);
+
+				struct Env* env = curenv;
+
+				uint32* pageDir = env->env_page_directory;
+				uint32* pageTable = NULL;
+				for(uint32 va = (uint32) pageDir; va <= USER_HEAP_MAX; va += 4 * kilo) {
+					uint32 dir_frame = get_frame_info(pageDir, va, &pageTable);
+					uint32 page_table_entry = pageTable[PTX(va)];
+					if(page_table_entry & PERM_AVAILABLE != 0) {
+						page_table_entry = ~page_table_entry;
+						allocate_user_mem(env, va, size);
+						break;
+					}
+				}
+
 			}
 		}
 		return NULL;
