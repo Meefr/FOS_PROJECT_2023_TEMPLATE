@@ -8,30 +8,33 @@
 int initialize_kheap_dynamic_allocator(uint32 daStart, uint32 initSizeToAllocate, uint32 daLimit)
 {
 	start =daStart;
-	hLimit=daLimit;
-	segmentbrk=start+initSizeToAllocate;
-	segmentbrk=ROUNDUP(segmentbrk,PAGE_SIZE);
-	if((initSizeToAllocate>daLimit)||((daStart + initSizeToAllocate)>daLimit))
-		return E_NO_MEM;
-	// handle if size = limit > sbrk
-	// 0-4 // 4-8 // 8-12
-	for(uint32 i=daStart;i<initSizeToAllocate;i+=4){
-//		uint32 *pageTable;
-//		struct Frame_Info *ptr=get_frame_info(ptr_page_directory,(void*)i,&pageTable);
-//		if(ptr!=NULL){
-//			continue;
-//		}
-		struct Frame_Info* ptrr=NULL;
-		int ret=allocate_frame((void*)&ptrr);
-		if(ret==E_NO_MEM)
-		{
-			return E_NO_MEM;
-		}
-		map_frame(ptr_page_directory,(void*)ptrr,i,PERM_USER|PERM_WRITEABLE);
+		hLimit=daLimit;
+		segmentbrk=start+initSizeToAllocate;
+		segmentbrk=ROUNDUP(segmentbrk,PAGE_SIZE);
 
-	}
-	initialize_dynamic_allocator(daStart,initSizeToAllocate);
-	return 0;
+		if((initSizeToAllocate>daLimit)||((daStart + initSizeToAllocate)>daLimit))
+			return E_NO_MEM;
+		// handle if size = limit > sbrk
+		// 0-4 // 4-8 // 8-12
+		for(uint32 i=daStart;i<daStart+initSizeToAllocate;i+=PAGE_SIZE){
+	//		uint32 *pageTable;
+	//		struct Frame_Info *ptr=get_frame_info(ptr_page_directory,(void*)i,&pageTable);
+	//		if(ptr!=NULL){
+	//			continue;
+	//		}
+			struct FrameInfo* ptrr;
+			int ret=allocate_frame(&ptrr);
+			if(ret==E_NO_MEM)
+			{
+				return E_NO_MEM;
+			}
+			map_frame(ptr_page_directory,ptrr,i,PERM_WRITEABLE);
+
+		}
+		// access null in this fun call
+		initialize_dynamic_allocator(daStart,initSizeToAllocate);
+		return 0;
+
 }
 
 void* sbrk(int increment)
@@ -55,50 +58,50 @@ void* sbrk(int increment)
 	//MS2: COMMENT THIS LINE BEFORE START CODING====
    // edit in ms1 not finished yet
 	if(increment>0)
-	{
-		// roundup then check if in the hard boundries
-		// should i pass page_size or just 4
-		increment=ROUNDUP(increment,PAGE_SIZE);
-		uint32 prevSbrk=segmentbrk;
-		if(segmentbrk+increment<=hLimit){
-			segmentbrk+=increment;
+		{
+			// roundup then check if in the hard boundries
+			// should i pass page_size or just 4
+			increment=ROUNDUP(increment,PAGE_SIZE);
+			uint32 prevSbrk=segmentbrk;
+			if(segmentbrk+increment<=hLimit){
+				segmentbrk+=increment;
 
-			for(uint32 i=prevSbrk;i<segmentbrk;i+=4){
-				struct Frame_Info* ptrr=NULL;
-				int ret=allocate_frame((void*)&ptrr);
-				if(ret==E_NO_MEM)
-				{
-					return (void*)E_NO_MEM;
+				for(uint32 i=prevSbrk;i<segmentbrk;i+=(PAGE_SIZE)){
+					struct Frame_Info* ptrr=NULL;
+					int ret=allocate_frame((void*)&ptrr);
+					if(ret==E_NO_MEM)
+					{
+						return (void*)E_NO_MEM;
+					}
+					map_frame(ptr_page_directory,(void*)ptrr,i,PERM_USER|PERM_WRITEABLE);
+
 				}
-				map_frame(ptr_page_directory,(void*)ptrr,i,PERM_USER|PERM_WRITEABLE);
-
 			}
+			else{
+				panic("in sbrk func increment>0");
+			}
+			return (void*)prevSbrk;
 		}
-		else{
-			panic("in sbrk func increment>0");
+		else if(increment==0)
+		{
+			return (void*)segmentbrk;
 		}
-		return (void*)prevSbrk;
-	}
-	else if(increment==0)
-	{
-		return (void*)segmentbrk;
-	}
-	else if(increment<0)
-	{
-		// dec sbrk to increment
-		// if inc=10 , should i free 3 pages (12) or only 2 pages(8)
-		increment=ROUNDUP(-increment,PAGE_SIZE);
-		uint32 newSbrk=segmentbrk-increment;
-		if(newSbrk<start){
-			panic("in sbrk func increment<0 and newSbrk<start");
+		else if(increment<0)
+		{
+			// dec sbrk to increment
+			// if inc=10 , should i free 3 pages (12) or only 2 pages(8)
+			increment=ROUNDUP(-increment,PAGE_SIZE);
+			uint32 newSbrk=segmentbrk-increment;
+			if(newSbrk<start){
+				panic("in sbrk func increment<0 and newSbrk<start");
+			}
+			for(uint32 i=segmentbrk;i>newSbrk;i-=(PAGE_SIZE)){
+				unmap_frame(ptr_page_directory,i);
+				free_frame((struct FrameInfo*)i);
+			}
+			return (void*)newSbrk;
 		}
-		for(uint32 i=segmentbrk;i>newSbrk;i-=4){
-			unmap_frame(ptr_page_directory,i);
-			free_frame((struct FrameInfo*)i);
-		}
-		return (void*)newSbrk;
-	}
-	return (void*)-1 ;
+		return (void*)-1 ;
 
 }
 
