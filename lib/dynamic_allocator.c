@@ -161,12 +161,26 @@ void *alloc_block_FF(uint32 size) {
 	}
 	//no free space for required size -> no allocate + no space
 	uint32* ptr = (uint32 *) sbrk((size + sizeOfMetaData()));
-	//create block
-
 	if (ptr != (uint32 *) -1) {
-		tmpBlk = (struct BlockMetaData *) ptr;
-		tmpBlk->size = size + sizeOfMetaData();
-		tmpBlk->is_free = 0;
+		blk = (struct BlockMetaData *) memBlocks.lh_last;
+		if (blk->is_free == 1) {
+			blk->size = size + blk->size + sizeOfMetaData();
+		 	tmpBlk = blk;
+			blk = (struct BlockMetaData *) ((uint32) blk
+					+ (size + sizeOfMetaData()));
+			blk->size = tmpBlk->size - (size + sizeOfMetaData());
+			blk->is_free = 1;
+			//				cprintf("blk: %x\ntmp: %x\n", blk, tmpBlk);
+			LIST_INSERT_AFTER(&memBlocks, tmpBlk, blk);
+			tmpBlk->size = size + sizeOfMetaData();
+			tmpBlk->is_free = 0;
+			return (struct BlockMetaData *) ((uint32) tmpBlk + sizeOfMetaData());
+		} else {
+			tmpBlk = (struct BlockMetaData *) ptr;
+			tmpBlk->size = size + sizeOfMetaData();
+			tmpBlk->is_free = 0;
+			LIST_INSERT_TAIL(&memBlocks, tmpBlk);
+		}
 		return (struct BlockMetaData *) ((uint32) tmpBlk + sizeOfMetaData());
 	}
 	return NULL;

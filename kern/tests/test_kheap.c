@@ -261,7 +261,6 @@ int test_kmalloc()
 
 }
 
-
 int test_kmalloc_firstfit1()
 {
 	/*********************** NOTE ****************************
@@ -2485,7 +2484,7 @@ int test_kfree()
 	struct MyStruct *structArr ;
 	int lastIndexOfByte, lastIndexOfByte2, lastIndexOfShort, lastIndexOfShort2, lastIndexOfInt, lastIndexOfStruct;
 	int start_freeFrames = sys_calculate_free_frames() ;
-
+//Wrong allocation: it's allocated in a previously allocated block. Should not allocate any pages from physical memory
 	//malloc some spaces
 	int i, freeFrames, freeDiskFrames ;
 	char* ptr;
