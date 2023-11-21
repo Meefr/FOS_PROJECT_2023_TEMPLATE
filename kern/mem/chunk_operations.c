@@ -121,21 +121,15 @@ void allocate_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
 {
 	/*=============================================================================*/
 	//TODO: [PROJECT'23.MS2 - #10] [2] USER HEAP - allocate_user_mem() [Kernel Side]
-	uint32* pageDir = e->env_page_directory;
-	uint32* pageTable = NULL;
 
-	//uint32 dir_frame = get_frame_info(pageDir, va, &pageTable);
-	int getPage = get_page_table(pageDir, virtual_address, &pageTable);
+	//uint32 page_permissions = pt_get_page_permissions(e, virtual_address );
+	env_page_ws_print(e);
+	//create new page
+	uint32* page = create_page_table(e->env_page_directory, virtual_address);
 
-	for(uint32 va = (uint32) pageDir; va <= USER_HEAP_MAX; va += 4 * kilo) {
-		//uint32 dir_frame = get_frame_info(pageDir, va, &pageTable);
-		uint32 page_table_entry = pageTable[PTX(va)];
-		if((page_table_entry & PERM_AVAILABLE) != 0) {
-			page_table_entry = ~page_table_entry;
-			//allocate_user_mem(env, va, size);
-			break;
-		}
-	}
+	/* set PERM_AVAILABLE to 1 indicates that it is marked as it is reserved in
+	 virtual memory and available to point to physical address after page fault*/
+	pt_set_page_permissions(e->env_page_directory, virtual_address, PERM_AVAILABLE, 0);
 
 	// Write your code here, remove the panic and write your code
 	//panic("allocate_user_mem() is not implemented yet...!!");

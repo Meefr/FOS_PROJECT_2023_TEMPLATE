@@ -51,7 +51,7 @@ void* malloc(uint32 size) {
 		} else {
 			uint32 hardLimit = sys_get_hard_limit();
 			uint32 ptr = (hardLimit + (4 * kilo));
-			while (ptr != (uint32) NULL && ptr != USER_HEAP_MAX) {
+			if (ptr != (uint32) NULL && ptr != USER_HEAP_MAX) {
 				/*
 				 * check the max size i can hold
 				 * so if (user_heap_max - ptr which mean the rest of free size) >= needed size / 4
@@ -60,6 +60,7 @@ void* malloc(uint32 size) {
 				if ((USER_HEAP_MAX - ptr) < size)
 					return NULL;
 				else {
+
 					sys_allocate_user_mem(ptr, size);
 					size -= (4 * kilo);
 					while (size >= (4 * kilo)) {
