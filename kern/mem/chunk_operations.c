@@ -12,6 +12,8 @@
 #include <inc/queue.h>
 #include <kern/tests/utilities.h>
 
+#define kilo 1024
+
 //extern void inctst();
 
 /******************************/
@@ -119,13 +121,18 @@ void allocate_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
 {
 	/*=============================================================================*/
 	//TODO: [PROJECT'23.MS2 - #10] [2] USER HEAP - allocate_user_mem() [Kernel Side]
-	/*REMOVE THESE LINES BEFORE START CODING */
-	inctst();
-	return;
-	/*=============================================================================*/
+
+	//uint32 page_permissions = pt_get_page_permissions(e, virtual_address );
+	env_page_ws_print(e);
+	//create new page
+	uint32* page = create_page_table(e->env_page_directory, virtual_address);
+
+	/* set PERM_AVAILABLE to 1 indicates that it is marked as it is reserved in
+	 virtual memory and available to point to physical address after page fault*/
+	pt_set_page_permissions(e->env_page_directory, virtual_address, PERM_AVAILABLE, 0);
 
 	// Write your code here, remove the panic and write your code
-	panic("allocate_user_mem() is not implemented yet...!!");
+	//panic("allocate_user_mem() is not implemented yet...!!");
 }
 
 //=====================================

@@ -1,4 +1,6 @@
 #include <inc/lib.h>
+#include <inc/syscall.h>
+#include <lib/syscall.c>
 
 //==================================================================================//
 //============================== GIVEN FUNCTIONS ===================================//
@@ -42,29 +44,23 @@ void* malloc(uint32 size) {
 	// Write your code here, remove the panic and write your code
 //	panic("malloc() is not implemented yet...!!");
 
-
 	// to check the first fit Strategy or not ?
 	if (sys_isUHeapPlacementStrategyFIRSTFIT()) {
 		if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
 			return alloc_block_FF(size);
 		} else {
-			uint32 hardLimit = syscall(SYS_get_hard_limit, hardLimit, 0, 0, 0,
-					0);
-			uint32 ptr = hardLimit + (4 * kilo);
-			while (ptr != NULL && ptr != USER_HEAP_MAX) {
+			uint32 hardLimit = sys_get_hard_limit();
+			uint32 ptr = (hardLimit + (4 * kilo));
+			if (ptr != (uint32) NULL && ptr != USER_HEAP_MAX) {
 				/*
 				 * check the max size i can hold
 				 * so if (user_heap_max - ptr which mean the rest of free size) >= needed size / 4
 				 * (means how many (4 kilo) I can hold )
 				 * */
-				if (ptr != USER_HEAP_MAX && (USER_HEAP_MAX - ptr) >= size / 4)
+				if ((USER_HEAP_MAX - ptr) < size)
 					return NULL;
+				else {
 
-				/*
-				 * the way to check depends on the way of marking in
-				 * alloc_user_mem function
-				 * */
-				if (ptr == NULL) {
 					sys_allocate_user_mem(ptr, size);
 					size -= (4 * kilo);
 					while (size >= (4 * kilo)) {
@@ -72,9 +68,18 @@ void* malloc(uint32 size) {
 						ptr += (4 * kilo);
 						size -= (4 * kilo);
 					}
-					return ptr;
+					return (void*) ptr;
 				}
-				ptr += (4 * kilo);
+
+				/*
+				 * the way to check depends on the way of marking in
+				 * alloc_user_mem function
+				 * */
+
+				//ptr += (4 * kilo);
+
+
+
 			}
 		}
 		return NULL;
@@ -92,16 +97,16 @@ void* malloc(uint32 size) {
 void free(void* virtual_address) {
 	//TODO: [PROJECT'23.MS2 - #11] [2] USER HEAP - free() [User Side]
 	// Write your code here, remove the panic and write your code
-//	panic("free() is not implemented yet...!!");
-	uint32 hardLimit = syscall(SYS_get_hard_limit, hardLimit, 0, 0, 0,
-						0);
-	if(virtual_address >= (void *)USER_HEAP_START && virtual_address <= (void *)hardLimit){
-		free_block(virtual_address);
-	}else if(virtual_address >= (void *)(hardLimit + (4*kilo)) && virtual_address <= (void *)USER_HEAP_MAX){
-
-	}else {
-		panic("invalid address...!!");
-	}
+	panic("free() is not implemented yet...!!");
+//	uint32 hardLimit = syscall(SYS_get_hard_limit, hardLimit, 0, 0, 0,
+//						0);
+//	if(virtual_address >= (void *)USER_HEAP_START && virtual_address <= (void *)hardLimit){
+//		free_block(virtual_address);
+//	}else if(virtual_address >= (void *)(hardLimit + (4*kilo)) && virtual_address <= (void *)USER_HEAP_MAX){
+//
+//	}else {
+//		panic("invalid address...!!");
+//	}
 }
 
 //=================================
