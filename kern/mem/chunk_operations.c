@@ -138,7 +138,7 @@ void allocate_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
 	}
 
 	// Write your code here, remove the panic and write your code
-	panic("allocate_user_mem() is not implemented yet...!!");
+	//panic("allocate_user_mem() is not implemented yet...!!");
 }
 
 //=====================================

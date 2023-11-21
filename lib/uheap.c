@@ -60,14 +60,6 @@ void* malloc(uint32 size) {
 				if ((USER_HEAP_MAX - ptr) < size)
 					return NULL;
 				else {
-
-				}
-
-				/*
-				 * the way to check depends on the way of marking in
-				 * alloc_user_mem function
-				 * */
-				if (ptr == (uint32) NULL) {
 					sys_allocate_user_mem(ptr, size);
 					size -= (4 * kilo);
 					while (size >= (4 * kilo)) {
@@ -77,7 +69,13 @@ void* malloc(uint32 size) {
 					}
 					return (void*) ptr;
 				}
-				ptr += (4 * kilo);
+
+				/*
+				 * the way to check depends on the way of marking in
+				 * alloc_user_mem function
+				 * */
+
+				//ptr += (4 * kilo);
 
 
 
