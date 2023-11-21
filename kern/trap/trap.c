@@ -380,16 +380,23 @@ void fault_handler(struct Trapframe *tf)
 			//your code is here
 
 			uint32 page_permissions = pt_get_page_permissions(faulted_env->env_page_directory, (uint32)fault_va);
-
-
-			if(fault_va>=KERNEL_HEAP_START){
+			uint32 *pagetable;
+			get_page_table(faulted_env->env_page_directory,fault_va,&pagetable);
+//			cprintf("%x ,%x \n",pagetable,pagetable[PTX(fault_va)]);
+			if(pagetable == 0){
+				cprintf("no page tabel\n");
+			}
+//				cprintf("%x \n%d \n",fault_va,page_permissions);
+//
+			if((fault_va >= KERNEL_HEAP_START && fault_va <= KERNEL_HEAP_MAX)){
 				// pointed to kernel
 				sched_kill_env(faulted_env->env_id);
 			} else if ((page_permissions & PERM_AVAILABLE)) {
 				// unmarked page
 				sched_kill_env(faulted_env->env_id);
-			} else if(!(page_permissions & PERM_WRITEABLE)) {
+			} else if(!(page_permissions & PERM_WRITEABLE) && pagetable[PTX(fault_va)]) {
 				// read-only permission
+				cprintf("hh!\n");
 				sched_kill_env(faulted_env->env_id);
 			}
 

@@ -107,19 +107,7 @@ void* kmalloc(unsigned int size) {
 	//change this "return" according to your answer
 //	kpanic_into_prompt("kmalloc() is not implemented yet...!!");
 	// 16
-	int tmp = 0;
-	uint32*pt;
-	struct FrameInfo* fi;
-	for (uint32 i = (hLimit + PAGE_SIZE); i < KERNEL_HEAP_MAX; i +=
-					(PAGE_SIZE)) {
-		fi = get_frame_info(ptr_page_directory, i, &pt);
-					uint32 page_table_entry = pt[PTX(i)];
-		//			cprintf("entry: %x\npresent: %x\n",page_table_entry,presentBit);
-					if (!(page_table_entry & PERM_PRESENT))
-						tmp++;
-	}
-//	cprintf("free pages number: %d, non free pages %d\n",tmp, ((KERNEL_HEAP_MAX - (hLimit + PAGE_SIZE))/PAGE_SIZE)-tmp);
-	//here we need to know roundUp where ?
+//here we need to know roundUp where ?
 	if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
 		if (isKHeapPlacementStrategyFIRSTFIT()) {
 			// here we need type cast;
@@ -227,14 +215,13 @@ unsigned int kheap_virtual_address(unsigned int physical_address) {
 	//EFFICIENT IMPLEMENTATION ~O(1) IS REQUIRED ==================
 
 	struct FrameInfo *ptr_frame_info;
-	ptr_frame_info = to_frame_info((uint32)physical_address);
-	if (ptr_frame_info->references > 0)
-		{
+	ptr_frame_info = to_frame_info((uint32) physical_address);
+	if (ptr_frame_info->references > 0) {
 		uint32 offset = physical_address;
 		offset = offset << 20;
 		offset = offset >> 20;
-		return (unsigned int)ptr_frame_info->va + offset;
-		}
+		return (unsigned int) ptr_frame_info->va + offset;
+	}
 	//change this "return" according to your answer
 	return 0;
 }
