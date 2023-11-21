@@ -4,6 +4,7 @@
 #include <inc/dynamic_allocator.h>
 #include "memory_manager.h"
 
+#define num_of_all_pages 32722
 int initialize_kheap_dynamic_allocator(uint32 daStart,
 		uint32 initSizeToAllocate, uint32 daLimit) {
 
@@ -24,6 +25,7 @@ int initialize_kheap_dynamic_allocator(uint32 daStart,
 //		}
 		struct FrameInfo* ptrr;
 		int ret = allocate_frame(&ptrr);
+		ptrr->va = i;
 		if (ret == E_NO_MEM) {
 			return E_NO_MEM;
 		}
@@ -88,7 +90,7 @@ void* sbrk(int increment) {
 		}
 		for (uint32 i = segmentbrk; i > newSbrk; i -= (PAGE_SIZE)) {
 			unmap_frame(ptr_page_directory, i);
-			free_frame((struct FrameInfo*) i);
+//			free_frame((struct FrameInfo*) i);
 		}
 		segmentbrk -= ((increment / PAGE_SIZE) * PAGE_SIZE);
 		return (void*) newSbrk;
@@ -105,7 +107,18 @@ void* kmalloc(unsigned int size) {
 	//change this "return" according to your answer
 //	kpanic_into_prompt("kmalloc() is not implemented yet...!!");
 	// 16
-
+	int tmp = 0;
+	uint32*pt;
+	struct FrameInfo* fi;
+	for (uint32 i = (hLimit + PAGE_SIZE); i < KERNEL_HEAP_MAX; i +=
+					(PAGE_SIZE)) {
+		fi = get_frame_info(ptr_page_directory, i, &pt);
+					uint32 page_table_entry = pt[PTX(i)];
+		//			cprintf("entry: %x\npresent: %x\n",page_table_entry,presentBit);
+					if (!(page_table_entry & PERM_PRESENT))
+						tmp++;
+	}
+//	cprintf("free pages number: %d, non free pages %d\n",tmp, ((KERNEL_HEAP_MAX - (hLimit + PAGE_SIZE))/PAGE_SIZE)-tmp);
 	//here we need to know roundUp where ?
 	if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
 		if (isKHeapPlacementStrategyFIRSTFIT()) {
@@ -131,13 +144,12 @@ void* kmalloc(unsigned int size) {
 //					&pageTable);
 			ptr_fram_Info = get_frame_info(ptr_page_directory, i, &pageTable);
 			uint32 page_table_entry = pageTable[PTX(i)];
-			uint32 presentBit = page_table_entry;
-			presentBit << 31;
-			presentBit >> 31;
-			if (!(presentBit & PERM_PRESENT))
+//			cprintf("entry: %x\npresent: %x\n",page_table_entry,presentBit);
+			if (!(page_table_entry & PERM_PRESENT))
 				count++;
-			else
+			else {
 				count = 0;
+			}
 
 			if (count == number_of_pages) {
 				i = i - ((number_of_pages - 1) * PAGE_SIZE);
@@ -149,19 +161,28 @@ void* kmalloc(unsigned int size) {
 					if (ret == E_NO_MEM) {
 						return (void*) E_NO_MEM;
 					}
-					map_frame(ptr_page_directory, ptrr, i,
+					ret = map_frame(ptr_page_directory, ptrr, i,
 					PERM_WRITEABLE);
+					if (ret == E_NO_MEM) {
+						unmap_frame(ptr_page_directory, i);
+						return (void*) E_NO_MEM;
+					}
 					i += PAGE_SIZE;
 				}
 //				struct vmBlock *ptr;
 //				LIST_INSERT_HEAD(&vmBlocks, ptr);
-				for (int j = 0; j < 1000; j++) {
+				for (int j = 0; j < num_of_all_pages; j++) {
 					if (vmS[j] == 0) {
 						vmS[j] = address;
 						numOfPages[j] = number_of_pages;
+//						cprintf("number of all pages %d \n", (KERNEL_HEAP_MAX - (hLimit+ PAGE_SIZE))/ PAGE_SIZE);
+//						cprintf("%d ,%d, %d\n", vmS[j], numOfPages[j],
+//								number_of_pages);
 						break;
 					}
 				}
+//				if(address == -134197248 || address == -131051520 || address == -130002944)
+//					cprintf("%d ,%d, %d\n",address,size,number_of_pages);
 				return (void *) address;
 			}
 		}
@@ -178,23 +199,23 @@ void kfree(void* virtual_address) {
 	if ((uint32) virtual_address >= start
 			&& (uint32) virtual_address < hLimit) {
 		free_block(virtual_address);
-	} else {
-		for (int i = 0; i < 1000; i++) {
+		return;
+	} else if ((uint32) virtual_address >= hLimit + PAGE_SIZE
+			&& (uint32) virtual_address < KERNEL_HEAP_MAX) {
+//		virtual_address = (void *)ROUNDDOWN((uint32)virtual_address,PAGE_SIZE);
+		for (int i = 0; i < num_of_all_pages; i++) {
 			if (vmS[i] == (uint32) virtual_address) {
 				for (int j = 0; j < numOfPages[i]; j++) {
+//					cprintf("%d \n",(vmS[i] + (PAGE_SIZE * j)));
 					unmap_frame(ptr_page_directory, (vmS[i] + (PAGE_SIZE * j)));
 				}
-//				struct FrameInfo * ptr_frame_info;
-//				uint32* tmp;
-//				ptr_frame_info = get_frame_info(ptr_page_directory,vmS[i],&tmp);
-//				ptr_frame_info->va = (uint32) NULL;
 				vmS[i] = 0;
 				numOfPages[i] = 0;
 				return;
 			}
 		}
-		panic("invalid virtual address");
 	}
+	panic("invalid virtual address");
 
 }
 
@@ -205,10 +226,15 @@ unsigned int kheap_virtual_address(unsigned int physical_address) {
 	//panic("kheap_virtual_address() is not implemented yet...!!");
 	//EFFICIENT IMPLEMENTATION ~O(1) IS REQUIRED ==================
 
-	uint32 frame_num = physical_address;
-	frame_num >> 12;
-	if (frames_info[frame_num].va == (uint32)NULL)
-		return frames_info[frame_num].va;
+	struct FrameInfo *ptr_frame_info;
+	ptr_frame_info = to_frame_info((uint32)physical_address);
+	if (ptr_frame_info->references > 0)
+		{
+		uint32 offset = physical_address;
+		offset = offset << 20;
+		offset = offset >> 20;
+		return (unsigned int)ptr_frame_info->va + offset;
+		}
 	//change this "return" according to your answer
 	return 0;
 }
