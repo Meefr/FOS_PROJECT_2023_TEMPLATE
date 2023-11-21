@@ -318,8 +318,8 @@ void fault_handler(struct Trapframe *tf)
 	// Read processor's CR2 register to find the faulting address
 	fault_va = rcr2();
 
-	//	cprintf("Faulted VA = %x\n", fault_va);
-	//	print_trapframe(tf);
+//		cprintf("Faulted VA = %x\n", fault_va);
+//		print_trapframe(tf);
 
 	/******************************************************/
 	/*2022*///If same fault va for 3 times, then panic
@@ -378,6 +378,22 @@ void fault_handler(struct Trapframe *tf)
 			//TODO: [PROJECT'23.MS2 - #13] [3] PAGE FAULT HANDLER - Check for invalid pointers
 			//(e.g. pointing to unmarked user heap page, kernel or wrong access rights),
 			//your code is here
+
+			uint32 page_permissions = pt_get_page_permissions(faulted_env->env_page_directory, (uint32)fault_va);
+
+
+			if(fault_va>=KERNEL_HEAP_START){
+				// pointed to kernel
+				sched_kill_env(faulted_env->env_id);
+			} else if ((page_permissions & PERM_AVAILABLE)) {
+				// unmarked page
+				sched_kill_env(faulted_env->env_id);
+			} else if(!(page_permissions & PERM_WRITEABLE)) {
+				// read-only permission
+				sched_kill_env(faulted_env->env_id);
+			}
+
+
 
 			/*============================================================================================*/
 		}
