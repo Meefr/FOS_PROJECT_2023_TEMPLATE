@@ -204,8 +204,7 @@ void kfree(void* virtual_address) {
 			}
 		}
 	}
-	panic("invalid virtual address");
-
+//	panic("invalid virtual address");
 }
 
 unsigned int kheap_virtual_address(unsigned int physical_address) {

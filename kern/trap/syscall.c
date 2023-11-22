@@ -17,6 +17,8 @@
 #include <kern/tests/utilities.h>
 #include <kern/tests/test_working_set.h>
 
+#define kilo 1024
+
 extern uint8 bypassInstrLength ;
 
 /*******************************/
@@ -482,7 +484,7 @@ void* sys_sbrk(int increment)
 {
 	//TODO: [PROJECT'23.MS2 - #08] [2] USER HEAP - Block Allocator - sys_sbrk() [Kernel Side]
 	//MS2: COMMENT THIS LINE BEFORE START CODING====
-	return (void*)-1 ;
+	//return (void*)-1 ;
 	//====================================================
 
 	/*2023*/
@@ -506,7 +508,39 @@ void* sys_sbrk(int increment)
 	 */
 	struct Env* env = curenv; //the current running Environment to adjust its break limit
 
+	//getting the hard limit of the environment
+	uint32 hardLimit = env->hardLimit;
+	uint32 segmentBreak = env->segBreak;
 
+	if((increment+env->segBreak) > hardLimit){
+		return (void*)-1;
+	}
+	if(increment > 0) {
+
+		if(increment % (4 * kilo) == 0) {
+			env->segBreak += increment;
+		} else {
+			env->segBreak += (((increment/(4*kilo))*(4*kilo)) + (4 * kilo));
+		}
+
+	} else if(increment < 0) {
+		if(segmentBreak + increment < env->start)
+			return (void*)-1;
+		while(increment <= (-4 * kilo)){
+			// moving the segment break by page boundary
+			segmentBreak -=(4 * kilo);
+			// deallocate page entry
+			unmap_frame(env->env_page_directory,segmentBreak);
+			//move to the next page.
+			increment += (4 * kilo);
+		}
+		env->segBreak = segmentBreak;
+	}
+	return (void *)segmentBreak;
+}
+
+uint32 sys_get_hard_limit(uint32 hardLimit) {
+	return hardLimit;
 }
 
 /**************************************************************************/
@@ -523,7 +557,9 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4, uin
 	//TODO: [PROJECT'23.MS1 - #4] [2] SYSTEM CALLS - Add suitable code here
 
 	//=====================================================================
-
+	case SYS_get_hard_limit:
+		return sys_get_hard_limit(curenv->hardLimit);
+		break;
 	case SYS_sbrk:
 		return (uint32)sys_sbrk(a1);
 		break;

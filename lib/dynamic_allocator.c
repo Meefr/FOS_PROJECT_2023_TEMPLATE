@@ -77,7 +77,7 @@ void print_blocks_list(struct MemBlock_LIST list) {
 //==================================================================================//
 //============================ REQUIRED FUNCTIONS ==================================//
 //==================================================================================//
-bool is_initialized=0;
+bool is_initialized = 0;
 //==================================
 // [1] INITIALIZE DYNAMIC ALLOCATOR:
 //==================================
@@ -87,7 +87,9 @@ void initialize_dynamic_allocator(uint32 daStart,
 	//DON'T CHANGE THESE LINES=================
 	if (initSizeOfAllocatedSpace == 0)
 		return;
-	is_initialized=1;
+
+
+	is_initialized = 1;
 	//=========================================
 	//=========================================
 	//TODO: [PROJECT'23.MS1 - #5] [3] DYNAMIC ALLOCATOR - initialize_dynamic_allocator()
@@ -109,15 +111,13 @@ void *alloc_block_FF(uint32 size) {
 		return NULL;
 
 	// code update for MS2
-	if (!is_initialized)
-	{
-	uint32 required_size = size + sizeOfMetaData();
-	uint32 da_start = (uint32)sbrk(required_size);
-	//get new break since it's page aligned! thus, the size can be more than the required one
-	uint32 da_break = (uint32)sbrk(0);
-	initialize_dynamic_allocator(da_start, da_break - da_start);
+	if (!is_initialized) {
+		uint32 required_size = size + sizeOfMetaData();
+		uint32 da_start = (uint32) sbrk(required_size);
+		//get new break since it's page aligned! thus, the size can be more than the required one
+		uint32 da_break = (uint32) sbrk(0);
+		initialize_dynamic_allocator(da_start, da_break - da_start);
 	}
-
 
 	struct BlockMetaData *blk, *tmpBlk;
 	//	tmpBlk->size = 0;
@@ -215,10 +215,16 @@ void *alloc_block_BF(uint32 size) {
 	if (minSize == -1) {
 		uint32* ptr = (uint32 *) sbrk((size + sizeOfMetaData()));
 		if (ptr != (uint32 *) -1) {
-			tmpBlk = (struct BlockMetaData *) ((uint32) ptr);
-			tmpBlk->size = size + sizeOfMetaData();
-			tmpBlk->is_free = 0;
-			return (void *) ((uint32) tmpBlk + sizeOfMetaData());
+			tmpBlk = (struct BlockMetaData *) memBlocks.lh_last;
+			if (tmpBlk->is_free == 1) {
+				tmpBlk->size = size;
+				tmpBlk->is_free = 0;
+			} else {
+				tmpBlk = (struct BlockMetaData *) ptr;
+				tmpBlk->size = size + sizeOfMetaData();
+				tmpBlk->is_free = 0;
+			}
+			return (struct BlockMetaData *) ((uint32) tmpBlk + sizeOfMetaData());
 		}
 		return NULL;
 	} else {
@@ -346,7 +352,7 @@ void *realloc_block_FF(void* va, uint32 new_size) {
 	new_size += sizeOfMetaData();
 	struct BlockMetaData *ptr = ((struct BlockMetaData *) va - 1), *tmpBlk;
 	if (new_size < ptr->size) {
-	 	tmpBlk = ptr;
+		tmpBlk = ptr;
 		if (ptr->size - new_size >= sizeOfMetaData()) {
 			ptr = (struct BlockMetaData *) ((uint32) ptr + (new_size));
 			ptr->size = tmpBlk->size - (new_size);
@@ -375,15 +381,17 @@ void *realloc_block_FF(void* va, uint32 new_size) {
 		// no check if the next is free or not
 		// no test if th next is null
 		//no test if the next size < size i need (we compare next with its meta)
-		if ((  ptr->prev_next_info.le_next != NULL&&ptr->prev_next_info.le_next->is_free == 0)
+		if ((ptr->prev_next_info.le_next != NULL
+				&& ptr->prev_next_info.le_next->is_free == 0)
 				|| ptr->prev_next_info.le_next == NULL
-				|| (ptr->prev_next_info.le_next != NULL&&(ptr->prev_next_info.le_next->size- sizeOfMetaData() < (new_size - ptr->size)))) {
+				|| (ptr->prev_next_info.le_next != NULL
+						&& (ptr->prev_next_info.le_next->size - sizeOfMetaData()
+								< (new_size - ptr->size)))) {
 
 			free_block(((struct BlockMetaData *) ptr + 1));
 			return alloc_block_FF(new_size - sizeOfMetaData());
 
-		}
-		else if (ptr->prev_next_info.le_next != NULL
+		} else if (ptr->prev_next_info.le_next != NULL
 				&& ptr->prev_next_info.le_next->is_free == 1) {
 			if ((ptr->prev_next_info.le_next->size - sizeOfMetaData()
 					> (new_size - ptr->size))) {

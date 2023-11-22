@@ -339,8 +339,6 @@ void* sys_sbrk(int increment)
 	return (void*)syscall(SYS_sbrk, increment, 0, 0, 0, 0);
 	//Comment the following line before start coding...
 	//panic("not implemented yet");
-
-
 }
 
 void sys_free_user_mem(uint32 virtual_address, uint32 size)
@@ -353,6 +351,13 @@ void sys_free_user_mem(uint32 virtual_address, uint32 size)
 void sys_allocate_user_mem(uint32 virtual_address, uint32 size)
 {
 	syscall(SYS_allocate_user_mem, virtual_address, size, 0, 0, 0);
+	//Comment the following line before start coding...
+	//panic("not implemented yet");
+}
+
+uint32 sys_get_hard_limit()
+{
+	return syscall(SYS_get_hard_limit, 0, 0, 0, 0, 0);
 	//Comment the following line before start coding...
 	//panic("not implemented yet");
 }
