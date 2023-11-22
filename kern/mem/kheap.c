@@ -109,7 +109,7 @@ void* kmalloc(unsigned int size) {
 	// 16
 //	cprintf("free pages number: %d, non free pages %d\n",tmp, ((KERNEL_HEAP_MAX - (hLimit + PAGE_SIZE))/PAGE_SIZE)-tmp);
 	//here we need to know roundUp where ?
-	cprintf("%d \n",(hLimit + PAGE_SIZE));
+	//cprintf("%d \n",(hLimit + PAGE_SIZE));
 	if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
 		if (isKHeapPlacementStrategyFIRSTFIT()) {
 			// here we need type cast;
