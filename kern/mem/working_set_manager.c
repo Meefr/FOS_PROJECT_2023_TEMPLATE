@@ -20,6 +20,7 @@ inline struct WorkingSetElement* env_page_ws_list_create_element(struct Env* e, 
 //	panic("env_page_ws_list_create_element() is not implemented yet...!!");
 
 	struct WorkingSetElement *my_elm=kmalloc(sizeof(struct WorkingSetElement));
+	my_elm->virtual_address=virtual_address;
 	if(my_elm==NULL)
 		panic("my_elm == null in ws, cant allocate the ws ");
 	else

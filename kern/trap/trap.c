@@ -379,18 +379,27 @@ void fault_handler(struct Trapframe *tf)
 			//(e.g. pointing to unmarked user heap page, kernel or wrong access rights),
 			//your code is here
 
-			uint32 page_permissions = pt_get_page_permissions(faulted_env->env_page_directory, fault_va);
-
-
-			if(fault_va>=syscall(SYS_get_hard_limit, 0, 0, 0, 0, 0)&&fault_va<=KERNEL_HEAP_MAX){
+			uint32 page_permissions = pt_get_page_permissions(faulted_env->env_page_directory, (uint32)fault_va);
+			uint32 *pagetable;
+			get_page_table(faulted_env->env_page_directory,fault_va,&pagetable);
+//			cprintf("%x ,%x \n",pagetable,pagetable[PTX(fault_va)]);
+			if(pagetable == 0){
+				cprintf("no page tabel\n");
+			}
+//				cprintf("%x \n%d \n",fault_va,page_permissions);
+//
+			if((fault_va > USER_LIMIT)){
+				cprintf("in point to kernel");
 				// pointed to kernel
-				cprintf("sss");
 				sched_kill_env(faulted_env->env_id);
-			} else if ((page_permissions & PERM_AVAILABLE)) {
+			} else if (((page_permissions & PERM_USED)==0)&&(fault_va>=USER_HEAP_START&&fault_va<=USER_HEAP_MAX)){
+				cprintf("in unmarked");
 				// unmarked page
 				sched_kill_env(faulted_env->env_id);
-			} else if(!(page_permissions & PERM_WRITEABLE)) {
+			} else if(((page_permissions & PERM_WRITEABLE)==0)&&(page_permissions&PERM_PRESENT)==1) {
 				// read-only permission
+				cprintf("IN READ ONLY!\n");
+				//cprintf("the res : %d\n",(page_permissions & PERM_WRITEABLE));
 				sched_kill_env(faulted_env->env_id);
 			}
 
