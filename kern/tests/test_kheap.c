@@ -4583,6 +4583,7 @@ int test_krealloc() {
 			panic(
 					"krealloc: Wrong allocation: krealloc reallocated an address with the same size (it should return same VA)");
 		if (freeFrames != sys_calculate_free_frames())
+			//cprintf("%d freeFrames \n",freeFrames);
 			panic(
 					"krealloc: Wrong number of frames after krealloc with the same size");
 
@@ -4661,6 +4662,9 @@ int test_krealloc() {
 		if ((uint32) newAddress < (KERNEL_HEAP_START))
 			panic("krealloc: Wrong start address for the allocated space... ");
 		if ((uint32) newAddress != ACTUAL_START + (14 * Mega))
+			//////////////////////
+			cprintf("write add %d , New add %d \n",ACTUAL_START + (14 * Mega),newAddress);
+		///////////////////////////////////
 			panic(
 					"krealloc: Wrong start address for reallocated space, NSA = %x\nbbb",
 					(uint32 )newAddress);

@@ -109,6 +109,7 @@ void* kmalloc(unsigned int size) {
 	// 16
 //	cprintf("free pages number: %d, non free pages %d\n",tmp, ((KERNEL_HEAP_MAX - (hLimit + PAGE_SIZE))/PAGE_SIZE)-tmp);
 	//here we need to know roundUp where ?
+	cprintf("%d \n",(hLimit + PAGE_SIZE));
 	if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
 		if (isKHeapPlacementStrategyFIRSTFIT()) {
 			// here we need type cast;
@@ -150,8 +151,7 @@ void* kmalloc(unsigned int size) {
 					if (ret == E_NO_MEM) {
 						return (void*) E_NO_MEM;
 					}
-					ret = map_frame(ptr_page_directory, ptrr, i,
-					PERM_WRITEABLE);
+					ret = map_frame(ptr_page_directory, ptrr, i,PERM_WRITEABLE);
 					if (ret == E_NO_MEM) {
 						unmap_frame(ptr_page_directory, i);
 						return (void*) E_NO_MEM;
@@ -284,6 +284,91 @@ void kexpand(uint32 newSize) {
 void *krealloc(void *virtual_address, uint32 new_size) {
 	//TODO: [PROJECT'23.MS2 - BONUS#1] [1] KERNEL HEAP - krealloc()
 	// Write your code here, remove the panic and write your code
+	if(virtual_address==NULL){
+		return kmalloc(new_size);
+	}
+	else if(new_size==0){
+		kfree(virtual_address);
+	}
+	else{
+		if(new_size<= DYN_ALLOC_MAX_BLOCK_SIZE){
+			return realloc_block_FF(virtual_address,new_size);
+		}
+		else{
+			uint32 NewNumberOfPages=ROUNDUP(new_size,PAGE_SIZE)/PAGE_SIZE;
+			uint32 NumberOfCurrentPages=0;
+			int indexOfva;
+			for (int i = 0; i < num_of_all_pages; i++) {
+				if (vmS[i] == (uint32) virtual_address) {
+					NumberOfCurrentPages=numOfPages[i];
+					indexOfva=i;
+					break;
+				}
+			}
+			// the va may not found in the array ?
+			if(NumberOfCurrentPages==0){
+				cprintf("aaaa0\n");
+				return kmalloc(NewNumberOfPages);
+			}
+			else{
+				cprintf("va %d , CurrentPages %d , NewNumberOfPages %d \n",virtual_address,NumberOfCurrentPages,NewNumberOfPages);
+				if(NumberOfCurrentPages==NewNumberOfPages){
+					//numOfPages[indexOfva]=NewNumberOfPages;
+					cprintf("aaaa1\n");
+					return virtual_address;
+				}
+				else if(NumberOfCurrentPages>NewNumberOfPages){
+					cprintf("aaaa2\n");
+//					uint32 NumberOfPagesToDelet=(NumberOfCurrentPages-NewNumberOfPages);
+//					uint32 StartPtr=(uint32)virtual_address+(NewNumberOfPages*PAGE_SIZE);
+//					numOfPages[indexOfva]=NewNumberOfPages;
+//					for(uint32 i=0;i<NumberOfPagesToDelet;i++){
+//						unmap_frame(ptr_page_directory, (StartPtr + (PAGE_SIZE * i)));
+//					}
+					return virtual_address;
+				}
+				else{
+					cprintf("aaaa3\n");
+					struct FrameInfo * ptr_fram_Info;
+					uint32 *pageTable;
+					uint32 NumberOfPagesNeedToalloc=NewNumberOfPages-NumberOfCurrentPages;
+					int count=0;
+					uint32 address;
+					for(uint32 i=(uint32)virtual_address+(PAGE_SIZE*NumberOfCurrentPages);
+							i<(uint32)virtual_address+(PAGE_SIZE*NewNumberOfPages);i+=PAGE_SIZE){
+						ptr_fram_Info = get_frame_info(ptr_page_directory, i, &pageTable);
+						uint32 page_table_entry = pageTable[PTX(i)];
+						if (!(page_table_entry & PERM_PRESENT))
+							count++;
+						else {
+							kfree(virtual_address);
+
+
+							return kmalloc(new_size);
+						}
+					}
+					if(count>0){
+						numOfPages[indexOfva]=NewNumberOfPages;
+						for(uint32 i=(uint32)virtual_address+(PAGE_SIZE*NumberOfCurrentPages);
+						i<(uint32)virtual_address+(PAGE_SIZE*NewNumberOfPages);i+=PAGE_SIZE){
+							struct FrameInfo* ptrr;
+							int ret = allocate_frame(&ptrr);
+							ptrr->va=i;
+							if (ret == E_NO_MEM) {
+								return (void*) E_NO_MEM;
+							}
+							ret = map_frame(ptr_page_directory, ptrr, i,PERM_WRITEABLE);
+							if (ret == E_NO_MEM) {
+								unmap_frame(ptr_page_directory, i);
+								return (void*) E_NO_MEM;
+							}
+						}
+						return virtual_address;
+					}
+				}
+			}
+		}
+	}
 	return NULL;
-	panic("krealloc() is not implemented yet...!!");
+	//panic("krealloc() is not implemented yet...!!");
 }
