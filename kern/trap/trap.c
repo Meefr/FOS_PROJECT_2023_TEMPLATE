@@ -389,16 +389,13 @@ void fault_handler(struct Trapframe *tf)
 //				cprintf("%x \n%d \n",fault_va,page_permissions);
 //
 			if((fault_va > USER_LIMIT)){
-				cprintf("in point to kernel");
 				// pointed to kernel
 				sched_kill_env(faulted_env->env_id);
 			} else if (((page_permissions & PERM_USED)==0)&&(fault_va>=USER_HEAP_START&&fault_va<=USER_HEAP_MAX)){
-				cprintf("in unmarked");
 				// unmarked page
 				sched_kill_env(faulted_env->env_id);
 			} else if(((page_permissions & PERM_WRITEABLE)==0)&&(page_permissions&PERM_PRESENT)==1) {
 				// read-only permission
-				cprintf("IN READ ONLY!\n");
 				//cprintf("the res : %d\n",(page_permissions & PERM_WRITEABLE));
 				sched_kill_env(faulted_env->env_id);
 			}
