@@ -6,9 +6,32 @@
 //============================== GIVEN FUNCTIONS ===================================//
 //==================================================================================//
 
+struct User_Heap_Data {
+	uint32 va;
+	int size;
+	int num_of_pages;
+	bool marked;
+	LIST_ENTRY(User_Heap_Data)
+	prev_next_info;
+};
+
+LIST_HEAD(User_Heap_Data_LIST, User_Heap_Data);
+struct User_Heap_Data_LIST user_heap_data_list;
+void initUserHeapData() {
+	uint32 hardLimit = sys_get_hard_limit();
+	struct User_Heap_Data *firstUserData = (struct User_Heap_Data *)(hardLimit + PAGE_SIZE);
+	firstUserData->va = hardLimit + PAGE_SIZE;
+	firstUserData->marked = 0;
+	firstUserData->size = (USER_HEAP_MAX - (hardLimit + PAGE_SIZE));
+	firstUserData->num_of_pages = (firstUserData->size / PAGE_SIZE);
+	cprintf("userstart : %d \nva %d\nsize %d\n", firstUserData,
+			firstUserData->va, firstUserData->size);
+	LIST_INSERT_HEAD(&user_heap_data_list, firstUserData);
+}
 #define kilo 1024
 int FirstTimeFlag = 1;
 void InitializeUHeap() {
+	initUserHeapData();
 	if (FirstTimeFlag) {
 #if UHP_USE_BUDDY
 		initialize_buddy();
@@ -41,56 +64,45 @@ void* malloc(uint32 size) {
 		return NULL;
 	//==============================================================
 	//TODO: [PROJECT'23.MS2 - #09] [2] USER HEAP - malloc() [User Side]
-	// Write your code here, remove the panic and write your code
+//	// Write your code here, remove the panic and write your code
+//	cprtinf(
+//			"struct user data va : %d \nstruct user data size : %d\nstruct user data numOfPages : %d\n",
+//			user_heap_data_list.lh_first->va,
+//			user_heap_data_list.lh_first->size,
+//			user_heap_data_list.lh_first->num_of_pages
+//			);
 //	panic("malloc() is not implemented yet...!!");
 
-	// to check the first fit Strategy or not ?
-//	if (sys_isUHeapPlacementStrategyFIRSTFIT()) {
-//		if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
+	if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
+//		return alloc_block_FF(size);
+//		if (sys_isUHeapPlacementStrategyFIRSTFIT()) {
 //			return alloc_block_FF(size);
-//		} else {
-//			uint32 hardLimit = sys_get_hard_limit();
-//			uint32 ptr = (hardLimit + (4 * kilo));
-//			if (ptr != (uint32) NULL && ptr != USER_HEAP_MAX) {
-//				/*
-//				 * check the max size i can hold
-//				 * so if (user_heap_max - ptr which mean the rest of free size) >= needed size / 4
-//				 * (means how many (4 kilo) I can hold )
-//				 * */
-//				if ((USER_HEAP_MAX - ptr) < size)
-//					return NULL;
-//				else {
-//
-//					sys_allocate_user_mem(ptr, size);
-//					size -= (4 * kilo);
-//					while (size >= (4 * kilo)) {
-//						sys_allocate_user_mem(ptr, size);
-//						ptr += (4 * kilo);
-//						size -= (4 * kilo);
-//					}
-//					return (void*) ptr;
-//				}
-//
-//				/*
-//				 * the way to check depends on the way of marking in
-//				 * alloc_user_mem function
-//				 * */
-//
-//				//ptr += (4 * kilo);
-//
-//
-//
-//			}
+//		} else if (sys_isUHeapPlacementStrategyBESTFIT()) {
+//			return alloc_block_BF(size);
 //		}
-//		return NULL;
-//	}
-
+	} else {
+		size = ROUNDUP(size, PAGE_SIZE);
+		struct User_Heap_Data *ptr;
+		LIST_FOREACH(ptr,&user_heap_data_list)
+		{
+			if (ptr->size > size && !ptr->marked) {
+				struct User_Heap_Data *newData = ptr
+						+ sizeof(struct User_Heap_Data);
+				newData->marked = 0;
+				newData->size = ptr->size - size;
+				newData->va = ptr->va + size;
+				newData->num_of_pages = (ptr->size - size) / PAGE_SIZE;
+				ptr->size = size;
+				ptr->marked = 1;
+				ptr->num_of_pages = size / PAGE_SIZE;
+				LIST_INSERT_AFTER(&user_heap_data_list, ptr, newData);
+				sys_allocate_user_mem(ptr->va, ptr->size);
+				return (void *) ptr->va;
+			}
+		}
+	}
 	return NULL;
-	//Use sys_isUHeapPlacementStrategyFIRSTFIT() and	sys_isUHeapPlacementStrategyBESTFIT()
-	//to check the current strategy
-
 }
-
 //=================================
 // [3] FREE SPACE FROM USER HEAP:
 //=================================
