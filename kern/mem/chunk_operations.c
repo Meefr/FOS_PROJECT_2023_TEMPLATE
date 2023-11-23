@@ -118,16 +118,19 @@ void allocate_user_mem(struct Env* e, uint32 virtual_address, uint32 size) {
 	/*=============================================================================*/
 	//TODO: [PROJECT'23.MS2 - #10] [2] USER HEAP - allocate_user_mem() [Kernel Side]
 	// ------------------------------meefr code-------------------------------- //
+	cprintf("here!! alloc user mem\n");
 
-	for (uint32 i = virtual_address; i < virtual_address + size; i += PAGE_SIZE) {
+	for (uint32 i = virtual_address; i < virtual_address + size; i +=
+			PAGE_SIZE) {
 		uint32* pageTabel;
-		int ret = get_page_table(e->env_page_directory, virtual_address,
+		int ret = get_page_table(e->env_page_directory, i,
 				&pageTabel);
 		if (ret == TABLE_NOT_EXIST) {
-			create_page_table(e->env_page_directory, virtual_address);
+			(uint32) create_page_table(e->env_page_directory,
+					i);
 		}
 		pt_set_page_permissions(e->env_page_directory, i,
-					PERM_AVAILABLE, 0);
+		PERM_AVAILABLE, 0);
 	}
 
 	// ---------------------------hazem code--------------------------- //

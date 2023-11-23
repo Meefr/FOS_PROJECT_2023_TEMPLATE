@@ -249,6 +249,13 @@ void sys_free_user_mem(uint32 virtual_address, uint32 size) {
 }
 
 void sys_allocate_user_mem(uint32 virtual_address, uint32 size) {
+	if ((uint32*) virtual_address == 0 || size == 0) {
+		sched_kill_env(curenv->env_id);
+		return;
+	} else if (virtual_address >= USER_LIMIT || ((virtual_address + size)>USER_LIMIT)){
+		sched_kill_env(curenv->env_id);
+		return;
+	}
 	allocate_user_mem(curenv, virtual_address, size);
 	return;
 }
@@ -464,9 +471,14 @@ void* sys_sbrk(int increment) {
 	if (increment > 0) {
 		increment = ROUNDUP(increment, PAGE_SIZE);
 		env->segBreak += increment;
+		uint32 *pageTable;
 		for (uint32 i = segmentBreak; i < env->segBreak; i += (PAGE_SIZE)) {
+			int ret = get_page_table(env->env_page_directory, i, &pageTable);
+			if (ret == TABLE_NOT_EXIST) {
+				create_page_table(env->env_page_directory, i);
+			}
 			pt_set_page_permissions(env->env_page_directory, i,
-								PERM_AVAILABLE, 0);
+			PERM_AVAILABLE, 0);
 		}
 //		if(increment % (4 * kilo) == 0) {
 //			env->segBreak += increment;
@@ -502,8 +514,8 @@ void* sys_sbrk(int increment) {
 	return (void *) segmentBreak;
 }
 
-uint32 sys_get_hard_limit(uint32 hardLimit) {
-	return hardLimit;
+uint32 sys_get_hard_limit() {
+	return syscall(SYS_get_hard_limit, 0, 0, 0, 0, 0);
 }
 
 /**************************************************************************/
@@ -519,7 +531,7 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4,
 	//TODO: [PROJECT'23.MS1 - #4] [2] SYSTEM CALLS - Add suitable code here
 	//=====================================================================
 	case SYS_get_hard_limit:
-		return sys_get_hard_limit(curenv->hardLimit);
+		return curenv->hardLimit;
 		break;
 	case SYS_sbrk:
 		return (uint32) sys_sbrk(a1);
@@ -537,16 +549,7 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4,
 		}
 		break;
 	case SYS_allocate_user_mem:
-		if ((uint32*) a1 == NULL || (uint32*) a2 == NULL) {
-			sched_kill_env(curenv->env_id);
-		} else if (a1 >= USER_LIMIT || a2 >= PAGE_SIZE) {
-			sched_kill_env(curenv->env_id);
-		} else if (a1 <= 0 || a2 <= 0) {
-			sched_kill_env(curenv->env_id);
-		} else {
-			sys_allocate_user_mem(a1, a2);
-			return 0;
-		}
+		sys_allocate_user_mem(a1, a2);
 		break;
 	case SYS_cputs:
 		sys_cputs((const char*) a1, a2, (uint8) a3);

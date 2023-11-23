@@ -390,12 +390,15 @@ void fault_handler(struct Trapframe *tf)
 //
 			if((fault_va > USER_LIMIT)){
 				// pointed to kernel
+				cprintf("KILL at user Limit\n");
 				sched_kill_env(faulted_env->env_id);
-			} else if (((page_permissions & PERM_USED)==0)&&(fault_va>=USER_HEAP_START&&fault_va<=USER_HEAP_MAX)){
+			} else if (((page_permissions & PERM_AVAILABLE)==0)&&(fault_va>=USER_HEAP_START&&fault_va<=USER_HEAP_MAX) && ((page_permissions & PERM_PRESENT)!=0)){
 				// unmarked page
+				cprintf("KILL at unmarked page\n");
 				sched_kill_env(faulted_env->env_id);
 			} else if(((page_permissions & PERM_WRITEABLE)==0)&&(page_permissions&PERM_PRESENT)==1) {
 				// read-only permission
+				cprintf("KILL at read only\n");
 				//cprintf("the res : %d\n",(page_permissions & PERM_WRITEABLE));
 				sched_kill_env(faulted_env->env_id);
 			}

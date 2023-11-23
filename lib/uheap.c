@@ -1,12 +1,12 @@
 #include <inc/lib.h>
-#include <inc/syscall.h>
-#include <lib/syscall.c>
+//#include <inc/syscall.h>
+//#include <lib/syscall.c>
 
 //==================================================================================//
 //============================== GIVEN FUNCTIONS ===================================//
 //==================================================================================//
-#define numofVmem 4003
-uint32 vMem[numofVmem - 1];
+#define numofVmem (USER_HEAP_MAX - USER_HEAP_START) / PAGE_SIZE
+uint32 vMem[numofVmem];
 
 #define kilo 1024
 int FirstTimeFlag = 1;
@@ -45,14 +45,13 @@ void* malloc(uint32 size) {
 	//TODO: [PROJECT'23.MS2 - #09] [2] USER HEAP - malloc() [User Side]
 	//	// Write your code here, remove the panic and write your code
 	//	panic("malloc() is not implemented yet...!!");
-
 	if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
-		return alloc_block_FF(size);
-//		if (sys_isUHeapPlacementStrategyFIRSTFIT()) {
-//			return alloc_block_FF(size);
-//		} else if (sys_isUHeapPlacementStrategyBESTFIT()) {
-//			return alloc_block_BF(size);
-//		}
+//		return alloc_block_FF(size);
+		if (sys_isUHeapPlacementStrategyFIRSTFIT()) {
+			return alloc_block_FF(size);
+		} else if (sys_isUHeapPlacementStrategyBESTFIT()) {
+			return alloc_block_BF(size);
+		}
 	} else {
 		size = ROUNDUP(size, PAGE_SIZE);
 		int number_of_pages = size / PAGE_SIZE;
@@ -72,9 +71,10 @@ void* malloc(uint32 size) {
 					vMem[i] = startAddress;
 					i++;
 				}
-//				cprintf("here!!\n");
-				sys_allocate_user_mem(startAddress,size);
-				return (void *)startAddress;
+				cprintf("Va %d\nstart of heap %d\n", startAddress,
+						(sys_get_hard_limit() + PAGE_SIZE));
+				sys_allocate_user_mem(startAddress, size);
+				return (void *) startAddress;
 			}
 		}
 	}
@@ -86,16 +86,20 @@ void* malloc(uint32 size) {
 void free(void* virtual_address) {
 	//TODO: [PROJECT'23.MS2 - #11] [2] USER HEAP - free() [User Side]
 	// Write your code here, remove the panic and write your code
-	panic("free() is not implemented yet...!!");
-//	uint32 hardLimit = syscall(SYS_get_hard_limit, hardLimit, 0, 0, 0,
-//						0);
-//	if(virtual_address >= (void *)USER_HEAP_START && virtual_address <= (void *)hardLimit){
-//		free_block(virtual_address);
-//	}else if(virtual_address >= (void *)(hardLimit + (4*kilo)) && virtual_address <= (void *)USER_HEAP_MAX){
-//
-//	}else {
-//		panic("invalid address...!!");
+	//	panic("free() is not implemented yet...!!");
+//	for (int i = 0; i < numofVmem; i++) {
+//		uint8 flag = 0;
+//		int count = 0;
+//		if (vMem[i] == virtual_address) {
+//			flag = 1;
+//			count++;
+//			vMem[i] = 0;
+//		} else if (vMem[i] != virtual_address && flag) {
+//			sys_free_user_mem((vMem[i - 1] - (count - 1)), (count * PAGE_SIZE));
+//			return;
+//		}
 //	}
+
 }
 
 //=================================
