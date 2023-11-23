@@ -5,33 +5,12 @@
 //==================================================================================//
 //============================== GIVEN FUNCTIONS ===================================//
 //==================================================================================//
+#define numofVmem 4003
+uint32 vMem[numofVmem - 1];
 
-struct User_Heap_Data {
-	uint32 va;
-	int size;
-	int num_of_pages;
-	bool marked;
-	LIST_ENTRY(User_Heap_Data)
-	prev_next_info;
-};
-
-LIST_HEAD(User_Heap_Data_LIST, User_Heap_Data);
-struct User_Heap_Data_LIST user_heap_data_list;
-void initUserHeapData() {
-	uint32 hardLimit = sys_get_hard_limit();
-	struct User_Heap_Data *firstUserData = (struct User_Heap_Data *)(hardLimit + PAGE_SIZE);
-	firstUserData->va = hardLimit + PAGE_SIZE;
-	firstUserData->marked = 0;
-	firstUserData->size = (USER_HEAP_MAX - (hardLimit + PAGE_SIZE));
-	firstUserData->num_of_pages = (firstUserData->size / PAGE_SIZE);
-	cprintf("userstart : %d \nva %d\nsize %d\n", firstUserData,
-			firstUserData->va, firstUserData->size);
-	LIST_INSERT_HEAD(&user_heap_data_list, firstUserData);
-}
 #define kilo 1024
 int FirstTimeFlag = 1;
 void InitializeUHeap() {
-	initUserHeapData();
 	if (FirstTimeFlag) {
 #if UHP_USE_BUDDY
 		initialize_buddy();
@@ -64,17 +43,11 @@ void* malloc(uint32 size) {
 		return NULL;
 	//==============================================================
 	//TODO: [PROJECT'23.MS2 - #09] [2] USER HEAP - malloc() [User Side]
-//	// Write your code here, remove the panic and write your code
-//	cprtinf(
-//			"struct user data va : %d \nstruct user data size : %d\nstruct user data numOfPages : %d\n",
-//			user_heap_data_list.lh_first->va,
-//			user_heap_data_list.lh_first->size,
-//			user_heap_data_list.lh_first->num_of_pages
-//			);
-//	panic("malloc() is not implemented yet...!!");
+	//	// Write your code here, remove the panic and write your code
+	//	panic("malloc() is not implemented yet...!!");
 
 	if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
-//		return alloc_block_FF(size);
+		return alloc_block_FF(size);
 //		if (sys_isUHeapPlacementStrategyFIRSTFIT()) {
 //			return alloc_block_FF(size);
 //		} else if (sys_isUHeapPlacementStrategyBESTFIT()) {
@@ -82,22 +55,26 @@ void* malloc(uint32 size) {
 //		}
 	} else {
 		size = ROUNDUP(size, PAGE_SIZE);
-		struct User_Heap_Data *ptr;
-		LIST_FOREACH(ptr,&user_heap_data_list)
-		{
-			if (ptr->size > size && !ptr->marked) {
-				struct User_Heap_Data *newData = ptr
-						+ sizeof(struct User_Heap_Data);
-				newData->marked = 0;
-				newData->size = ptr->size - size;
-				newData->va = ptr->va + size;
-				newData->num_of_pages = (ptr->size - size) / PAGE_SIZE;
-				ptr->size = size;
-				ptr->marked = 1;
-				ptr->num_of_pages = size / PAGE_SIZE;
-				LIST_INSERT_AFTER(&user_heap_data_list, ptr, newData);
-				sys_allocate_user_mem(ptr->va, ptr->size);
-				return (void *) ptr->va;
+		int number_of_pages = size / PAGE_SIZE;
+		int count = 0;
+//		cprintf("%d\n" , vMem[0]);
+		for (int i = 0; i < numofVmem; i++) {
+			if (vMem[i] == 0)
+				count++;
+			else {
+				count = 0;
+			}
+			if (count == number_of_pages) {
+				i -= (number_of_pages - 1);
+				uint32 startAddress = (sys_get_hard_limit() + PAGE_SIZE)
+						+ (PAGE_SIZE * i);
+				for (int j = 0; j < number_of_pages; j++) {
+					vMem[i] = startAddress;
+					i++;
+				}
+//				cprintf("here!!\n");
+				sys_allocate_user_mem(startAddress,size);
+				return (void *)startAddress;
 			}
 		}
 	}
