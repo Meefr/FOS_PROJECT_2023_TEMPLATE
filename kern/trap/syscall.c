@@ -250,9 +250,11 @@ void sys_free_user_mem(uint32 virtual_address, uint32 size) {
 
 void sys_allocate_user_mem(uint32 virtual_address, uint32 size) {
 	if ((uint32*) virtual_address == 0 || size == 0) {
+//		cprintf("kill alloc 1\n");
 		sched_kill_env(curenv->env_id);
 		return;
 	} else if (virtual_address >= USER_LIMIT || ((virtual_address + size)>USER_LIMIT)){
+//		cprintf("kill alloc 2\n");
 		sched_kill_env(curenv->env_id);
 		return;
 	}

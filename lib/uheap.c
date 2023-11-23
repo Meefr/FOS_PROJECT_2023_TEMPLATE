@@ -46,12 +46,12 @@ void* malloc(uint32 size) {
 	//	// Write your code here, remove the panic and write your code
 	//	panic("malloc() is not implemented yet...!!");
 	if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
-//		return alloc_block_FF(size);
-		if (sys_isUHeapPlacementStrategyFIRSTFIT()) {
-			return alloc_block_FF(size);
-		} else if (sys_isUHeapPlacementStrategyBESTFIT()) {
-			return alloc_block_BF(size);
-		}
+		return alloc_block_FF(size);
+//		if (sys_isUHeapPlacementStrategyFIRSTFIT()) {
+//			return alloc_block_FF(size);
+//		} else if (sys_isUHeapPlacementStrategyBESTFIT()) {
+//			return alloc_block_BF(size);
+//		}
 	} else {
 		size = ROUNDUP(size, PAGE_SIZE);
 		int number_of_pages = size / PAGE_SIZE;
