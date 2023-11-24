@@ -87,19 +87,26 @@ void free(void* virtual_address) {
 	//TODO: [PROJECT'23.MS2 - #11] [2] USER HEAP - free() [User Side]
 	// Write your code here, remove the panic and write your code
 	//	panic("free() is not implemented yet...!!");
-//	for (int i = 0; i < numofVmem; i++) {
-//		uint8 flag = 0;
-//		int count = 0;
-//		if (vMem[i] == virtual_address) {
-//			flag = 1;
-//			count++;
-//			vMem[i] = 0;
-//		} else if (vMem[i] != virtual_address && flag) {
-//			sys_free_user_mem((vMem[i - 1] - (count - 1)), (count * PAGE_SIZE));
-//			return;
-//		}
-//	}
-
+	if ((uint32) virtual_address == 0 || (uint32) virtual_address >= USER_LIMIT) {
+		panic("invalid address to free!");
+	} else if ((uint32) virtual_address >= USER_HEAP_START
+			&& (uint32) virtual_address < sys_get_hard_limit()) {
+		free_block(virtual_address);
+	} else {
+		int count = 0;
+		uint8 flag = 0;
+		for (int i = 0; i < numofVmem; i++) {
+			if (vMem[i] == (uint32) virtual_address) {
+				flag = 1;
+				count++;
+				vMem[i] = 0;
+			} else if (vMem[i] != (uint32) virtual_address && flag) {
+				sys_free_user_mem((uint32) virtual_address,
+						(count * PAGE_SIZE));
+				return;
+			}
+		}
+	}
 }
 
 //=================================
