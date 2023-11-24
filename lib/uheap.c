@@ -42,7 +42,9 @@ void* malloc(uint32 size) {
 	//==============================================================
 	//TODO: [PROJECT'23.MS2 - #09] [2] USER HEAP - malloc() [User Side]
 	// Write your code here, remove the panic and write your code
+
 	//	panic("malloc() is not implemented yet...!!");
+
 
 	// to check the first fit Strategy or not ?
 //	if (sys_isUHeapPlacementStrategyFIRSTFIT()) {
