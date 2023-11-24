@@ -109,7 +109,6 @@ void *alloc_block_FF(uint32 size) {
 	//	panic("alloc_block_FF is not implemented yet");
 	if (size == 0)
 		return NULL;
-
 	// code update for MS2
 	if (!is_initialized) {
 		uint32 required_size = size + sizeOfMetaData();

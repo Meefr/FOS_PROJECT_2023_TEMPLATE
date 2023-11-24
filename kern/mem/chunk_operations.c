@@ -28,11 +28,11 @@
 //	If ANY of the destination pages exists, deny the entire process and return -1. Otherwise, cut-paste the number of pages and return 0
 //	ALL 12 permission bits of the destination should be TYPICAL to those of the source
 //	The given addresses may be not aligned on 4 KB
-int cut_paste_pages(uint32* page_directory, uint32 source_va, uint32 dest_va, uint32 num_of_pages)
-{
+int cut_paste_pages(uint32* page_directory, uint32 source_va, uint32 dest_va,
+		uint32 num_of_pages) {
 	panic("cut_paste_pages() is not implemented yet...!!");
 
-	return 0 ;
+	return 0;
 }
 
 //===============================
@@ -47,8 +47,8 @@ int cut_paste_pages(uint32* page_directory, uint32 source_va, uint32 dest_va, ui
 //		1. WRITABLE permission
 //		2. USER/SUPERVISOR permission must be SAME as the one of the source
 //	The given range(s) may be not aligned on 4 KB
-int copy_paste_chunk(uint32* page_directory, uint32 source_va, uint32 dest_va, uint32 size)
-{
+int copy_paste_chunk(uint32* page_directory, uint32 source_va, uint32 dest_va,
+		uint32 size) {
 	panic("copy_paste_chunk() is not implemented yet...!!");
 	return 0;
 }
@@ -62,8 +62,8 @@ int copy_paste_chunk(uint32* page_directory, uint32 source_va, uint32 dest_va, u
 //	If ANY of the destination pages exists, deny the entire process and return -1. Otherwise, share the required range and return 0
 //	If the page table at any destination page in the range is not exist, it should create it
 //	The given range(s) may be not aligned on 4 KB
-int share_chunk(uint32* page_directory, uint32 source_va,uint32 dest_va, uint32 size, uint32 perms)
-{
+int share_chunk(uint32* page_directory, uint32 source_va, uint32 dest_va,
+		uint32 size, uint32 perms) {
 	panic("share_chunk() is not implemented yet...!!");
 	return 0;
 }
@@ -75,8 +75,7 @@ int share_chunk(uint32* page_directory, uint32 source_va,uint32 dest_va, uint32 
 //	If ANY of the destination pages exists, deny the entire process and return -1. Otherwise, allocate the required range and return 0
 //	If the page table at any destination page in the range is not exist, it should create it
 //	Allocation should be aligned on page boundary. However, the given range may be not aligned.
-int allocate_chunk(uint32* page_directory, uint32 va, uint32 size, uint32 perms)
-{
+int allocate_chunk(uint32* page_directory, uint32 va, uint32 size, uint32 perms) {
 	panic("allocate_chunk() is not implemented yet...!!");
 	return 0;
 }
@@ -84,11 +83,10 @@ int allocate_chunk(uint32* page_directory, uint32 va, uint32 size, uint32 perms)
 //=====================================
 // 5) CALCULATE ALLOCATED SPACE IN RAM:
 //=====================================
-void calculate_allocated_space(uint32* page_directory, uint32 sva, uint32 eva, uint32 *num_tables, uint32 *num_pages)
-{
+void calculate_allocated_space(uint32* page_directory, uint32 sva, uint32 eva,
+		uint32 *num_tables, uint32 *num_pages) {
 	panic("calculate_allocated_space() is not implemented yet...!!");
 }
-
 
 //=====================================
 // 6) CALCULATE REQUIRED FRAMES IN RAM:
@@ -96,8 +94,8 @@ void calculate_allocated_space(uint32* page_directory, uint32 sva, uint32 eva, u
 //This function should calculate the required number of pages for allocating and mapping the given range [start va, start va + size) (either for the pages themselves or for the page tables required for mapping)
 //	Pages and/or page tables that are already exist in the range SHOULD NOT be counted.
 //	The given range(s) may be not aligned on 4 KB
-uint32 calculate_required_frames(uint32* page_directory, uint32 sva, uint32 size)
-{
+uint32 calculate_required_frames(uint32* page_directory, uint32 sva,
+		uint32 size) {
 	panic("calculate_required_frames() is not implemented yet...!!");
 	return 0;
 }
@@ -113,43 +111,60 @@ uint32 calculate_required_frames(uint32* page_directory, uint32 sva, uint32 size
 //======================================================
 /// functions used for USER HEAP (malloc, free, ...)
 //======================================================
-
 //=====================================
 // 1) ALLOCATE USER MEMORY:
 //=====================================
-void allocate_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
-{
+void allocate_user_mem(struct Env* e, uint32 virtual_address, uint32 size) {
 	/*=============================================================================*/
 	//TODO: [PROJECT'23.MS2 - #10] [2] USER HEAP - allocate_user_mem() [Kernel Side]
+	// ------------------------------meefr code-------------------------------- //
+	cprintf("here!! alloc user mem\n");
 
-	//uint32 page_permissions = pt_get_page_permissions(e, virtual_address );
-	env_page_ws_print(e);
-	//create new page
-	uint32* page = create_page_table(e->env_page_directory, virtual_address);
+	for (uint32 i = virtual_address; i < virtual_address + size; i +=
+	PAGE_SIZE) {
+		uint32* pageTabel;
+		int ret = get_page_table(e->env_page_directory, i, &pageTabel);
+		if (ret == TABLE_NOT_EXIST) {
+			(uint32) create_page_table(e->env_page_directory, i);
+		}
+		pt_set_page_permissions(e->env_page_directory, i,
+		PERM_AVAILABLE, 0);
+	}
 
-	/* set PERM_AVAILABLE to 1 indicates that it is marked as it is reserved in
-	 virtual memory and available to point to physical address after page fault*/
-	pt_set_page_permissions(e->env_page_directory, virtual_address, PERM_AVAILABLE, 0);
+	// ---------------------------hazem code--------------------------- //
 
-	// Write your code here, remove the panic and write your code
-	//panic("allocate_user_mem() is not implemented yet...!!");
+//	//uint32 page_permissions = pt_get_page_permissions(e, virtual_address );
+//	env_page_ws_print(e);
+//	//create new page
+//	uint32* page = create_page_table(e->env_page_directory, virtual_address);
+//
+//	/* set PERM_AVAILABLE to 1 indicates that it is marked as it is reserved in
+//	 virtual memory and available to point to physical address after page fault*/
+//	pt_set_page_permissions(e->env_page_directory, virtual_address,
+//			PERM_AVAILABLE, 0);
+//
+//	// Write your code here, remove the panic and write your code
+//	//panic("allocate_user_mem() is not implemented yet...!!");
+
 }
 
 //=====================================
 // 2) FREE USER MEMORY:
 //=====================================
-void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
-{
+void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size) {
 	/*==========================================================================*/
 	//TODO: [PROJECT'23.MS2 - #12] [2] USER HEAP - free_user_mem() [Kernel Side]
 	/*REMOVE THESE LINES BEFORE START CODING */
-	inctst();
-	return;
+//	inctst();
+//	return;
 	/*==========================================================================*/
-
+	for (uint32 i = virtual_address; i < virtual_address + size; i++) {
+		pt_set_page_permissions(e->env_page_directory, i, 0, PERM_AVAILABLE);
+		env_page_ws_invalidate(e, i);
+		pf_remove_env_page(e, i);
+	}
 	// Write your code here, remove the panic and write your code
-	panic("free_user_mem() is not implemented yet...!!");
-
+//	panic("free_user_mem() is not implemented yet...!!");
 	//TODO: [PROJECT'23.MS2 - BONUS#2] [2] USER HEAP - free_user_mem() IN O(1): removing page from WS List instead of searching the entire list
 
 }
@@ -157,8 +172,8 @@ void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
 //=====================================
 // 2) FREE USER MEMORY (BUFFERING):
 //=====================================
-void __free_user_mem_with_buffering(struct Env* e, uint32 virtual_address, uint32 size)
-{
+void __free_user_mem_with_buffering(struct Env* e, uint32 virtual_address,
+		uint32 size) {
 	// your code is here, remove the panic and write your code
 	panic("__free_user_mem_with_buffering() is not implemented yet...!!");
 }
@@ -166,8 +181,8 @@ void __free_user_mem_with_buffering(struct Env* e, uint32 virtual_address, uint3
 //=====================================
 // 3) MOVE USER MEMORY:
 //=====================================
-void move_user_mem(struct Env* e, uint32 src_virtual_address, uint32 dst_virtual_address, uint32 size)
-{
+void move_user_mem(struct Env* e, uint32 src_virtual_address,
+		uint32 dst_virtual_address, uint32 size) {
 	//your code is here, remove the panic and write your code
 	panic("move_user_mem() is not implemented yet...!!");
 

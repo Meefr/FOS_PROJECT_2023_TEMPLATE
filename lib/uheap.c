@@ -1,10 +1,12 @@
 #include <inc/lib.h>
-#include <inc/syscall.h>
-#include <lib/syscall.c>
+//#include <inc/syscall.h>
+//#include <lib/syscall.c>
 
 //==================================================================================//
 //============================== GIVEN FUNCTIONS ===================================//
 //==================================================================================//
+#define numofVmem (USER_HEAP_MAX - USER_HEAP_START) / PAGE_SIZE
+uint32 vMem[numofVmem];
 
 #define kilo 1024
 int FirstTimeFlag = 1;
@@ -41,74 +43,71 @@ void* malloc(uint32 size) {
 		return NULL;
 	//==============================================================
 	//TODO: [PROJECT'23.MS2 - #09] [2] USER HEAP - malloc() [User Side]
-	// Write your code here, remove the panic and write your code
 
+	//	// Write your code here, remove the panic and write your code
 	//	panic("malloc() is not implemented yet...!!");
-
-
-	// to check the first fit Strategy or not ?
-//	if (sys_isUHeapPlacementStrategyFIRSTFIT()) {
-//		if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
+	if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
+		return alloc_block_FF(size);
+//		if (sys_isUHeapPlacementStrategyFIRSTFIT()) {
 //			return alloc_block_FF(size);
-//		} else {
-//			uint32 hardLimit = sys_get_hard_limit();
-//			uint32 ptr = (hardLimit + (4 * kilo));
-//			if (ptr != (uint32) NULL && ptr != USER_HEAP_MAX) {
-//				/*
-//				 * check the max size i can hold
-//				 * so if (user_heap_max - ptr which mean the rest of free size) >= needed size / 4
-//				 * (means how many (4 kilo) I can hold )
-//				 * */
-//				if ((USER_HEAP_MAX - ptr) < size)
-//					return NULL;
-//				else {
-//
-//					sys_allocate_user_mem(ptr, size);
-//					size -= (4 * kilo);
-//					while (size >= (4 * kilo)) {
-//						sys_allocate_user_mem(ptr, size);
-//						ptr += (4 * kilo);
-//						size -= (4 * kilo);
-//					}
-//					return (void*) ptr;
-//				}
-//
-//				/*
-//				 * the way to check depends on the way of marking in
-//				 * alloc_user_mem function
-//				 * */
-//
-//				//ptr += (4 * kilo);
-//
-//
-//
-//			}
+//		} else if (sys_isUHeapPlacementStrategyBESTFIT()) {
+//			return alloc_block_BF(size);
 //		}
-//		return NULL;
-//	}
-
+	} else {
+		size = ROUNDUP(size, PAGE_SIZE);
+		int number_of_pages = size / PAGE_SIZE;
+		int count = 0;
+//		cprintf("%d\n" , vMem[0]);
+		for (int i = 0; i < numofVmem; i++) {
+			if (vMem[i] == 0)
+				count++;
+			else {
+				count = 0;
+			}
+			if (count == number_of_pages) {
+				i -= (number_of_pages - 1);
+				uint32 startAddress = (sys_get_hard_limit() + PAGE_SIZE)
+						+ (PAGE_SIZE * i);
+				for (int j = 0; j < number_of_pages; j++) {
+					vMem[i] = startAddress;
+					i++;
+				}
+				cprintf("Va %d\nstart of heap %d\n", startAddress,
+						(sys_get_hard_limit() + PAGE_SIZE));
+				sys_allocate_user_mem(startAddress, size);
+				return (void *) startAddress;
+			}
+		}
+	}
 	return NULL;
-	//Use sys_isUHeapPlacementStrategyFIRSTFIT() and	sys_isUHeapPlacementStrategyBESTFIT()
-	//to check the current strategy
-
 }
-
 //=================================
 // [3] FREE SPACE FROM USER HEAP:
 //=================================
 void free(void* virtual_address) {
 	//TODO: [PROJECT'23.MS2 - #11] [2] USER HEAP - free() [User Side]
 	// Write your code here, remove the panic and write your code
-	panic("free() is not implemented yet...!!");
-//	uint32 hardLimit = syscall(SYS_get_hard_limit, hardLimit, 0, 0, 0,
-//						0);
-//	if(virtual_address >= (void *)USER_HEAP_START && virtual_address <= (void *)hardLimit){
-//		free_block(virtual_address);
-//	}else if(virtual_address >= (void *)(hardLimit + (4*kilo)) && virtual_address <= (void *)USER_HEAP_MAX){
-//
-//	}else {
-//		panic("invalid address...!!");
-//	}
+	//	panic("free() is not implemented yet...!!");
+	if ((uint32) virtual_address == 0 || (uint32) virtual_address >= USER_LIMIT) {
+		panic("invalid address to free!");
+	} else if ((uint32) virtual_address >= USER_HEAP_START
+			&& (uint32) virtual_address < sys_get_hard_limit()) {
+		free_block(virtual_address);
+	} else {
+		int count = 0;
+		uint8 flag = 0;
+		for (int i = 0; i < numofVmem; i++) {
+			if (vMem[i] == (uint32) virtual_address) {
+				flag = 1;
+				count++;
+				vMem[i] = 0;
+			} else if (vMem[i] != (uint32) virtual_address && flag) {
+				sys_free_user_mem((uint32) virtual_address,
+						(count * PAGE_SIZE));
+				return;
+			}
+		}
+	}
 }
 
 //=================================
