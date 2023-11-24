@@ -84,6 +84,7 @@ void* sbrk(int increment) {
 		// dec sbrk to increment
 		// if inc=10 , should i free 3 pages (12) or only 2 pages(8)
 		//increment = ROUNDUP(-increment, PAGE_SIZE);
+		increment = increment * -1;
 		uint32 newSbrk = segmentbrk - ((increment / PAGE_SIZE) * PAGE_SIZE);
 		if (newSbrk < start) {
 			panic("in sbrk func increment<0 and newSbrk<start");
@@ -92,8 +93,9 @@ void* sbrk(int increment) {
 			unmap_frame(ptr_page_directory, i);
 //			free_frame((struct FrameInfo*) i);
 		}
-		segmentbrk -= ((increment / PAGE_SIZE) * PAGE_SIZE);
-		return (void*) newSbrk;
+		segmentbrk -= increment;
+//		segmentbrk -= ((increment / PAGE_SIZE) * PAGE_SIZE);
+		return (void*) segmentbrk;
 	}
 	return (void*) -1;
 
