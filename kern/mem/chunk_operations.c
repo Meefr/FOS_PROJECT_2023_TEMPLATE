@@ -121,13 +121,11 @@ void allocate_user_mem(struct Env* e, uint32 virtual_address, uint32 size) {
 	cprintf("here!! alloc user mem\n");
 
 	for (uint32 i = virtual_address; i < virtual_address + size; i +=
-			PAGE_SIZE) {
+	PAGE_SIZE) {
 		uint32* pageTabel;
-		int ret = get_page_table(e->env_page_directory, i,
-				&pageTabel);
+		int ret = get_page_table(e->env_page_directory, i, &pageTabel);
 		if (ret == TABLE_NOT_EXIST) {
-			(uint32) create_page_table(e->env_page_directory,
-					i);
+			(uint32) create_page_table(e->env_page_directory, i);
 		}
 		pt_set_page_permissions(e->env_page_directory, i,
 		PERM_AVAILABLE, 0);
@@ -157,13 +155,16 @@ void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size) {
 	/*==========================================================================*/
 	//TODO: [PROJECT'23.MS2 - #12] [2] USER HEAP - free_user_mem() [Kernel Side]
 	/*REMOVE THESE LINES BEFORE START CODING */
-	inctst();
-	return;
+//	inctst();
+//	return;
 	/*==========================================================================*/
-
+	for (uint32 i = virtual_address; i < virtual_address + size; i++) {
+		pt_set_page_permissions(e->env_page_directory, i, 0, PERM_AVAILABLE);
+		env_page_ws_invalidate(e, i);
+		pf_remove_env_page(e, i);
+	}
 	// Write your code here, remove the panic and write your code
-	panic("free_user_mem() is not implemented yet...!!");
-
+//	panic("free_user_mem() is not implemented yet...!!");
 	//TODO: [PROJECT'23.MS2 - BONUS#2] [2] USER HEAP - free_user_mem() IN O(1): removing page from WS List instead of searching the entire list
 
 }

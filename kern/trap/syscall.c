@@ -243,6 +243,16 @@ void sys_free_user_mem(uint32 virtual_address, uint32 size) {
 	if (isBufferingEnabled()) {
 		__free_user_mem_with_buffering(curenv, virtual_address, size);
 	} else {
+		if ((uint32*) virtual_address == 0 || size == 0) {
+			cprintf("kill free 1\n");
+			sched_kill_env(curenv->env_id);
+			return;
+		} else if (virtual_address >= USER_LIMIT
+				|| ((virtual_address + size) > USER_LIMIT)) {
+			cprintf("kill free 2\n");
+			sched_kill_env(curenv->env_id);
+			return;
+		}
 		free_user_mem(curenv, virtual_address, size);
 	}
 	return;
@@ -250,11 +260,12 @@ void sys_free_user_mem(uint32 virtual_address, uint32 size) {
 
 void sys_allocate_user_mem(uint32 virtual_address, uint32 size) {
 	if ((uint32*) virtual_address == 0 || size == 0) {
-//		cprintf("kill alloc 1\n");
+		cprintf("kill alloc 1\n");
 		sched_kill_env(curenv->env_id);
 		return;
-	} else if (virtual_address >= USER_LIMIT || ((virtual_address + size)>USER_LIMIT)){
-//		cprintf("kill alloc 2\n");
+	} else if (virtual_address >= USER_LIMIT
+			|| ((virtual_address + size) > USER_LIMIT)) {
+		cprintf("kill alloc 2\n");
 		sched_kill_env(curenv->env_id);
 		return;
 	}
@@ -539,16 +550,7 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4,
 		return (uint32) sys_sbrk(a1);
 		break;
 	case SYS_free_user_mem:
-		if ((uint32*) a1 == NULL || (uint32*) a2 == NULL) {
-			sched_kill_env(curenv->env_id);
-		} else if (a1 > USER_LIMIT || a2 > PAGE_SIZE) {
-			sched_kill_env(curenv->env_id);
-		} else if (a1 < 0 || a2 < 0) {
-			sched_kill_env(curenv->env_id);
-		} else {
-			sys_free_user_mem(a1, a2);
-			return 0;
-		}
+		sys_free_user_mem(a1, a2);
 		break;
 	case SYS_allocate_user_mem:
 		sys_allocate_user_mem(a1, a2);
