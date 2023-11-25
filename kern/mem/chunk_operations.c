@@ -118,7 +118,7 @@ void allocate_user_mem(struct Env* e, uint32 virtual_address, uint32 size) {
 	/*=============================================================================*/
 	//TODO: [PROJECT'23.MS2 - #10] [2] USER HEAP - allocate_user_mem() [Kernel Side]
 	// ------------------------------meefr code-------------------------------- //
-	cprintf("here!! alloc user mem\n");
+//	cprintf("here!! alloc user mem\n");
 
 	for (uint32 i = virtual_address; i < virtual_address + size; i +=
 	PAGE_SIZE) {
@@ -158,10 +158,11 @@ void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size) {
 //	inctst();
 //	return;
 	/*==========================================================================*/
-	for (uint32 i = virtual_address; i < virtual_address + size; i++) {
+	for (uint32 i = virtual_address; i < virtual_address + size; i+=PAGE_SIZE) {
 		pt_set_page_permissions(e->env_page_directory, i, 0, PERM_AVAILABLE);
+		unmap_frame(e->env_page_directory, i);
+//		pf_remove_env_page(e, i);
 		env_page_ws_invalidate(e, i);
-		pf_remove_env_page(e, i);
 	}
 	// Write your code here, remove the panic and write your code
 //	panic("free_user_mem() is not implemented yet...!!");

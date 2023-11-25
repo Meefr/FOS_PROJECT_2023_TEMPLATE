@@ -359,6 +359,7 @@ void _main(void)
 		va = malloc(actualSize);
 		//Check returned va
 		expected = startVAs[2*allocCntPerSize];
+		cprintf("5.3.1 exp %x : va %x \n\n",expected,va);
 		if(va == NULL || (va != expected))
 		{
 			is_correct = 0;
@@ -377,6 +378,7 @@ void _main(void)
 		va = malloc(actualSize);
 		//Check returned va
 		expected = startVAs[numOfAllocs*allocCntPerSize-2];
+		cprintf("5.3.2 exp %x : va %x \n\n",expected,va);
 		if(va == NULL || (va != expected))
 		{
 			is_correct = 0;
@@ -388,6 +390,7 @@ void _main(void)
 
 		//Check returned va
 		expected = (void*)startVAs[numOfAllocs*allocCntPerSize-2] + 3*kilo/2 + sizeOfMetaData();
+		cprintf("5.3.3 exp %x : va %x \n\n",expected,va);
 		if(va == NULL || (va != expected))
 		{
 			is_correct = 0;
