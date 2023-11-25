@@ -166,8 +166,6 @@ void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size) {
 	}
 	// Write your code here, remove the panic and write your code
 //	panic("free_user_mem() is not implemented yet...!!");
-
-
 	//TODO: [PROJECT'23.MS2 - BONUS#2] [2] USER HEAP - free_user_mem() IN O(1): removing page from WS List instead of searching the entire list
 
 }
@@ -198,4 +196,3 @@ void move_user_mem(struct Env* e, uint32 src_virtual_address,
 //=================================================================================//
 //========================== END USER CHUNKS MANIPULATION =========================//
 //=================================================================================//
-

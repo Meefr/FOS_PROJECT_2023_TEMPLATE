@@ -72,11 +72,9 @@ void* sbrk(int increment) {
 				if (ret == E_NO_MEM) {
 					return (void*) E_NO_MEM;
 				}
-				map_frame(ptr_page_directory, ptrr, i, PERM_WRITEABLE);
+				map_frame(ptr_page_directory, ptrr, i, PERM_WRITEABLE|PERM_USER);
 
 			}
-		} else {
-			panic("in sbrk func increment>0");
 		}
 		return (void*) prevSbrk;
 	} else if (increment == 0) {
@@ -98,6 +96,10 @@ void* sbrk(int increment) {
 //		segmentbrk -= ((increment / PAGE_SIZE) * PAGE_SIZE);
 		return (void*) segmentbrk;
 	}
+	else if(segmentbrk+increment>hLimit) {
+				cprintf("segmentbrk=%d and hlimit=%d",segmentbrk,hLimit);
+				panic("in sbrk func increment>0");
+			}
 	return (void*) -1;
 
 }

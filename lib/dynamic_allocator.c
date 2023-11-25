@@ -127,6 +127,7 @@ void *alloc_block_FF(uint32 size) {
 
 			//blk size is not enough to hold data -> no split
 			if ((blk->size - (sizeOfMetaData() + size)) <= sizeOfMetaData()) {
+//				cprintf("---------second if---------");
 				blk->is_free = 0;
 //				cprintf("  allco va if no split : %x \n",((uint32) blk + sizeOfMetaData()));
 				return (struct BlockMetaData *) ((uint32) blk + sizeOfMetaData());
@@ -140,11 +141,11 @@ void *alloc_block_FF(uint32 size) {
 				blk->is_free = 1;
 
 //				cprintf("blk: %x\ntmp: %x\n", blk, tmpBlk);
-				LIST_INSERT_AFTER(&memBlocks, tmpBlk, blk);
+				LIST_INSERT_AFTER(&memBlocks, tmpBlk,blk);
 				tmpBlk->size = size + sizeOfMetaData();
 				tmpBlk->is_free = 0;
-//				cprintf("  allco va if split : %x \n",((struct BlockMetaData *) ((uint32) tmpBlk
-//						+ sizeOfMetaData())));
+//				cprintf("  allco va if split : %x \n",((struct BlockMetaData *) ((uint32) blk
+///						+ sizeOfMetaData())));
 				return (struct BlockMetaData *) ((uint32) tmpBlk
 						+ sizeOfMetaData());
 //				 tmpBlk = blk;
@@ -278,7 +279,7 @@ void *alloc_block_NF(uint32 size) {
 void free_block(void *va) {
 	//TODO: [PROJECT'23.MS1 - #7] [3] DYNAMIC ALLOCATOR - free_block()
 	//	panic("free_block is not implemented yet");
-	struct BlockMetaData *ptr = ((struct BlockMetaData *) va - 1);
+	struct BlockMetaData *ptr = ((struct BlockMetaData *) va- 1);
 	struct BlockMetaData * next = ptr->prev_next_info.le_next;
 	struct BlockMetaData * prev = ptr->prev_next_info.le_prev;
 	if (ptr == NULL)
@@ -289,7 +290,6 @@ void free_block(void *va) {
 	// invalid address -> no need to do anything
 	// check corners
 	ptr->is_free = 1;
-
 	// next and prev meta data is free
 	if (prev != NULL && next != NULL && next->is_free == 1
 			&& prev->is_free == 1) {

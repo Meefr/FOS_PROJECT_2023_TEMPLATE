@@ -39,7 +39,7 @@ void* malloc(uint32 size) {
 	//==============================================================
 	//DON'T CHANGE THIS CODE========================================
 	InitializeUHeap();
-	if (size == 0||size>PAGE_SIZE)
+	if (size == 0)
 		return NULL;
 	//==============================================================
 	//TODO: [PROJECT'23.MS2 - #09] [2] USER HEAP - malloc() [User Side]
@@ -115,8 +115,6 @@ void free(void* virtual_address) {
 	}else{
 		panic("invalid address to free!");
 	}
-	else
-		panic("invalid va");
 }
 
 //=================================
