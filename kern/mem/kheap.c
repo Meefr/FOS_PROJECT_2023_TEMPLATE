@@ -72,7 +72,7 @@ void* sbrk(int increment) {
 				if (ret == E_NO_MEM) {
 					return (void*) E_NO_MEM;
 				}
-				map_frame(ptr_page_directory, ptrr, i, PERM_WRITEABLE|PERM_USER);
+				map_frame(ptr_page_directory, ptrr, i, PERM_WRITEABLE);
 
 			}
 		}
