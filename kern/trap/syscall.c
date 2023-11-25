@@ -244,12 +244,12 @@ void sys_free_user_mem(uint32 virtual_address, uint32 size) {
 		__free_user_mem_with_buffering(curenv, virtual_address, size);
 	} else {
 		if ((uint32*) virtual_address == 0 || size == 0) {
-			cprintf("kill free 1\n");
+//			cprintf("kill free 1\n");
 			sched_kill_env(curenv->env_id);
 			return;
 		} else if (virtual_address >= USER_LIMIT
 				|| ((virtual_address + size) > USER_LIMIT)) {
-			cprintf("kill free 2\n");
+//			cprintf("kill free 2\n");
 			sched_kill_env(curenv->env_id);
 			return;
 		}
@@ -260,12 +260,12 @@ void sys_free_user_mem(uint32 virtual_address, uint32 size) {
 
 void sys_allocate_user_mem(uint32 virtual_address, uint32 size) {
 	if ((uint32*) virtual_address == 0 || size == 0) {
-		cprintf("kill alloc 1\n");
+//		cprintf("kill alloc 1\n");
 		sched_kill_env(curenv->env_id);
 		return;
 	} else if (virtual_address >= USER_LIMIT
 			|| ((virtual_address + size) > USER_LIMIT)) {
-		cprintf("kill alloc 2\n");
+//		cprintf("kill alloc 2\n");
 		sched_kill_env(curenv->env_id);
 		return;
 	}
@@ -483,6 +483,7 @@ void* sys_sbrk(int increment) {
 	}
 	if (increment > 0) {
 		increment = ROUNDUP(increment, PAGE_SIZE);
+		env->segBreak = ROUNDUP(env->segBreak,PAGE_SIZE);
 		env->segBreak += increment;
 		uint32 *pageTable;
 		for (uint32 i = segmentBreak; i < env->segBreak; i += (PAGE_SIZE)) {
@@ -506,6 +507,9 @@ void* sys_sbrk(int increment) {
 			return (void *) -1;
 		}
 		for (uint32 i = segmentBreak; i > newSbrk; i -= (PAGE_SIZE)) {
+//			pt_set_page_permissions(env->env_page_directory, i, 0, PERM_AVAILABLE);
+//			env_page_ws_invalidate(env, i);
+//			pf_remove_env_page(env, i);
 			unmap_frame(ptr_page_directory, i);
 //			free_frame((struct FrameInfo*) i);
 		}

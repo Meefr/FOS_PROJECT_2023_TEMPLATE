@@ -88,7 +88,6 @@ void initialize_dynamic_allocator(uint32 daStart,
 	if (initSizeOfAllocatedSpace == 0)
 		return;
 
-
 	is_initialized = 1;
 	//=========================================
 	//=========================================
@@ -130,11 +129,11 @@ void *alloc_block_FF(uint32 size) {
 			if ((blk->size - (sizeOfMetaData() + size)) <= sizeOfMetaData()) {
 //				cprintf("---------second if---------");
 				blk->is_free = 0;
+//				cprintf("  allco va if no split : %x \n",((uint32) blk + sizeOfMetaData()));
 				return (struct BlockMetaData *) ((uint32) blk + sizeOfMetaData());
 			}
 			//blk size is big enough to hold data -> split
 			else {
-//				cprintf("---------else---------");
 				tmpBlk = blk;
 				blk = (struct BlockMetaData *) ((uint32) blk
 						+ (size + sizeOfMetaData()));
@@ -145,6 +144,8 @@ void *alloc_block_FF(uint32 size) {
 				LIST_INSERT_AFTER(&memBlocks, tmpBlk, blk);
 				tmpBlk->size = size + sizeOfMetaData();
 				tmpBlk->is_free = 0;
+//				cprintf("  allco va if split : %x \n",((struct BlockMetaData *) ((uint32) tmpBlk
+//						+ sizeOfMetaData())));
 				return (struct BlockMetaData *) ((uint32) tmpBlk
 						+ sizeOfMetaData());
 //				 tmpBlk = blk;
@@ -162,9 +163,10 @@ void *alloc_block_FF(uint32 size) {
 	uint32* ptr = (uint32 *) sbrk((size + sizeOfMetaData()));
 	if (ptr != (uint32 *) -1) {
 		blk = (struct BlockMetaData *) memBlocks.lh_last;
+//		cprintf(" blk: %x \n",blk + sizeOfMetaData());
 		if (blk->is_free == 1) {
 			blk->size = size + blk->size + sizeOfMetaData();
-		 	tmpBlk = blk;
+			tmpBlk = blk;
 			blk = (struct BlockMetaData *) ((uint32) blk
 					+ (size + sizeOfMetaData()));
 			blk->size = tmpBlk->size - (size + sizeOfMetaData());
@@ -173,6 +175,9 @@ void *alloc_block_FF(uint32 size) {
 			LIST_INSERT_AFTER(&memBlocks, tmpBlk, blk);
 			tmpBlk->size = size + sizeOfMetaData();
 			tmpBlk->is_free = 0;
+
+//			cprintf("  allco va if sprk with collision : %x \n",((struct BlockMetaData *) ((uint32) tmpBlk
+//									+ sizeOfMetaData())));
 			return (struct BlockMetaData *) ((uint32) tmpBlk + sizeOfMetaData());
 		} else {
 			tmpBlk = (struct BlockMetaData *) ptr;
@@ -180,6 +185,9 @@ void *alloc_block_FF(uint32 size) {
 			tmpBlk->is_free = 0;
 			LIST_INSERT_TAIL(&memBlocks, tmpBlk);
 		}
+
+//		cprintf("  allco va if sprk no collision : %x \n",((struct BlockMetaData *) ((uint32) tmpBlk
+//								+ sizeOfMetaData())));
 		return (struct BlockMetaData *) ((uint32) tmpBlk + sizeOfMetaData());
 	}
 	return NULL;
@@ -272,53 +280,46 @@ void free_block(void *va) {
 	//TODO: [PROJECT'23.MS1 - #7] [3] DYNAMIC ALLOCATOR - free_block()
 	//	panic("free_block is not implemented yet");
 	struct BlockMetaData *ptr = ((struct BlockMetaData *) va - 1);
+	struct BlockMetaData * next = ptr->prev_next_info.le_next;
+	struct BlockMetaData * prev = ptr->prev_next_info.le_prev;
 	if (ptr == NULL)
 		return;
+
+//	cprintf("  free va : %x \n",va);
 	// ptr need to free is free -> no need to do anything
 	// invalid address -> no need to do anything
 	// check corners
 	ptr->is_free = 1;
 	// next and prev meta data is free
-	if (ptr->prev_next_info.le_prev != NULL
-			&& ptr->prev_next_info.le_next != NULL
-			&& ptr->prev_next_info.le_next->is_free == 1
-			&& ptr->prev_next_info.le_prev->is_free == 1) {
-		ptr->prev_next_info.le_prev->size = (ptr->size
-				+ ptr->prev_next_info.le_next->size
-				+ ptr->prev_next_info.le_prev->size);
-		ptr->prev_next_info.le_next->size = 0;
-		ptr->prev_next_info.le_next->is_free = 0;
+	if (prev != NULL && next != NULL && next->is_free == 1
+			&& prev->is_free == 1) {
+		prev->size = (ptr->size + next->size + prev->size);
+		next->size = 0;
+		next->is_free = 0;
 		ptr->size = 0;
 		ptr->is_free = 0;
-		struct BlockMetaData *tmp = ptr->prev_next_info.le_next;
-		LIST_REMOVE(&memBlocks, tmp);
+		LIST_REMOVE(&memBlocks, next);
 		LIST_REMOVE(&memBlocks, ptr);
 	}
 	// neither next or prev meta data is free
-	else if (ptr->prev_next_info.le_prev != NULL
-			&& ptr->prev_next_info.le_next != NULL
-			&& ptr->prev_next_info.le_next->is_free == 0
-			&& ptr->prev_next_info.le_prev->is_free == 0) {
+	else if (prev != NULL && next != NULL && next->is_free == 0
+			&& prev->is_free == 0) {
 		ptr->is_free = 1;
 	}
 //			// prev meta data is free only
-	else if (ptr->prev_next_info.le_prev != NULL
-			&& ptr->prev_next_info.le_prev->is_free == 1) {
-		ptr->prev_next_info.le_prev->size = (ptr->size
-				+ ptr->prev_next_info.le_prev->size);
+	else if (prev != NULL && prev->is_free == 1) {
+		prev->size = (ptr->size + prev->size);
 		ptr->size = 0;
 		ptr->is_free = 0;
 		LIST_REMOVE(&memBlocks, ptr);
 	}
 	// next meta data is free only
-	else if (ptr->prev_next_info.le_next != NULL
-			&& ptr->prev_next_info.le_next->is_free == 1) {
-		ptr->size = (ptr->prev_next_info.le_next->size + ptr->size);
-		ptr->prev_next_info.le_next->size = 0;
-		ptr->prev_next_info.le_next->is_free = 0;
+	else if (next != NULL && next->is_free == 1) {
+		ptr->size = (next->size + ptr->size);
+		next->size = 0;
+		next->is_free = 0;
 		ptr->is_free = 1;
-		struct BlockMetaData *tmp = ptr->prev_next_info.le_next;
-		LIST_REMOVE(&memBlocks, tmp);
+		LIST_REMOVE(&memBlocks, next);
 	}
 }
 

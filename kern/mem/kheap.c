@@ -60,6 +60,7 @@ void* sbrk(int increment) {
 		// roundup then check if in the hard boundries
 		// should i pass page_size or just 4
 		increment = ROUNDUP(increment, PAGE_SIZE);
+		segmentbrk = ROUNDUP(segmentbrk,PAGE_SIZE);
 		uint32 prevSbrk = segmentbrk;
 		if (segmentbrk + increment <= hLimit) {
 			segmentbrk += increment;

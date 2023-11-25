@@ -54,6 +54,8 @@ void* malloc(uint32 size) {
 //		}
 	} else {
 		size = ROUNDUP(size, PAGE_SIZE);
+		if(size > (USER_HEAP_MAX - (sys_get_hard_limit() + PAGE_SIZE)))
+			return NULL;
 		int number_of_pages = size / PAGE_SIZE;
 		int count = 0;
 //		cprintf("%d\n" , vMem[0]);
@@ -64,6 +66,10 @@ void* malloc(uint32 size) {
 				count = 0;
 			}
 			if (count == number_of_pages) {
+				uint32 checkaddress = (sys_get_hard_limit() + PAGE_SIZE)
+								+ (PAGE_SIZE * i);
+				if(checkaddress >= USER_HEAP_MAX || checkaddress < (sys_get_hard_limit() + PAGE_SIZE))
+					return NULL;
 				i -= (number_of_pages - 1);
 				uint32 startAddress = (sys_get_hard_limit() + PAGE_SIZE)
 						+ (PAGE_SIZE * i);
@@ -71,8 +77,8 @@ void* malloc(uint32 size) {
 					vMem[i] = startAddress;
 					i++;
 				}
-				cprintf("Va %d\nstart of heap %d\n", startAddress,
-						(sys_get_hard_limit() + PAGE_SIZE));
+				/*cprintf("Va %d\nstart of heap %d\n", startAddress,
+						(sys_get_hard_limit() + PAGE_SIZE));*/
 				sys_allocate_user_mem(startAddress, size);
 				return (void *) startAddress;
 			}
@@ -87,12 +93,12 @@ void free(void* virtual_address) {
 	//TODO: [PROJECT'23.MS2 - #11] [2] USER HEAP - free() [User Side]
 	// Write your code here, remove the panic and write your code
 	//	panic("free() is not implemented yet...!!");
-	if ((uint32) virtual_address == 0 || (uint32) virtual_address >= USER_LIMIT) {
-		panic("invalid address to free!");
-	} else if ((uint32) virtual_address >= USER_HEAP_START
+	if ((uint32) virtual_address >= USER_HEAP_START
 			&& (uint32) virtual_address < sys_get_hard_limit()) {
 		free_block(virtual_address);
-	} else {
+	} else if (((uint32) virtual_address >= (sys_get_hard_limit() + PAGE_SIZE))
+			&& ((uint32) virtual_address < USER_HEAP_MAX)) {
+		virtual_address = ROUNDDOWN(virtual_address,PAGE_SIZE);
 		int count = 0;
 		uint8 flag = 0;
 		for (int i = 0; i < numofVmem; i++) {
@@ -106,6 +112,8 @@ void free(void* virtual_address) {
 				return;
 			}
 		}
+	}else{
+		panic("invalid address to free!");
 	}
 }
 
