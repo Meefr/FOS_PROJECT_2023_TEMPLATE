@@ -128,13 +128,12 @@ void *alloc_block_FF(uint32 size) {
 
 			//blk size is not enough to hold data -> no split
 			if ((blk->size - (sizeOfMetaData() + size)) <= sizeOfMetaData()) {
-//				cprintf("---------second if---------");
 				blk->is_free = 0;
 				return (struct BlockMetaData *) ((uint32) blk + sizeOfMetaData());
 			}
 			//blk size is big enough to hold data -> split
 			else {
-//				cprintf("---------else---------");
+				cprintf("o7a in split\n");
 				tmpBlk = blk;
 				blk = (struct BlockMetaData *) ((uint32) blk
 						+ (size + sizeOfMetaData()));
@@ -278,11 +277,13 @@ void free_block(void *va) {
 	// invalid address -> no need to do anything
 	// check corners
 	ptr->is_free = 1;
+
 	// next and prev meta data is free
 	if (ptr->prev_next_info.le_prev != NULL
 			&& ptr->prev_next_info.le_next != NULL
 			&& ptr->prev_next_info.le_next->is_free == 1
 			&& ptr->prev_next_info.le_prev->is_free == 1) {
+
 		ptr->prev_next_info.le_prev->size = (ptr->size
 				+ ptr->prev_next_info.le_next->size
 				+ ptr->prev_next_info.le_prev->size);
@@ -299,11 +300,13 @@ void free_block(void *va) {
 			&& ptr->prev_next_info.le_next != NULL
 			&& ptr->prev_next_info.le_next->is_free == 0
 			&& ptr->prev_next_info.le_prev->is_free == 0) {
+
 		ptr->is_free = 1;
 	}
 //			// prev meta data is free only
 	else if (ptr->prev_next_info.le_prev != NULL
 			&& ptr->prev_next_info.le_prev->is_free == 1) {
+
 		ptr->prev_next_info.le_prev->size = (ptr->size
 				+ ptr->prev_next_info.le_prev->size);
 		ptr->size = 0;
@@ -313,6 +316,7 @@ void free_block(void *va) {
 	// next meta data is free only
 	else if (ptr->prev_next_info.le_next != NULL
 			&& ptr->prev_next_info.le_next->is_free == 1) {
+
 		ptr->size = (ptr->prev_next_info.le_next->size + ptr->size);
 		ptr->prev_next_info.le_next->size = 0;
 		ptr->prev_next_info.le_next->is_free = 0;
