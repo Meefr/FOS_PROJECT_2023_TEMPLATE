@@ -477,13 +477,14 @@ void* sys_sbrk(int increment) {
 	uint32 hardLimit = env->hardLimit;
 	uint32 segmentBreak = env->segBreak;
 
-	if (((increment + env->segBreak) > hardLimit)
+	if (((increment + env->segBreak) >= hardLimit)
 			|| ((increment + env->segBreak) < env->start)) {
 		return (void*) -1;
 	}
 	if (increment > 0) {
 		increment = ROUNDUP(increment, PAGE_SIZE);
 		env->segBreak = ROUNDUP(env->segBreak,PAGE_SIZE);
+		segmentBreak = ROUNDUP(segmentBreak,PAGE_SIZE);
 		env->segBreak += increment;
 		uint32 *pageTable;
 		for (uint32 i = segmentBreak; i < env->segBreak; i += (PAGE_SIZE)) {

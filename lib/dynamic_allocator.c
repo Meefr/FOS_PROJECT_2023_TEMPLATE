@@ -121,12 +121,16 @@ void *alloc_block_FF(uint32 size) {
 	//	tmpBlk->size = 0;
 	LIST_FOREACH(blk, &memBlocks)
 	{
+//		if(/*(uint32)blk == 80357010-sizeOfMetaData())*/1)
+//		{
+//			cprintf("\n\n\n\n\n blk is %x : \nsize is : %d\n\n\n\n",(uint32)blk,size+sizeOfMetaData());
+//		}
 		//blk size is found -> allocate
 		if ((blk->size - sizeOfMetaData()) >= size && blk->is_free == 1) {
 //		cprintf("sn: %d , sb: %d \n",(size +sizeOfMetaData()) , blk->size);
 
 			//blk size is not enough to hold data -> no split
-			if ((blk->size - (sizeOfMetaData() + size)) <= sizeOfMetaData()) {
+			if ((blk->size - (sizeOfMetaData() + size)) < sizeOfMetaData()) {
 //				cprintf("---------second if---------");
 				blk->is_free = 0;
 //				cprintf("  allco va if no split : %x \n",((uint32) blk + sizeOfMetaData()));
@@ -161,34 +165,29 @@ void *alloc_block_FF(uint32 size) {
 	}
 	//no free space for required size -> no allocate + no space
 	uint32* ptr = (uint32 *) sbrk((size + sizeOfMetaData()));
-	if (ptr != (uint32 *) -1) {
-		blk = (struct BlockMetaData *) memBlocks.lh_last;
-//		cprintf(" blk: %x \n",blk + sizeOfMetaData());
-		if (blk->is_free == 1) {
-			blk->size = size + blk->size + sizeOfMetaData();
-			tmpBlk = blk;
-			blk = (struct BlockMetaData *) ((uint32) blk
-					+ (size + sizeOfMetaData()));
-			blk->size = tmpBlk->size - (size + sizeOfMetaData());
-			blk->is_free = 1;
-			//				cprintf("blk: %x\ntmp: %x\n", blk, tmpBlk);
-			LIST_INSERT_AFTER(&memBlocks, tmpBlk, blk);
-			tmpBlk->size = size + sizeOfMetaData();
-			tmpBlk->is_free = 0;
-
-//			cprintf("  allco va if sprk with collision : %x \n",((struct BlockMetaData *) ((uint32) tmpBlk
-//									+ sizeOfMetaData())));
-			return (struct BlockMetaData *) ((uint32) tmpBlk + sizeOfMetaData());
-		} else {
-			tmpBlk = (struct BlockMetaData *) ptr;
-			tmpBlk->size = size + sizeOfMetaData();
-			tmpBlk->is_free = 0;
-			LIST_INSERT_TAIL(&memBlocks, tmpBlk);
+	if (ptr != NULL) {
+		struct BlockMetaData * tmp2 = (struct BlockMetaData *) ((uint32)ptr
+				+ (PAGE_SIZE / 2)), *split;
+		tmp2->is_free = 1;
+		tmp2->size = (PAGE_SIZE / 2);
+		tmpBlk = (struct BlockMetaData *) ptr;
+		//there is split
+		if ((PAGE_SIZE / 2) - (size + sizeOfMetaData()) >= sizeOfMetaData()) {
+			split = (struct BlockMetaData *)((uint32)tmpBlk + size + sizeOfMetaData());
+			split->is_free = 1;
+			split->size = (PAGE_SIZE / 2) - (size + sizeOfMetaData());
 		}
+		tmpBlk->size = size + sizeOfMetaData();
+		tmpBlk->is_free = 0;
+		LIST_INSERT_TAIL(&memBlocks, tmpBlk);
+		if ((PAGE_SIZE / 2) - (size + sizeOfMetaData()) >= sizeOfMetaData())
+			LIST_INSERT_TAIL(&memBlocks, split);
+		LIST_INSERT_TAIL(&memBlocks, tmp2);
+		return (struct BlockMetaData *) ((uint32) tmpBlk + sizeOfMetaData());
+//		}
 
 //		cprintf("  allco va if sprk no collision : %x \n",((struct BlockMetaData *) ((uint32) tmpBlk
 //								+ sizeOfMetaData())));
-		return (struct BlockMetaData *) ((uint32) tmpBlk + sizeOfMetaData());
 	}
 	return NULL;
 

@@ -60,11 +60,11 @@ void* sbrk(int increment) {
 		// roundup then check if in the hard boundries
 		// should i pass page_size or just 4
 		increment = ROUNDUP(increment, PAGE_SIZE);
-		segmentbrk = ROUNDUP(segmentbrk,PAGE_SIZE);
+		segmentbrk = ROUNDUP(segmentbrk, PAGE_SIZE);
 		uint32 prevSbrk = segmentbrk;
 		if (segmentbrk + increment <= hLimit) {
 			segmentbrk += increment;
-
+			segmentbrk = ROUNDUP(segmentbrk, PAGE_SIZE);
 			for (uint32 i = prevSbrk; i < segmentbrk; i += (PAGE_SIZE)) {
 				struct FrameInfo* ptrr;
 				int ret = allocate_frame(&ptrr);
@@ -76,7 +76,8 @@ void* sbrk(int increment) {
 
 			}
 		} else {
-			panic("in sbrk func increment>0");
+//			rerurn NULL;
+			panic("in sbrk func increment > 0");
 		}
 		return (void*) prevSbrk;
 	} else if (increment == 0) {
@@ -88,7 +89,7 @@ void* sbrk(int increment) {
 		increment = increment * -1;
 		uint32 newSbrk = segmentbrk - ((increment / PAGE_SIZE) * PAGE_SIZE);
 		if (newSbrk < start) {
-			panic("in sbrk func increment<0 and newSbrk<start");
+			panic("in sbrk func increment < 0 and newSbrk<start");
 		}
 		for (uint32 i = segmentbrk; i > newSbrk; i -= (PAGE_SIZE)) {
 			unmap_frame(ptr_page_directory, i);
@@ -154,7 +155,8 @@ void* kmalloc(unsigned int size) {
 					if (ret == E_NO_MEM) {
 						return (void*) E_NO_MEM;
 					}
-					ret = map_frame(ptr_page_directory, ptrr, i,PERM_WRITEABLE);
+					ret = map_frame(ptr_page_directory, ptrr, i,
+							PERM_WRITEABLE);
 					if (ret == E_NO_MEM) {
 						unmap_frame(ptr_page_directory, i);
 						return (void*) E_NO_MEM;
@@ -218,14 +220,13 @@ unsigned int kheap_virtual_address(unsigned int physical_address) {
 	//EFFICIENT IMPLEMENTATION ~O(1) IS REQUIRED ==================
 
 	struct FrameInfo *ptr_frame_info;
-	ptr_frame_info = to_frame_info((uint32)physical_address);
-	if (ptr_frame_info->references > 0)
-		{
+	ptr_frame_info = to_frame_info((uint32) physical_address);
+	if (ptr_frame_info->references > 0) {
 		uint32 offset = physical_address;
 		offset = offset << 20;
 		offset = offset >> 20;
-		return (unsigned int)ptr_frame_info->va + offset;
-		}
+		return (unsigned int) ptr_frame_info->va + offset;
+	}
 	//change this "return" according to your answer
 	return 0;
 }
@@ -286,40 +287,37 @@ void kexpand(uint32 newSize) {
 void *krealloc(void *virtual_address, uint32 new_size) {
 	//TODO: [PROJECT'23.MS2 - BONUS#1] [1] KERNEL HEAP - krealloc()
 	// Write your code here, remove the panic and write your code
-	if(virtual_address==NULL){
+	if (virtual_address == NULL) {
 		return kmalloc(new_size);
-	}
-	else if(new_size==0){
+	} else if (new_size == 0) {
 		kfree(virtual_address);
-	}
-	else{
-		if(new_size<= DYN_ALLOC_MAX_BLOCK_SIZE){
-			return realloc_block_FF(virtual_address,new_size);
-		}
-		else{
-			uint32 NewNumberOfPages=ROUNDUP(new_size,PAGE_SIZE)/PAGE_SIZE;
-			uint32 NumberOfCurrentPages=0;
+	} else {
+		if (new_size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
+			return realloc_block_FF(virtual_address, new_size);
+		} else {
+			uint32 NewNumberOfPages = ROUNDUP(new_size,PAGE_SIZE) / PAGE_SIZE;
+			uint32 NumberOfCurrentPages = 0;
 			int indexOfva;
 			for (int i = 0; i < num_of_all_pages; i++) {
 				if (vmS[i] == (uint32) virtual_address) {
-					NumberOfCurrentPages=numOfPages[i];
-					indexOfva=i;
+					NumberOfCurrentPages = numOfPages[i];
+					indexOfva = i;
 					break;
 				}
 			}
 			// the va may not found in the array ?
-			if(NumberOfCurrentPages==0){
+			if (NumberOfCurrentPages == 0) {
 				cprintf("aaaa0\n");
 				return kmalloc(NewNumberOfPages);
-			}
-			else{
-				cprintf("va %d , CurrentPages %d , NewNumberOfPages %d \n",virtual_address,NumberOfCurrentPages,NewNumberOfPages);
-				if(NumberOfCurrentPages==NewNumberOfPages){
+			} else {
+				cprintf("va %d , CurrentPages %d , NewNumberOfPages %d \n",
+						virtual_address, NumberOfCurrentPages,
+						NewNumberOfPages);
+				if (NumberOfCurrentPages == NewNumberOfPages) {
 					//numOfPages[indexOfva]=NewNumberOfPages;
 					cprintf("aaaa1\n");
 					return virtual_address;
-				}
-				else if(NumberOfCurrentPages>NewNumberOfPages){
+				} else if (NumberOfCurrentPages > NewNumberOfPages) {
 					cprintf("aaaa2\n");
 //					uint32 NumberOfPagesToDelet=(NumberOfCurrentPages-NewNumberOfPages);
 //					uint32 StartPtr=(uint32)virtual_address+(NewNumberOfPages*PAGE_SIZE);
@@ -328,38 +326,47 @@ void *krealloc(void *virtual_address, uint32 new_size) {
 //						unmap_frame(ptr_page_directory, (StartPtr + (PAGE_SIZE * i)));
 //					}
 					return virtual_address;
-				}
-				else{
+				} else {
 					cprintf("aaaa3\n");
 					struct FrameInfo * ptr_fram_Info;
 					uint32 *pageTable;
-					uint32 NumberOfPagesNeedToalloc=NewNumberOfPages-NumberOfCurrentPages;
-					int count=0;
+					uint32 NumberOfPagesNeedToalloc = NewNumberOfPages
+							- NumberOfCurrentPages;
+					int count = 0;
 					uint32 address;
-					for(uint32 i=(uint32)virtual_address+(PAGE_SIZE*NumberOfCurrentPages);
-							i<(uint32)virtual_address+(PAGE_SIZE*NewNumberOfPages);i+=PAGE_SIZE){
-						ptr_fram_Info = get_frame_info(ptr_page_directory, i, &pageTable);
+					for (uint32 i = (uint32) virtual_address
+							+ (PAGE_SIZE * NumberOfCurrentPages);
+							i
+									< (uint32) virtual_address
+											+ (PAGE_SIZE * NewNumberOfPages);
+							i += PAGE_SIZE) {
+						ptr_fram_Info = get_frame_info(ptr_page_directory, i,
+								&pageTable);
 						uint32 page_table_entry = pageTable[PTX(i)];
 						if (!(page_table_entry & PERM_PRESENT))
 							count++;
 						else {
 							kfree(virtual_address);
 
-
 							return kmalloc(new_size);
 						}
 					}
-					if(count>0){
-						numOfPages[indexOfva]=NewNumberOfPages;
-						for(uint32 i=(uint32)virtual_address+(PAGE_SIZE*NumberOfCurrentPages);
-						i<(uint32)virtual_address+(PAGE_SIZE*NewNumberOfPages);i+=PAGE_SIZE){
+					if (count > 0) {
+						numOfPages[indexOfva] = NewNumberOfPages;
+						for (uint32 i = (uint32) virtual_address
+								+ (PAGE_SIZE * NumberOfCurrentPages);
+								i
+										< (uint32) virtual_address
+												+ (PAGE_SIZE * NewNumberOfPages);
+								i += PAGE_SIZE) {
 							struct FrameInfo* ptrr;
 							int ret = allocate_frame(&ptrr);
-							ptrr->va=i;
+							ptrr->va = i;
 							if (ret == E_NO_MEM) {
 								return (void*) E_NO_MEM;
 							}
-							ret = map_frame(ptr_page_directory, ptrr, i,PERM_WRITEABLE);
+							ret = map_frame(ptr_page_directory, ptrr, i,
+									PERM_WRITEABLE);
 							if (ret == E_NO_MEM) {
 								unmap_frame(ptr_page_directory, i);
 								return (void*) E_NO_MEM;

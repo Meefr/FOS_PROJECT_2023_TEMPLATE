@@ -140,8 +140,9 @@ void page_fault_handler(struct Env * curenv, uint32 fault_va) {
 		if (read_page == E_PAGE_NOT_EXIST_IN_PF) {
 			//int update = pf_update_env_page(curenv, fault_va, frame);
 //			if ((fault_va<USER_HEAP_START&&fault_va>=USER_HEAP_MAX)||(fault_va<=USTACKBOTTOM&&fault_va>USTACKTOP)) {
-			if ((fault_va < USER_HEAP_START || fault_va > USTACKTOP)) {
-				cprintf("kill at read in placement\n");
+//			if ((fault_va < USER_HEAP_START || fault_va > USTACKTOP)) {
+			if(!((fault_va >= USER_HEAP_START && fault_va <=USER_HEAP_MAX ) || (fault_va <= USTACKTOP && fault_va >= USTACKBOTTOM))){
+			cprintf("kill at read in placement\n");
 				sched_kill_env(curenv->env_id);
 			}
 		}
