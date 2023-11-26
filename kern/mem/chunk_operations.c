@@ -160,8 +160,11 @@ void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size) {
 	/*==========================================================================*/
 	for (uint32 i = virtual_address; i < virtual_address + size; i++) {
 		pt_set_page_permissions(e->env_page_directory, i, 0, PERM_AVAILABLE);
+		//cprintf("before env_page_ws_invalidate \n");
 		env_page_ws_invalidate(e, i);
+		//cprintf("before pf_remove_env_page \n");
 		pf_remove_env_page(e, i);
+		cprintf("After pf_remove_env_page \n");
 	}
 	// Write your code here, remove the panic and write your code
 //	panic("free_user_mem() is not implemented yet...!!");

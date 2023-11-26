@@ -327,14 +327,15 @@ void fault_handler(struct Trapframe *tf) {
 			uint32 page_permissions = pt_get_page_permissions(
 					faulted_env->env_page_directory, (uint32) fault_va);
 			uint32 *pagetable;
+			// why this code
 			get_page_table(faulted_env->env_page_directory, fault_va,
 					&pagetable);
 //			cprintf("%x ,%x \n",pagetable,pagetable[PTX(fault_va)]);
 			if (pagetable == 0) {
 				cprintf("no page tabel\n");
 			}
-//				cprintf("%x \n%d \n",fault_va,page_permissions);
-//
+				cprintf("%x \n%d \n",fault_va,page_permissions);
+
 			if ((fault_va > USER_LIMIT)) {
 				// pointed to kernel
 				cprintf("KILL at user Limit\n");

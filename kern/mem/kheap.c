@@ -60,6 +60,7 @@ void* sbrk(int increment) {
 		// roundup then check if in the hard boundries
 		// should i pass page_size or just 4
 		increment = ROUNDUP(increment, PAGE_SIZE);
+		//segmentbrk=ROUNDUP(segmentbrk,PAGE_SIZE);
 		uint32 prevSbrk = segmentbrk;
 		if (segmentbrk + increment <= hLimit) {
 			segmentbrk += increment;
@@ -314,11 +315,11 @@ void *krealloc(void *virtual_address, uint32 new_size) {
 				cprintf("va %d , CurrentPages %d , NewNumberOfPages %d \n",virtual_address,NumberOfCurrentPages,NewNumberOfPages);
 				if(NumberOfCurrentPages==NewNumberOfPages){
 					//numOfPages[indexOfva]=NewNumberOfPages;
-					cprintf("aaaa1\n");
+					//cprintf("aaaa1\n");
 					return virtual_address;
 				}
 				else if(NumberOfCurrentPages>NewNumberOfPages){
-					cprintf("aaaa2\n");
+					//cprintf("aaaa2\n");
 //					uint32 NumberOfPagesToDelet=(NumberOfCurrentPages-NewNumberOfPages);
 //					uint32 StartPtr=(uint32)virtual_address+(NewNumberOfPages*PAGE_SIZE);
 //					numOfPages[indexOfva]=NewNumberOfPages;
@@ -328,7 +329,7 @@ void *krealloc(void *virtual_address, uint32 new_size) {
 					return virtual_address;
 				}
 				else{
-					cprintf("aaaa3\n");
+					//cprintf("aaaa3\n");
 					struct FrameInfo * ptr_fram_Info;
 					uint32 *pageTable;
 					uint32 NumberOfPagesNeedToalloc=NewNumberOfPages-NumberOfCurrentPages;
@@ -343,8 +344,8 @@ void *krealloc(void *virtual_address, uint32 new_size) {
 						else {
 							kfree(virtual_address);
 
-
-							return kmalloc(new_size);
+							cprintf("aaaa3\n");
+							return kmalloc((unsigned int)new_size);
 						}
 					}
 					if(count>0){

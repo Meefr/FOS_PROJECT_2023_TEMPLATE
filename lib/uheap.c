@@ -72,8 +72,7 @@ void* malloc(uint32 size) {
 					vMem[i] = startAddress;
 					i++;
 				}
-				cprintf("Va %d\nstart of heap %d\n", startAddress,
-						(sys_get_hard_limit() + PAGE_SIZE));
+				//cprintf("Va %d\nstart of heap %d\n", startAddress,(sys_get_hard_limit() + PAGE_SIZE));
 				sys_allocate_user_mem(startAddress, size);
 				return (void *) startAddress;
 			}
@@ -88,12 +87,10 @@ void free(void* virtual_address) {
 	//TODO: [PROJECT'23.MS2 - #11] [2] USER HEAP - free() [User Side]
 	// Write your code here, remove the panic and write your code
 	//	panic("free() is not implemented yet...!!");
-	if ((uint32) virtual_address == 0 || (uint32) virtual_address >= USER_LIMIT) {
-		panic("invalid address to free!");
-	} else if ((uint32) virtual_address >= USER_HEAP_START
-			&& (uint32) virtual_address < sys_get_hard_limit()) {
+	if (((uint32) virtual_address >= USER_HEAP_START )&& ((uint32) virtual_address < sys_get_hard_limit())) {
 		free_block(virtual_address);
-	} else {
+	}
+	else if(((uint32) virtual_address >= sys_get_hard_limit()+PAGE_SIZE )&&((uint32) virtual_address < USER_HEAP_MAX)) {
 		int count = 0;
 		uint8 flag = 0;
 		for (int i = 0; i < numofVmem; i++) {
@@ -102,11 +99,14 @@ void free(void* virtual_address) {
 				count++;
 				vMem[i] = 0;
 			} else if (vMem[i] != (uint32) virtual_address && flag) {
-				sys_free_user_mem((uint32) virtual_address,
-						(count * PAGE_SIZE));
+				//cprintf("in else \n");
+				sys_free_user_mem((uint32) virtual_address,(count * PAGE_SIZE));
 				return;
 			}
 		}
+	}
+	else{
+		panic("invalid Address in fun free line 109\n");
 	}
 }
 
