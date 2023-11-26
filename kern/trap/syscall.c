@@ -244,12 +244,12 @@ void sys_free_user_mem(uint32 virtual_address, uint32 size) {
 		__free_user_mem_with_buffering(curenv, virtual_address, size);
 	} else {
 		if ((uint32*) virtual_address == 0 || size == 0) {
-			cprintf("kill free 1\n");
+//			cprintf("kill free 1\n");
 			sched_kill_env(curenv->env_id);
 			return;
 		} else if (virtual_address >= USER_LIMIT
 				|| ((virtual_address + size) > USER_LIMIT)) {
-			cprintf("kill free 2\n");
+//			cprintf("kill free 2\n");
 			sched_kill_env(curenv->env_id);
 			return;
 		}
@@ -260,12 +260,12 @@ void sys_free_user_mem(uint32 virtual_address, uint32 size) {
 
 void sys_allocate_user_mem(uint32 virtual_address, uint32 size) {
 	if ((uint32*) virtual_address == 0 || size == 0) {
-		cprintf("kill alloc 1\n");
+//		cprintf("kill alloc 1\n");
 		sched_kill_env(curenv->env_id);
 		return;
 	} else if (virtual_address >= USER_LIMIT
 			|| ((virtual_address + size) > USER_LIMIT)) {
-		cprintf("kill alloc 2\n");
+//		cprintf("kill alloc 2\n");
 		sched_kill_env(curenv->env_id);
 		return;
 	}
@@ -466,7 +466,7 @@ void* sys_sbrk(int increment) {
 	 * 	2) New segment break should be aligned on page-boundary to avoid "No Man's Land" problem
 	 * 	3) As in real OS, allocate pages lazily. While sbrk moves the segment break, pages are not allocated
 	 * 		until the user program actually tries to access data in its heap (i.e. will be allocated via the fault handler).
-	 * 	4) Allocating additional pages for a process’ heap will fail if, for example, the free frames are exhausted
+	 * 	4) Allocating additional pages for a processï¿½ heap will fail if, for example, the free frames are exhausted
 	 * 		or the break exceed the limit of the dynamic allocator. If sys_sbrk fails, the net effect should
 	 * 		be that sys_sbrk returns (void*) -1 and that the segment break and the process heap are unaffected.
 	 * 		You might have to undo any operations you have done so far in this case.
@@ -477,12 +477,14 @@ void* sys_sbrk(int increment) {
 	uint32 hardLimit = env->hardLimit;
 	uint32 segmentBreak = env->segBreak;
 
-	if (((increment + env->segBreak) > hardLimit)
+	if (((increment + env->segBreak) >= hardLimit)
 			|| ((increment + env->segBreak) < env->start)) {
 		return (void*) -1;
 	}
 	if (increment > 0) {
 		increment = ROUNDUP(increment, PAGE_SIZE);
+		env->segBreak = ROUNDUP(env->segBreak,PAGE_SIZE);
+		segmentBreak = ROUNDUP(segmentBreak,PAGE_SIZE);
 		env->segBreak += increment;
 		uint32 *pageTable;
 		for (uint32 i = segmentBreak; i < env->segBreak; i += (PAGE_SIZE)) {
@@ -506,6 +508,9 @@ void* sys_sbrk(int increment) {
 			return (void *) -1;
 		}
 		for (uint32 i = segmentBreak; i > newSbrk; i -= (PAGE_SIZE)) {
+//			pt_set_page_permissions(env->env_page_directory, i, 0, PERM_AVAILABLE);
+//			env_page_ws_invalidate(env, i);
+//			pf_remove_env_page(env, i);
 			unmap_frame(ptr_page_directory, i);
 //			free_frame((struct FrameInfo*) i);
 		}

@@ -43,18 +43,19 @@ void* malloc(uint32 size) {
 		return NULL;
 	//==============================================================
 	//TODO: [PROJECT'23.MS2 - #09] [2] USER HEAP - malloc() [User Side]
-
 	//	// Write your code here, remove the panic and write your code
 	//	panic("malloc() is not implemented yet...!!");
 	if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
-		return alloc_block_FF(size);
-//		if (sys_isUHeapPlacementStrategyFIRSTFIT()) {
-//			return alloc_block_FF(size);
-//		} else if (sys_isUHeapPlacementStrategyBESTFIT()) {
-//			return alloc_block_BF(size);
-//		}
+		//return alloc_block_FF(size);
+		if (sys_isUHeapPlacementStrategyFIRSTFIT()) {
+			return alloc_block_FF(size);
+		} else if (sys_isUHeapPlacementStrategyBESTFIT()) {
+			return alloc_block_BF(size);
+		}
 	} else {
 		size = ROUNDUP(size, PAGE_SIZE);
+		if(size > (USER_HEAP_MAX - (sys_get_hard_limit() + PAGE_SIZE)))
+			return NULL;
 		int number_of_pages = size / PAGE_SIZE;
 		int count = 0;
 //		cprintf("%d\n" , vMem[0]);
@@ -65,6 +66,10 @@ void* malloc(uint32 size) {
 				count = 0;
 			}
 			if (count == number_of_pages) {
+				uint32 checkaddress = (sys_get_hard_limit() + PAGE_SIZE)
+								+ (PAGE_SIZE * i);
+				if(checkaddress >= USER_HEAP_MAX || checkaddress < (sys_get_hard_limit() + PAGE_SIZE))
+					return NULL;
 				i -= (number_of_pages - 1);
 				uint32 startAddress = (sys_get_hard_limit() + PAGE_SIZE)
 						+ (PAGE_SIZE * i);
@@ -72,7 +77,8 @@ void* malloc(uint32 size) {
 					vMem[i] = startAddress;
 					i++;
 				}
-				//cprintf("Va %d\nstart of heap %d\n", startAddress,(sys_get_hard_limit() + PAGE_SIZE));
+				/*cprintf("Va %d\nstart of heap %d\n", startAddress,
+						(sys_get_hard_limit() + PAGE_SIZE));*/
 				sys_allocate_user_mem(startAddress, size);
 				return (void *) startAddress;
 			}
@@ -87,10 +93,12 @@ void free(void* virtual_address) {
 	//TODO: [PROJECT'23.MS2 - #11] [2] USER HEAP - free() [User Side]
 	// Write your code here, remove the panic and write your code
 	//	panic("free() is not implemented yet...!!");
-	if (((uint32) virtual_address >= USER_HEAP_START )&& ((uint32) virtual_address < sys_get_hard_limit())) {
+	if ((uint32) virtual_address >= USER_HEAP_START
+			&& (uint32) virtual_address < sys_get_hard_limit()) {
 		free_block(virtual_address);
-	}
-	else if(((uint32) virtual_address >= sys_get_hard_limit()+PAGE_SIZE )&&((uint32) virtual_address < USER_HEAP_MAX)) {
+	} else if (((uint32) virtual_address >= (sys_get_hard_limit() + PAGE_SIZE))
+			&& ((uint32) virtual_address < USER_HEAP_MAX)) {
+		virtual_address = ROUNDDOWN(virtual_address,PAGE_SIZE);
 		int count = 0;
 		uint8 flag = 0;
 		for (int i = 0; i < numofVmem; i++) {
@@ -99,14 +107,13 @@ void free(void* virtual_address) {
 				count++;
 				vMem[i] = 0;
 			} else if (vMem[i] != (uint32) virtual_address && flag) {
-				//cprintf("in else \n");
-				sys_free_user_mem((uint32) virtual_address,(count * PAGE_SIZE));
+				sys_free_user_mem((uint32) virtual_address,
+						(count * PAGE_SIZE));
 				return;
 			}
 		}
-	}
-	else{
-		panic("invalid Address in fun free line 109\n");
+	}else{
+		panic("invalid address to free!");
 	}
 }
 
