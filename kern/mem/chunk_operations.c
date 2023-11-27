@@ -120,8 +120,7 @@ void allocate_user_mem(struct Env* e, uint32 virtual_address, uint32 size) {
 	// ------------------------------meefr code-------------------------------- //
 //	cprintf("here!! alloc user mem\n");
 
-	for (uint32 i = virtual_address; i < virtual_address + size; i +=
-	PAGE_SIZE) {
+	for (uint32 i = virtual_address; i < virtual_address + size; i +=PAGE_SIZE) {
 		uint32* pageTabel;
 		int ret = get_page_table(e->env_page_directory, i, &pageTabel);
 		if (ret == TABLE_NOT_EXIST) {

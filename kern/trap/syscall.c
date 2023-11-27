@@ -492,8 +492,7 @@ void* sys_sbrk(int increment) {
 			if (ret == TABLE_NOT_EXIST) {
 				create_page_table(env->env_page_directory, i);
 			}
-			pt_set_page_permissions(env->env_page_directory, i,
-			PERM_AVAILABLE, 0);
+			pt_set_page_permissions(env->env_page_directory, i,PERM_AVAILABLE, 0);
 		}
 //		if(increment % (4 * kilo) == 0) {
 //			env->segBreak += increment;

@@ -166,8 +166,7 @@ void *alloc_block_FF(uint32 size) {
 	//no free space for required size -> no allocate + no space
 	uint32* ptr = (uint32 *) sbrk((size + sizeOfMetaData()));
 	if (ptr != NULL) {
-		struct BlockMetaData * tmp2 = (struct BlockMetaData *) ((uint32)ptr
-				+ (PAGE_SIZE / 2)), *split;
+		struct BlockMetaData * tmp2 = (struct BlockMetaData *) ((uint32)ptr+ (PAGE_SIZE / 2)), *split;
 		tmp2->is_free = 1;
 		tmp2->size = (PAGE_SIZE / 2);
 		tmpBlk = (struct BlockMetaData *) ptr;
