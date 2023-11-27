@@ -66,8 +66,7 @@ void* malloc(uint32 size) {
 				count = 0;
 			}
 			if (count == number_of_pages) {
-				uint32 checkaddress = (sys_get_hard_limit() + PAGE_SIZE)
-								+ (PAGE_SIZE * i);
+				uint32 checkaddress = (sys_get_hard_limit() + PAGE_SIZE)+ (PAGE_SIZE * i);
 				if(checkaddress >= USER_HEAP_MAX || checkaddress < (sys_get_hard_limit() + PAGE_SIZE))
 					return NULL;
 				i -= (number_of_pages - 1);

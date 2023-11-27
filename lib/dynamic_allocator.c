@@ -176,7 +176,7 @@ void *alloc_block_FF(uint32 size) {
 //		cprintf("  allco va if sprk no collision : %x \n",((struct BlockMetaData *) ((uint32) tmpBlk
 //								+ sizeOfMetaData())));
 	}
-	cprintf("179\n");
+	//cprintf("179\n");
 	return NULL;
 
 }

@@ -308,27 +308,33 @@ void *krealloc(void *virtual_address, uint32 new_size) {
 			}
 			// the va may not found in the array ?
 			if (NumberOfCurrentPages == 0) {
-				cprintf("aaaa0\n");
+				//cprintf("aaaa0\n");
 				return kmalloc(NewNumberOfPages);
 			} else {
-				cprintf("va %d , CurrentPages %d , NewNumberOfPages %d \n",
-						virtual_address, NumberOfCurrentPages,
-						NewNumberOfPages);
+				//cprintf("va %d , CurrentPages %d , NewNumberOfPages %d \n",virtual_address, NumberOfCurrentPages,NewNumberOfPages);
 				if (NumberOfCurrentPages == NewNumberOfPages) {
 					//numOfPages[indexOfva]=NewNumberOfPages;
-					cprintf("aaaa1\n");
+					//cprintf("aaaa1\n");
 					return virtual_address;
 				} else if (NumberOfCurrentPages > NewNumberOfPages) {
-					cprintf("aaaa2\n");
-//					uint32 NumberOfPagesToDelet=(NumberOfCurrentPages-NewNumberOfPages);
-//					uint32 StartPtr=(uint32)virtual_address+(NewNumberOfPages*PAGE_SIZE);
-//					numOfPages[indexOfva]=NewNumberOfPages;
-//					for(uint32 i=0;i<NumberOfPagesToDelet;i++){
-//						unmap_frame(ptr_page_directory, (StartPtr + (PAGE_SIZE * i)));
-//					}
+					//cprintf("aaaa2\n");
+
+					/*
+					 * Logically we have to unmaped the no needed pages
+					 * but in test DR/Ahmed said to do nothing in those pages.
+					 *
+					 * but that was in the NEXT FIT algorithm not in FIRST FIT
+					 *
+					 * */
+					uint32 NumberOfPagesToDelet=(NumberOfCurrentPages-NewNumberOfPages);
+					uint32 StartPtr=(uint32)virtual_address+(NewNumberOfPages*PAGE_SIZE);
+					numOfPages[indexOfva]=NewNumberOfPages;
+					for(uint32 i=0;i<NumberOfPagesToDelet;i++){
+						unmap_frame(ptr_page_directory, (StartPtr + (PAGE_SIZE * i)));
+					}
 					return virtual_address;
 				} else {
-					cprintf("aaaa3\n");
+					//cprintf("aaaa3\n");
 					struct FrameInfo * ptr_fram_Info;
 					uint32 *pageTable;
 					uint32 NumberOfPagesNeedToalloc = NewNumberOfPages
