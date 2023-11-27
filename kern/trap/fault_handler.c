@@ -142,13 +142,15 @@ void page_fault_handler(struct Env * curenv, uint32 fault_va) {
 //			if ((fault_va<USER_HEAP_START&&fault_va>=USER_HEAP_MAX)||(fault_va<=USTACKBOTTOM&&fault_va>USTACKTOP)) {
 //			if ((fault_va < USER_HEAP_START || fault_va > USTACKTOP)) {
 			if(!((fault_va >= USER_HEAP_START && fault_va <USER_HEAP_MAX ) || (fault_va <= USTACKTOP && fault_va > USTACKBOTTOM))){
-			cprintf("kill at read in placement\n va: %x\n",fault_va);
+//			cprintf("kill at read in placement\n va: %x\n",fault_va);
 				unmap_frame(curenv->env_page_directory, fault_va);
 				sched_kill_env(curenv->env_id);
 			}
 		}
 		struct WorkingSetElement* new_workingset =
 				env_page_ws_list_create_element(curenv, fault_va);
+		int index = ( fault_va / PAGE_SIZE);
+		wsVM[index] = new_workingset;
 		LIST_INSERT_TAIL(&(curenv->page_WS_list), new_workingset);
 		if (curenv->page_WS_max_size == curenv->page_WS_list.size) {
 //			cprintf("inside maxSize");

@@ -15,9 +15,7 @@ uint32 _KHeapPlacementStrategy;
 #define KHP_PLACE_BESTFIT 	0x2
 #define KHP_PLACE_NEXTFIT 	0x3
 #define KHP_PLACE_WORSTFIT 	0x4
-#define numofVmem (0xA0000000 - 0x80000000) / 4096
 
-struct WorkingSetElement*  wsVM[numofVmem];
 
 
 static inline void setKHeapPlacementStrategyCONTALLOC() {

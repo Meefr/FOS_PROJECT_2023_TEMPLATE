@@ -12,7 +12,9 @@
 #endif
 #include <inc/types.h>
 #include <inc/environment_definitions.h>
+#define numofVmem (0xFFFFFFFF - /*0x80000000*/0) / 4096
 
+struct WorkingSetElement*  wsVM[numofVmem];
 /******************************/
 /*	DATA 					  */
 /******************************/
