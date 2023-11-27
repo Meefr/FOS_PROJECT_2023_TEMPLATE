@@ -142,7 +142,7 @@ void page_fault_handler(struct Env * curenv, uint32 fault_va) {
 //			if ((fault_va<USER_HEAP_START&&fault_va>=USER_HEAP_MAX)||(fault_va<=USTACKBOTTOM&&fault_va>USTACKTOP)) {
 //			if ((fault_va < USER_HEAP_START || fault_va > USTACKTOP)) {
 			if(!((fault_va >= USER_HEAP_START && fault_va <USER_HEAP_MAX ) || (fault_va <= USTACKTOP && fault_va > USTACKBOTTOM))){
-//			cprintf("kill at read in placement\n va: %x\n",fault_va);
+			cprintf("kill at read in placement\n va: %x\n",fault_va);
 				unmap_frame(curenv->env_page_directory, fault_va);
 				sched_kill_env(curenv->env_id);
 			}

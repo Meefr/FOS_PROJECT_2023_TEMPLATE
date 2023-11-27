@@ -25,6 +25,8 @@ inline struct WorkingSetElement* env_page_ws_list_create_element(struct Env* e,
 		panic("my_elm == null in ws, cant allocate the ws ");
 	else {
 		my_elm->virtual_address = virtual_address;
+		int index = (((ROUNDDOWN(virtual_address, PAGE_SIZE) - USER_HEAP_START) / PAGE_SIZE));
+		wsVM[index] = my_elm;
 		return my_elm;
 	}
 

@@ -119,7 +119,6 @@ void allocate_user_mem(struct Env* e, uint32 virtual_address, uint32 size) {
 	//TODO: [PROJECT'23.MS2 - #10] [2] USER HEAP - allocate_user_mem() [Kernel Side]
 	// ------------------------------meefr code-------------------------------- //
 //	cprintf("here!! alloc user mem\n");
-
 	for (uint32 i = virtual_address; i < virtual_address + size; i +=
 	PAGE_SIZE) {
 		uint32* pageTabel;
@@ -158,12 +157,22 @@ void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size) {
 //	inctst();
 //	return;
 	/*==========================================================================*/
-	for (uint32 i = virtual_address; i < virtual_address + size; i+=PAGE_SIZE) {
+	for (uint32 i = virtual_address; i < virtual_address + size; i +=
+	PAGE_SIZE) {
 
 		pt_set_page_permissions(e->env_page_directory, i, 0, PERM_AVAILABLE);
 		unmap_frame(e->env_page_directory, i);
 		pf_remove_env_page(e, i);
-		env_page_ws_invalidate(e, i);
+		int index = (((ROUNDDOWN(i,PAGE_SIZE) - USER_HEAP_START) / PAGE_SIZE));
+		cprintf("index: %d , va: %d , real va: %d\n",index,i,wsVM[index]->virtual_address);
+		if (e->page_last_WS_element == wsVM[index]) {
+			e->page_last_WS_element = LIST_NEXT(wsVM[index]);
+		}
+		LIST_REMOVE(&(e->page_WS_list), wsVM[index]);
+		kfree(wsVM[index]);
+		wsVM[index] = NULL;
+
+//		env_page_ws_invalidate(e, i);
 	}
 	// Write your code here, remove the panic and write your code
 //	panic("free_user_mem() is not implemented yet...!!");
