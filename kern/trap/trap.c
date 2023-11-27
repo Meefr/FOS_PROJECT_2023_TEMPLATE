@@ -331,25 +331,25 @@ void fault_handler(struct Trapframe *tf) {
 			get_page_table(faulted_env->env_page_directory, fault_va,
 					&pagetable);
 //			cprintf("%x ,%x \n",pagetable,pagetable[PTX(fault_va)]);
-			if (pagetable == 0) {
-				cprintf("no page tabel\n");
-			}
-				cprintf("%x \n%d \n",fault_va,page_permissions);
+//			if (pagetable == 0) {
+//				cprintf("no page tabel\n");
+//			}
+				//cprintf("%x \n%d \n",fault_va,page_permissions);
 
 			if ((fault_va > USER_LIMIT)) {
 				// pointed to kernel
-				cprintf("KILL at user Limit\n");
+				//cprintf("KILL at user Limit\n");
 				sched_kill_env(faulted_env->env_id);
 			} else if (((page_permissions & PERM_AVAILABLE) == 0)
 					&& (fault_va >= USER_HEAP_START && fault_va <= USER_HEAP_MAX)
 					&& ((page_permissions & PERM_PRESENT) == 0)) {
 				// unmarked page
-				cprintf("KILL at unmarked page\n");
+				//cprintf("KILL at unmarked page\n");
 				sched_kill_env(faulted_env->env_id);
 			} else if (((page_permissions & PERM_WRITEABLE) == 0)
 					&& (page_permissions & PERM_PRESENT) != 0) {
 				// read-only permission
-				cprintf("KILL at read only\n");
+				//cprintf("KILL at read only\n");
 				//cprintf("the res : %d\n",(page_permissions & PERM_WRITEABLE));
 				sched_kill_env(faulted_env->env_id);
 			}
