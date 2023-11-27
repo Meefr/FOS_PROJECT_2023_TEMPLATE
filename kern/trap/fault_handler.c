@@ -131,18 +131,19 @@ void page_fault_handler(struct Env * curenv, uint32 fault_va) {
 		//cprintf("PLACEMENT=========================WS Size = %d\n", wsSize );
 		//TODO: [PROJECT'23.MS2 - #15] [3] PAGE FAULT HANDLER - Placement
 		// Write your code here, remove the panic and write your code
-
+//		cprintf("fault_va: %x\n",fault_va);
 		struct FrameInfo* frame;
 		allocate_frame(&frame);
 		map_frame(curenv->env_page_directory, frame, fault_va,
-				PERM_WRITEABLE | PERM_USER);
+				PERM_WRITEABLE | PERM_USER );
 		int read_page = pf_read_env_page(curenv, (void*) fault_va);
 		if (read_page == E_PAGE_NOT_EXIST_IN_PF) {
 			//int update = pf_update_env_page(curenv, fault_va, frame);
 //			if ((fault_va<USER_HEAP_START&&fault_va>=USER_HEAP_MAX)||(fault_va<=USTACKBOTTOM&&fault_va>USTACKTOP)) {
 //			if ((fault_va < USER_HEAP_START || fault_va > USTACKTOP)) {
-			if(!((fault_va >= USER_HEAP_START && fault_va <=USER_HEAP_MAX ) || (fault_va <= USTACKTOP && fault_va >= USTACKBOTTOM))){
-			cprintf("kill at read in placement\n");
+			if(!((fault_va >= USER_HEAP_START && fault_va <USER_HEAP_MAX ) || (fault_va <= USTACKTOP && fault_va > USTACKBOTTOM))){
+//			cprintf("kill at read in placement\n va: %x\n",fault_va);
+				unmap_frame(curenv->env_page_directory, fault_va);
 				sched_kill_env(curenv->env_id);
 			}
 		}

@@ -158,6 +158,7 @@ void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size) {
 //	return;
 	/*==========================================================================*/
 	for (uint32 i = virtual_address; i < virtual_address + size; i+=PAGE_SIZE) {
+
 		pt_set_page_permissions(e->env_page_directory, i, 0, PERM_AVAILABLE);
 		unmap_frame(e->env_page_directory, i);
 		pf_remove_env_page(e, i);

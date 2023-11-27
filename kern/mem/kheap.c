@@ -59,19 +59,20 @@ void* sbrk(int increment) {
 	if (increment > 0) {
 		// roundup then check if in the hard boundries
 		// should i pass page_size or just 4
-		increment = ROUNDUP(increment, PAGE_SIZE);
-		segmentbrk = ROUNDUP(segmentbrk, PAGE_SIZE);
 		uint32 prevSbrk = segmentbrk;
-		if (segmentbrk + increment <= hLimit) {
-			segmentbrk += increment;
-			segmentbrk = ROUNDUP(segmentbrk, PAGE_SIZE);
+		segmentbrk += increment;
+//		increment = ROUNDUP(increment, PAGE_SIZE);
+		segmentbrk = ROUNDUP(segmentbrk, PAGE_SIZE);
+		if (segmentbrk /*+ increment*/ <= hLimit) {
+//			segmentbrk += increment;
+//			segmentbrk = ROUNDUP(segmentbrk, PAGE_SIZE);
 			for (uint32 i = prevSbrk; i < segmentbrk; i += (PAGE_SIZE)) {
 				struct FrameInfo* ptrr;
 				int ret = allocate_frame(&ptrr);
-				ptrr->va = i;
 				if (ret == E_NO_MEM) {
 					return (void*) E_NO_MEM;
 				}
+				ptrr->va = i;
 				map_frame(ptr_page_directory, ptrr, i, PERM_WRITEABLE);
 
 			}
@@ -151,10 +152,10 @@ void* kmalloc(unsigned int size) {
 				for (uint32 j = 0; j < number_of_pages; j++) {
 					struct FrameInfo* ptrr;
 					int ret = allocate_frame(&ptrr);
-					ptrr->va = i;
 					if (ret == E_NO_MEM) {
 						return (void*) E_NO_MEM;
 					}
+					ptrr->va = i;
 					ret = map_frame(ptr_page_directory, ptrr, i,
 							PERM_WRITEABLE);
 					if (ret == E_NO_MEM) {
@@ -361,10 +362,10 @@ void *krealloc(void *virtual_address, uint32 new_size) {
 								i += PAGE_SIZE) {
 							struct FrameInfo* ptrr;
 							int ret = allocate_frame(&ptrr);
-							ptrr->va = i;
 							if (ret == E_NO_MEM) {
 								return (void*) E_NO_MEM;
 							}
+							ptrr->va = i;
 							ret = map_frame(ptr_page_directory, ptrr, i,
 									PERM_WRITEABLE);
 							if (ret == E_NO_MEM) {
