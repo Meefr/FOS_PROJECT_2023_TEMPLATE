@@ -4663,7 +4663,7 @@ int test_krealloc() {
 			panic("krealloc: Wrong start address for the allocated space... ");
 		if ((uint32) newAddress != ACTUAL_START + (14 * Mega))
 			//////////////////////
-			cprintf("write add %d , New add %d \n",ACTUAL_START + (14 * Mega),newAddress);
+			//cprintf("write add %d , New add %d \n",ACTUAL_START + (14 * Mega),newAddress);
 		///////////////////////////////////
 			panic(
 					"krealloc: Wrong start address for reallocated space, NSA = %x\nbbb",

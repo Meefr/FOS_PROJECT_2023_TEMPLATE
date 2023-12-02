@@ -19,12 +19,15 @@ inline struct WorkingSetElement* env_page_ws_list_create_element(struct Env* e,
 	// Write your code here, remove the panic and write your code
 //	panic("env_page_ws_list_create_element() is not implemented yet...!!");
 
-	struct WorkingSetElement *my_elm = (struct WorkingSetElement *)kmalloc(
+	struct WorkingSetElement *my_elm = (struct WorkingSetElement *) kmalloc(
 			sizeof(struct WorkingSetElement));
 	if (my_elm == NULL)
 		panic("my_elm == null in ws, cant allocate the ws ");
 	else {
 		my_elm->virtual_address = virtual_address;
+//		int index = (((ROUNDDOWN(virtual_address, PAGE_SIZE)
+//				- (e->hardLimit + PAGE_SIZE)) / PAGE_SIZE));
+//		wsVM[index] = my_elm;
 		return my_elm;
 	}
 
@@ -38,12 +41,13 @@ inline void env_page_ws_invalidate(struct Env* e, uint32 virtual_address) {
 		LIST_FOREACH(ptr_WS_element, &(e->ActiveList))
 		{
 			if (ROUNDDOWN(ptr_WS_element->virtual_address,
-					PAGE_SIZE) == ROUNDDOWN(virtual_address,PAGE_SIZE)) {
+					PAGE_SIZE) == ROUNDDOWN(virtual_address, PAGE_SIZE)) {
 				struct WorkingSetElement* ptr_tmp_WS_element = LIST_FIRST(
 						&(e->SecondList));
 				unmap_frame(e->env_page_directory,
 						ptr_WS_element->virtual_address);
 				LIST_REMOVE(&(e->ActiveList), ptr_WS_element);
+				kfree(ptr_WS_element);
 				if (ptr_tmp_WS_element != NULL) {
 					LIST_REMOVE(&(e->SecondList), ptr_tmp_WS_element);
 					LIST_INSERT_TAIL(&(e->ActiveList), ptr_tmp_WS_element);
@@ -61,12 +65,13 @@ inline void env_page_ws_invalidate(struct Env* e, uint32 virtual_address) {
 			LIST_FOREACH(ptr_WS_element, &(e->SecondList))
 			{
 				if (ROUNDDOWN(ptr_WS_element->virtual_address,
-						PAGE_SIZE) == ROUNDDOWN(virtual_address,PAGE_SIZE)) {
+						PAGE_SIZE) == ROUNDDOWN(virtual_address, PAGE_SIZE)) {
 					unmap_frame(e->env_page_directory,
 							ptr_WS_element->virtual_address);
 					LIST_REMOVE(&(e->SecondList), ptr_WS_element);
 
 					kfree(ptr_WS_element);
+					break;
 				}
 			}
 		}
@@ -75,7 +80,7 @@ inline void env_page_ws_invalidate(struct Env* e, uint32 virtual_address) {
 		LIST_FOREACH(wse, &(e->page_WS_list))
 		{
 			if (ROUNDDOWN(wse->virtual_address,
-					PAGE_SIZE) == ROUNDDOWN(virtual_address,PAGE_SIZE)) {
+					PAGE_SIZE) == ROUNDDOWN(virtual_address, PAGE_SIZE)) {
 				if (e->page_last_WS_element == wse) {
 					e->page_last_WS_element = LIST_NEXT(wse);
 				}
@@ -290,7 +295,7 @@ inline void env_table_ws_invalidate(struct Env* e, uint32 virtual_address) {
 	int i = 0;
 	for (; i < __TWS_MAX_SIZE; i++) {
 		if (ROUNDDOWN(e->__ptr_tws[i].virtual_address,
-				PAGE_SIZE*1024) == ROUNDDOWN(virtual_address,PAGE_SIZE*1024)) {
+				PAGE_SIZE*1024) == ROUNDDOWN(virtual_address, PAGE_SIZE*1024)) {
 			env_table_ws_clear_entry(e, i);
 			break;
 		}

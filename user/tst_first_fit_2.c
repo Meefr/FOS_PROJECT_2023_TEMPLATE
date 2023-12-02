@@ -227,7 +227,10 @@ void _main(void) {
 		}
 		//Test two more allocs
 		va = malloc(actualSize);
+		//cprintf("after malloc 1 in test va: %x\n",va);
 		va = malloc(actualSize);
+		//cprintf("hard Limit: %x , address: %x\n",sys_get_hard_limit(),va);
+		//cprintf("3 after 5!\n");
 
 		if (va != NULL) {
 			is_correct = 0;

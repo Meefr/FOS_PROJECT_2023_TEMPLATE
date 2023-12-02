@@ -46,6 +46,7 @@ void _main(void)
 	int freeFrames = sys_calculate_free_frames() ;
 	uint32 actualSize, block_size, expectedSize, blockIndex;
 	int8 block_status;
+
 	//====================================================================//
 	/*INITIAL ALLOC Scenario 1: Try to allocate set of blocks with different sizes*/
 	cprintf("PREREQUISITE#1: Try to allocate set of blocks with different sizes [all should fit]\n\n") ;
@@ -359,26 +360,38 @@ void _main(void)
 		va = malloc(actualSize);
 		//Check returned va
 		expected = startVAs[2*allocCntPerSize];
-		cprintf("5.3.1 exp %x : va %x \n\n",expected,va);
+		//cprintf("5.3.1 exp %x : va %x \n\n",expected,va);
 		if(va == NULL || (va != expected))
 		{
 			is_correct = 0;
 			cprintf("test_free_2 #5.3.1: WRONG ALLOC - alloc_block_FF return wrong address. Expected %x, Actual %x\n", expected, va);
 		}
 		actualSize = 3*kilo/2 ;
-
+//		cprintf("addres of index 1000 %x \n",startVAs[1000]);
+//		cprintf("size of index 1000 %d \n",get_block_size(startVAs[1000]));
+//		cprintf("indx 1000 is free ? %d ",is_free_block(startVAs[1000]));
+//		cprintf("addres of index 1200 %x \n",startVAs[1200]);
+//		cprintf("addres of index 1398 %x \n",startVAs[1398]);
 		//dummy allocation to consume the 1st 1.5 KB free block
 		{
-			va = malloc(actualSize);
+			va = malloc(actualSize/*-sizeOfMetaData()*/);
+			//cprintf(" line 374 va %x \n\n",va);
+
 		}
 		//dummy allocation to consume the 1st 2 KB free block
 		{
 			va = malloc(actualSize);
+			//cprintf(" line 384 va %x \n\n",va);
+
 		}
 		va = malloc(actualSize);
+		//cprintf(" line 388 va %x \n\n",va);
+
+		//cprintf("size of index 1000 %d \n",get_block_size(startVAs[1000]));
+		//cprintf("indx 1000 is free ? %d \n",is_free_block(startVAs[1000]));
 		//Check returned va
 		expected = startVAs[numOfAllocs*allocCntPerSize-2];
-		cprintf("5.3.2 exp %x : va %x \n\n",expected,va);
+		//cprintf("5.3.2 exp %x : va %x \n\n",expected,va);
 		if(va == NULL || (va != expected))
 		{
 			is_correct = 0;
@@ -390,7 +403,7 @@ void _main(void)
 
 		//Check returned va
 		expected = (void*)startVAs[numOfAllocs*allocCntPerSize-2] + 3*kilo/2 + sizeOfMetaData();
-		cprintf("5.3.3 exp %x : va %x \n\n",expected,va);
+		//cprintf("5.3.3 exp %x : va %x \n\n",expected,va);
 		if(va == NULL || (va != expected))
 		{
 			is_correct = 0;

@@ -46,12 +46,12 @@ void* malloc(uint32 size) {
 	//	// Write your code here, remove the panic and write your code
 	//	panic("malloc() is not implemented yet...!!");
 	if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
-		return alloc_block_FF(size);
-//		if (sys_isUHeapPlacementStrategyFIRSTFIT()) {
-//			return alloc_block_FF(size);
-//		} else if (sys_isUHeapPlacementStrategyBESTFIT()) {
-//			return alloc_block_BF(size);
-//		}
+		//return alloc_block_FF(size);
+		if (sys_isUHeapPlacementStrategyFIRSTFIT()) {
+			return alloc_block_FF(size);
+		} else if (sys_isUHeapPlacementStrategyBESTFIT()) {
+			return alloc_block_BF(size);
+		}
 	} else {
 		size = ROUNDUP(size, PAGE_SIZE);
 		if(size > (USER_HEAP_MAX - (sys_get_hard_limit() + PAGE_SIZE)))
@@ -66,8 +66,7 @@ void* malloc(uint32 size) {
 				count = 0;
 			}
 			if (count == number_of_pages) {
-				uint32 checkaddress = (sys_get_hard_limit() + PAGE_SIZE)
-								+ (PAGE_SIZE * i);
+				uint32 checkaddress = (sys_get_hard_limit() + PAGE_SIZE)+ (PAGE_SIZE * i);
 				if(checkaddress >= USER_HEAP_MAX || checkaddress < (sys_get_hard_limit() + PAGE_SIZE))
 					return NULL;
 				i -= (number_of_pages - 1);
