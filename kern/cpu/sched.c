@@ -165,7 +165,7 @@ void sched_init_BSD(uint8 numOfLevels, uint8 quantum)
 	//TODO: [PROJECT'23.MS3 - #4] [2] BSD SCHEDULER - sched_init_BSD
 	//Your code is here
 	//Comment the following line
-	panic("Not implemented yet");
+//	panic("Not implemented yet");
 
 	//=========================================
 	//DON'T CHANGE THESE LINES=================
@@ -173,7 +173,8 @@ void sched_init_BSD(uint8 numOfLevels, uint8 quantum)
 	scheduler_method = SCH_BSD;
 	//=========================================
 	//=========================================
-#endif
+
+	#endif
 }
 
 

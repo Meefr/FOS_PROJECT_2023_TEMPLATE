@@ -361,4 +361,7 @@ uint32 sys_get_hard_limit()
 	//Comment the following line before start coding...
 	//panic("not implemented yet");
 }
-
+void sys_env_set_nice(int nice_value){
+	syscall(SYS_env_set_nice, nice_value, 0, 0, 0, 0);
+	return;
+}
