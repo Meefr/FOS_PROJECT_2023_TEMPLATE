@@ -79,7 +79,6 @@ int allocate_chunk(uint32* page_directory, uint32 va, uint32 size, uint32 perms)
 	panic("allocate_chunk() is not implemented yet...!!");
 	return 0;
 }
-
 //=====================================
 // 5) CALCULATE ALLOCATED SPACE IN RAM:
 //=====================================
@@ -165,19 +164,21 @@ void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size) {
 		unmap_frame(e->env_page_directory, i);
 		pf_remove_env_page(e, i);
 		int index = (i / PAGE_SIZE);
-//		if (wsVM[index] != NULL) {
-//			if (e->page_last_WS_element == wsVM[index]) {
-//				e->page_last_WS_element = LIST_NEXT(wsVM[index]);
-//			}
-//
-//			cprintf("max size in free user mem %x\n",virtual_address);
-//			//cprintf("max size in free user mem after %x\n",e->page_last_WS_element);
-//			LIST_REMOVE(&(e->page_WS_list), wsVM[index]);
-//			kfree(wsVM[index]);
-//			wsVM[index] = NULL;
-//		}
+		if (wsVM[index] != NULL) {
+			if (e->page_last_WS_element == wsVM[index]) {
+				e->page_last_WS_element = LIST_NEXT(wsVM[index]);
+			}
+
+			cprintf("max size in free user mem %x\n",virtual_address);
+			//cprintf("max size in free user mem after %x\n",e->page_last_WS_element);
+			LIST_REMOVE(&(e->page_WS_list), wsVM[index]);
+			kfree(wsVM[index]);
+			wsVM[index] = NULL;
+		}
+
 		cprintf("max size in free user mem %x\n",virtual_address);
-	env_page_ws_invalidate(e, i);
+		//env_page_ws_invalidate(e, i);
+		e->page_WS_list.lh_first=e->page_last_WS_element;
 	}
 	// Write your code here, remove the panic and write your code
 //	panic("free_user_mem() is not implemented yet...!!");

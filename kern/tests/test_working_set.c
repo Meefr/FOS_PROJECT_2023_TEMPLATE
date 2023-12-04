@@ -118,7 +118,7 @@ int sys_check_WS_list(uint32* WS_list_content, int actual_WS_list_size, uint32 l
 	{
 		if(LIST_SIZE(&(env->page_WS_list)) != actual_WS_list_size)
 		{
-			cprintf("inside tst 1\n");
+
 			return WS_list_validation = 0;
 		}
 	}
@@ -127,7 +127,6 @@ int sys_check_WS_list(uint32* WS_list_content, int actual_WS_list_size, uint32 l
 	{
 		if (ROUNDDOWN(env->page_last_WS_element->virtual_address, PAGE_SIZE) != ROUNDDOWN(last_WS_element_content, PAGE_SIZE))
 		{
-			cprintf("inside tst 2\n lastelm %x -- lastcontent%x\n",env->page_last_WS_element->virtual_address,last_WS_element_content);
 			return WS_list_validation = 0;
 		}
 	}
@@ -139,7 +138,7 @@ int sys_check_WS_list(uint32* WS_list_content, int actual_WS_list_size, uint32 l
 		{
 			if (ROUNDDOWN(ptr_WS_element->virtual_address, PAGE_SIZE) != ROUNDDOWN(WS_list_content[idx_WS_list], PAGE_SIZE))
 			{
-				cprintf("inside tst 3\n");
+
 				WS_list_validation = 0;
 				break;
 			}
@@ -161,7 +160,6 @@ int sys_check_WS_list(uint32* WS_list_content, int actual_WS_list_size, uint32 l
 			}
 			if (!found)
 			{
-				cprintf("inside tst 4\n");
 				WS_list_validation = 0;
 				break;
 			}
@@ -183,7 +181,7 @@ int sys_check_WS_list(uint32* WS_list_content, int actual_WS_list_size, uint32 l
 			}
 			if (found)
 			{
-				cprintf("inside tst 5\n");
+
 				WS_list_validation = 0;
 				break;
 			}

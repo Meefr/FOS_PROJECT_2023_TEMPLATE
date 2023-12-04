@@ -157,22 +157,30 @@ void page_fault_handler(struct Env * curenv, uint32 fault_va) {
 					env_page_ws_list_create_element(curenv, fault_va);
 			int index = (fault_va / PAGE_SIZE);
 			wsVM[index] = new_workingset;
-			LIST_INSERT_TAIL(&(curenv->page_WS_list), new_workingset);
-			if (curenv->page_WS_max_size == curenv->page_WS_list.size) {
-				//			cprintf("inside maxSize");
-				curenv->page_last_WS_element = curenv->page_WS_list.lh_first;
-				curenv->page_last_WS_index = 0;
+			if (curenv->page_last_WS_element != NULL) {
+
+				LIST_INSERT_BEFORE(&(curenv->page_WS_list),
+						curenv->page_last_WS_element, new_workingset);
 			} else {
-				//			cprintf("inside last WS = null");
-				curenv->page_last_WS_index++;
-				curenv->page_last_WS_element = NULL;
+				LIST_INSERT_TAIL(&(curenv->page_WS_list), new_workingset);
+				if (curenv->page_WS_max_size == curenv->page_WS_list.size) {
+					//			cprintf("inside maxSize");
+					curenv->page_last_WS_element =
+							curenv->page_WS_list.lh_first;
+					curenv->page_last_WS_index = 0;
+				} else {
+					//			cprintf("inside last WS = null");
+					curenv->page_last_WS_index++;
+					curenv->page_last_WS_element = NULL;
+				}
 			}
 
 			//panic("page_fault_handler().PLACEMENT is not implemented yet...!!");
 
 			//refer to the project presentation and documentation for details
 		} else {
-			cprintf("REPLACEMENT=========================WS Size = %d\n", wsSize );
+			cprintf("REPLACEMENT=========================WS Size = %d\n",
+					wsSize);
 			//refer to the project presentation and documentation for details
 			//TODO: [PROJECT'23.MS3 - #1] [1] PAGE FAULT HANDLER - FIFO Replacement
 			// Write your code here, remove the panic and write your code
@@ -189,8 +197,8 @@ void page_fault_handler(struct Env * curenv, uint32 fault_va) {
 			// get the frame info for this fault address
 			uint32 *pageTable = NULL;
 			struct FrameInfo *frameInfo = get_frame_info(
-					curenv->env_page_directory,
-					 removed_elm->virtual_address, &pageTable);
+					curenv->env_page_directory, removed_elm->virtual_address,
+					&pageTable);
 //			if (frameInfo == NULL) {
 //				cprintf("the frame is = nulllllllllll\n");
 //			}
@@ -199,55 +207,56 @@ void page_fault_handler(struct Env * curenv, uint32 fault_va) {
 
 			if ((page_permissions & PERM_MODIFIED) == PERM_MODIFIED) {
 				// Modified -> then update the disk
-				int ret = pf_update_env_page(curenv, (uint32) removed_elm->virtual_address,
-						frameInfo);
+				int ret = pf_update_env_page(curenv,
+						(uint32) removed_elm->virtual_address, frameInfo);
 				if (ret == 0) {
-				//	cprintf("succ updated in disk\n");
+					//	cprintf("succ updated in disk\n");
 					//cprintf("the frameInfo= %x",frameInfo);
 				} else if (ret == E_NO_PAGE_FILE_SPACE) {
 					cprintf("page file is full\n");
 				}
 			}
 			// delete it from the WS either it was modified or not
-			env_page_ws_invalidate(curenv,
-					  removed_elm->virtual_address);
+			env_page_ws_invalidate(curenv, removed_elm->virtual_address);
 			// now update the empty space in WS with the fault va (placement)
 
-			map_frame(curenv->env_page_directory,frameInfo , fault_va,
+			map_frame(curenv->env_page_directory, frameInfo, fault_va,
 			PERM_WRITEABLE | PERM_USER);
 			int read_page = pf_read_env_page(curenv, (void*) fault_va);
 			if (read_page == E_PAGE_NOT_EXIST_IN_PF) {
 				if (!((fault_va >= USER_HEAP_START && fault_va < USER_HEAP_MAX)
 						|| (fault_va <= USTACKTOP && fault_va > USTACKBOTTOM))) {
-								cprintf("kill at read in placement\n va: %x\n",fault_va);
+					cprintf("kill at read in placement\n va: %x\n", fault_va);
 					unmap_frame(curenv->env_page_directory, fault_va);
 					sched_kill_env(curenv->env_id);
 				}
 			}
-			unmap_frame(curenv->env_page_directory,removed_elm->virtual_address);
+			unmap_frame(curenv->env_page_directory,
+					removed_elm->virtual_address);
+			cprintf("the ref %d", frameInfo->references);
 
 			struct WorkingSetElement* new_workingset =
 					env_page_ws_list_create_element(curenv, fault_va);
 			int index = (fault_va / PAGE_SIZE);
 			wsVM[index] = new_workingset;
-			if(curenv->page_last_WS_element==NULL){
+			if (curenv->page_last_WS_element == NULL) {
 				cprintf("inside null\n");
 				LIST_INSERT_TAIL(&(curenv->page_WS_list), new_workingset);
-				curenv->page_last_WS_element=curenv->page_WS_list.lh_first;
-			}
-			else if(curenv->page_last_WS_element!=NULL){
-		//		cprintf("inside last!=null %xlast %x\n",frameInfo,curenv->page_last_WS_element);
-				LIST_INSERT_BEFORE(&(curenv->page_WS_list),curenv->page_last_WS_element ,new_workingset);
+				curenv->page_last_WS_element = curenv->page_WS_list.lh_first;
+			} else if (curenv->page_last_WS_element != NULL) {
+				//		cprintf("inside last!=null %xlast %x\n",frameInfo,curenv->page_last_WS_element);
+				LIST_INSERT_BEFORE(&(curenv->page_WS_list),
+						curenv->page_last_WS_element, new_workingset);
 			}
 			if (curenv->page_WS_max_size == curenv->page_WS_list.size) {
-							cprintf("inside maxSize");
+				cprintf("inside maxSize");
 //				curenv->page_last_WS_element = curenv->page_WS_list.lh_first;
 //				curenv->page_last_WS_index = 0;
 
 			} else {
 				//	cprintf("inside last WS = null");
-				curenv->page_last_WS_index++;
-				curenv->page_last_WS_element = NULL;
+//				curenv->page_last_WS_index++;
+//				curenv->page_last_WS_element = NULL;
 			}
 			env_page_ws_print(curenv);
 		}
