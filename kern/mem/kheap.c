@@ -100,6 +100,10 @@ void* sbrk(int increment) {
 //		segmentbrk -= ((increment / PAGE_SIZE) * PAGE_SIZE);
 		return (void*) segmentbrk;
 	}
+	else if(segmentbrk+increment>hLimit) {
+				cprintf("segmentbrk=%d and hlimit=%d",segmentbrk,hLimit);
+				panic("in sbrk func increment>0");
+			}
 	return (void*) -1;
 
 }

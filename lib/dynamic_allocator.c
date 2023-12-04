@@ -107,7 +107,11 @@ void *alloc_block_FF(uint32 size) {
 	//TODO: [PROJECT'23.MS1 - #6] [3] DYNAMIC ALLOCATOR - alloc_block_FF()
 	//	panic("alloc_block_FF is not implemented yet");
 	if (size == 0)
-		return NULL;
+		{
+			cprintf("size = zero");
+			return NULL;
+		}
+
 	// code update for MS2
 	if (!is_initialized) {
 		uint32 required_size = size + sizeOfMetaData();
@@ -142,9 +146,10 @@ void *alloc_block_FF(uint32 size) {
 				blk->is_free = 1;
 
 //				cprintf("blk: %x\ntmp: %x\n", blk, tmpBlk);
-				LIST_INSERT_AFTER(&memBlocks, tmpBlk, blk);
+				LIST_INSERT_AFTER(&memBlocks, tmpBlk,blk);
 				tmpBlk->size = size + sizeOfMetaData();
 				tmpBlk->is_free = 0;
+
 //				cprintf("  allco va if split : %x \n",((struct BlockMetaData *) ((uint32) tmpBlk
 //						+ sizeOfMetaData())));
 //				cprintf("else %x\n",((uint32) tmpBlk + sizeOfMetaData()));
@@ -266,7 +271,7 @@ void *alloc_block_NF(uint32 size) {
 void free_block(void *va) {
 	//TODO: [PROJECT'23.MS1 - #7] [3] DYNAMIC ALLOCATOR - free_block()
 	//	panic("free_block is not implemented yet");
-	struct BlockMetaData *ptr = ((struct BlockMetaData *) va - 1);
+	struct BlockMetaData *ptr = ((struct BlockMetaData *) va- 1);
 	struct BlockMetaData * next = ptr->prev_next_info.le_next;
 	struct BlockMetaData * prev = ptr->prev_next_info.le_prev;
 	if (ptr == NULL)
