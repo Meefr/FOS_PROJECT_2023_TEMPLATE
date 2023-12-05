@@ -36,6 +36,7 @@ inline struct WorkingSetElement* env_page_ws_list_create_element(struct Env* e,
 
 inline void env_page_ws_invalidate(struct Env* e, uint32 virtual_address) {
 	if (isPageReplacmentAlgorithmLRU(PG_REP_LRU_LISTS_APPROX)) {
+		cprintf("here in lru invalidate");
 		bool found = 0;
 		struct WorkingSetElement *ptr_WS_element = NULL;
 		LIST_FOREACH(ptr_WS_element, &(e->ActiveList))
@@ -76,6 +77,7 @@ inline void env_page_ws_invalidate(struct Env* e, uint32 virtual_address) {
 			}
 		}
 	} else {
+		cprintf("here in fifo invalidate");
 		struct WorkingSetElement *wse;
 		LIST_FOREACH(wse, &(e->page_WS_list))
 		{
