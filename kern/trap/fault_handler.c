@@ -255,8 +255,26 @@ void page_fault_handler(struct Env * curenv, uint32 fault_va) {
 		if (isPageReplacmentAlgorithmLRU(PG_REP_LRU_LISTS_APPROX)) {
 			//TODO: [PROJECT'23.MS3 - #2] [1] PAGE FAULT HANDLER - LRU Replacement
 			// Write your code here, remove the panic and write your code
-			panic(
-					"page_fault_handler() LRU Replacement is not implemented yet...!!");
+			//panic("page_fault_handler() LRU Replacement is not implemented yet...!!");
+			int active_list_size = curenv->ActiveList.size;
+			int second_list_size = curenv->SecondList.size;
+
+			if (active_list_size + second_list_size < curenv->page_WS_max_size) {
+				// Placement
+				if(active_list_size >= curenv->ActiveListSize) {
+					// FIFO
+				} else {
+					// Add new element in ActiveList
+					struct FrameInfo* frame;
+					allocate_frame(&frame);
+
+				}
+
+
+			} else {
+				// Replacement
+			}
+
 
 			//TODO: [PROJECT'23.MS3 - BONUS] [1] PAGE FAULT HANDLER - O(1) implementation of LRU replacement
 		}
