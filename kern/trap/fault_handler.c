@@ -270,29 +270,51 @@ void page_fault_handler(struct Env * curenv, uint32 fault_va) {
 
 			if (active_list_size + second_list_size < curenv->page_WS_max_size) {
 				// Placement
-				if(active_list_size >= curenv->ActiveListSize) {
+				struct FrameInfo* frame;
+				allocate_frame(&frame);
+				map_frame(curenv->env_page_directory, frame, fault_va,
+				PERM_WRITEABLE | PERM_USER);
+				int read_page = pf_read_env_page(curenv, (void*) fault_va);
+				if (read_page == E_PAGE_NOT_EXIST_IN_PF) {
+					//int update = pf_update_env_page(curenv, fault_va, frame);
+					//			if ((fault_va<USER_HEAP_START&&fault_va>=USER_HEAP_MAX)||(fault_va<=USTACKBOTTOM&&fault_va>USTACKTOP)) {
+					//			if ((fault_va < USER_HEAP_START || fault_va > USTACKTOP)) {
+					if (!((fault_va >= USER_HEAP_START && fault_va < USER_HEAP_MAX)
+							|| (fault_va <= USTACKTOP && fault_va > USTACKBOTTOM))) {
+						//			cprintf("kill at read in placement\n va: %x\n",fault_va);
+						unmap_frame(curenv->env_page_directory, fault_va);
+						sched_kill_env(curenv->env_id);
+					}
+				}
+				struct WorkingSetElement* new_workingset =
+						env_page_ws_list_create_element(curenv, fault_va);
+
+				if(active_list_size == curenv->ActiveListSize) {
 					// FIFO and use SecondList
+
+					/*if (curenv->page_last_WS_element != NULL) {
+
+						LIST_INSERT_BEFORE(&(curenv->SecondList),
+								curenv->page_last_WS_element, new_workingset);
+					} else {
+						LIST_INSERT_TAIL(&(curenv->SecondList), new_workingset);
+						if (curenv->SecondListSize == curenv->SecondList.size) {
+							//			cprintf("inside maxSize");
+							curenv->page_last_WS_element =
+									curenv->page_WS_list.lh_first;
+							curenv->page_last_WS_index = 0;
+						} else {
+							//			cprintf("inside last WS = null");
+							curenv->page_last_WS_index++;
+							curenv->page_last_WS_element = NULL;
+						}
+						curenv->page_last_WS_element = NULL;
+						curenv->page_last_WS_index++;
+					}*/
 
 				} else {
 					// Add new element in ActiveList
-					struct FrameInfo* frame;
-					allocate_frame(&frame);
-					map_frame(curenv->env_page_directory, frame, fault_va,
-					PERM_WRITEABLE | PERM_USER);
-					int read_page = pf_read_env_page(curenv, (void*) fault_va);
-					if (read_page == E_PAGE_NOT_EXIST_IN_PF) {
-						//int update = pf_update_env_page(curenv, fault_va, frame);
-						//			if ((fault_va<USER_HEAP_START&&fault_va>=USER_HEAP_MAX)||(fault_va<=USTACKBOTTOM&&fault_va>USTACKTOP)) {
-						//			if ((fault_va < USER_HEAP_START || fault_va > USTACKTOP)) {
-						if (!((fault_va >= USER_HEAP_START && fault_va < USER_HEAP_MAX)
-								|| (fault_va <= USTACKTOP && fault_va > USTACKBOTTOM))) {
-							//			cprintf("kill at read in placement\n va: %x\n",fault_va);
-							unmap_frame(curenv->env_page_directory, fault_va);
-							sched_kill_env(curenv->env_id);
-						}
-					}
-					struct WorkingSetElement* new_workingset =
-							env_page_ws_list_create_element(curenv, fault_va);
+
 					//int index = (fault_va / PAGE_SIZE);
 					//wsVM[index] = new_workingset;
 					if (curenv->page_last_WS_element != NULL) {
@@ -301,15 +323,8 @@ void page_fault_handler(struct Env * curenv, uint32 fault_va) {
 								curenv->page_last_WS_element, new_workingset);
 					} else {
 						LIST_INSERT_TAIL(&(curenv->ActiveList), new_workingset);
-						if (curenv->ActiveListSize == curenv->ActiveList.size) {
-							//			cprintf("inside maxSize");
-							curenv->page_last_WS_element = curenv->SecondList.lh_first;
-							curenv->page_last_WS_index = 0;
-						} else {
-							//			cprintf("inside last WS = null");
-							curenv->page_last_WS_index++;
-							curenv->page_last_WS_element = NULL;
-						}
+						curenv->page_last_WS_element = NULL;
+						curenv->page_last_WS_index++;
 					}
 
 				}
