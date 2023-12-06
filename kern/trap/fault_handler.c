@@ -270,6 +270,7 @@ void page_fault_handler(struct Env * curenv, uint32 fault_va) {
 
 			if (active_list_size + second_list_size < curenv->page_WS_max_size) {
 				// Placement
+
 				struct FrameInfo* frame;
 				allocate_frame(&frame);
 				map_frame(curenv->env_page_directory, frame, fault_va,
@@ -292,7 +293,7 @@ void page_fault_handler(struct Env * curenv, uint32 fault_va) {
 				if(active_list_size == curenv->ActiveListSize) {
 					// FIFO and use SecondList
 
-					/*if (curenv->page_last_WS_element != NULL) {
+					if (curenv->page_last_WS_element != NULL) {
 
 						LIST_INSERT_BEFORE(&(curenv->SecondList),
 								curenv->page_last_WS_element, new_workingset);
@@ -301,16 +302,14 @@ void page_fault_handler(struct Env * curenv, uint32 fault_va) {
 						if (curenv->SecondListSize == curenv->SecondList.size) {
 							//			cprintf("inside maxSize");
 							curenv->page_last_WS_element =
-									curenv->page_WS_list.lh_first;
-							curenv->page_last_WS_index = 0;
+									curenv->SecondList.lh_first;
+							curenv->page_last_WS_index = curenv->ActiveListSize;
 						} else {
 							//			cprintf("inside last WS = null");
 							curenv->page_last_WS_index++;
 							curenv->page_last_WS_element = NULL;
 						}
-						curenv->page_last_WS_element = NULL;
-						curenv->page_last_WS_index++;
-					}*/
+					}
 
 				} else {
 					// Add new element in ActiveList
