@@ -46,4 +46,6 @@ void enqueue(struct Env_Queue* queue, struct Env* env);
 struct Env* dequeue(struct Env_Queue* queue);
 struct Env* find_env_in_queue(struct Env_Queue* queue, uint32 envID);
 void remove_from_queue(struct Env_Queue* queue, struct Env* e);
+int load_avg;
+
 #endif	// !FOS_KERN_SCHED_HELPERS_H
