@@ -9,10 +9,21 @@
 #include <kern/tests/utilities.h>
 #include <kern/cmd/command_prompt.h>
 
-
-uint32 isSchedMethodRR(){if(scheduler_method == SCH_RR) return 1; return 0;}
-uint32 isSchedMethodMLFQ(){if(scheduler_method == SCH_MLFQ) return 1; return 0;}
-uint32 isSchedMethodBSD(){if(scheduler_method == SCH_BSD) return 1; return 0;}
+uint32 isSchedMethodRR() {
+	if (scheduler_method == SCH_RR)
+		return 1;
+	return 0;
+}
+uint32 isSchedMethodMLFQ() {
+	if (scheduler_method == SCH_MLFQ)
+		return 1;
+	return 0;
+}
+uint32 isSchedMethodBSD() {
+	if (scheduler_method == SCH_BSD)
+		return 1;
+	return 0;
+}
 
 //===================================================================================//
 //============================ SCHEDULER FUNCTIONS ==================================//
@@ -21,8 +32,7 @@ uint32 isSchedMethodBSD(){if(scheduler_method == SCH_BSD) return 1; return 0;}
 //===================================
 // [1] Default Scheduler Initializer:
 //===================================
-void sched_init()
-{
+void sched_init() {
 	old_pf_counter = 0;
 
 	sched_init_RR(INIT_QUANTUM_IN_MS);
@@ -35,9 +45,7 @@ void sched_init()
 //=========================
 // [2] Main FOS Scheduler:
 //=========================
-void
-fos_scheduler(void)
-{
+void fos_scheduler(void) {
 	//	cprintf("inside scheduler\n");
 
 	chk1();
@@ -46,8 +54,7 @@ fos_scheduler(void)
 	//This variable should be set to the next environment to be run (if any)
 	struct Env* next_env = NULL;
 
-	if (scheduler_method == SCH_RR)
-	{
+	if (scheduler_method == SCH_RR) {
 		// Implement simple round-robin scheduling.
 		// Pick next environment from the ready queue,
 		// and switch to such environment if found.
@@ -55,8 +62,7 @@ fos_scheduler(void)
 		// is runnable.
 
 		//If the curenv is still exist, then insert it again in the ready queue
-		if (curenv != NULL)
-		{
+		if (curenv != NULL) {
 			enqueue(&(env_ready_queues[0]), curenv);
 		}
 
@@ -69,32 +75,25 @@ fos_scheduler(void)
 		//uint16 cnt0 = kclock_read_cnt0_latch() ;
 		//cprintf("CLOCK INTERRUPT AFTER RESET: Counter0 Value = %d\n", cnt0 );
 
-	}
-	else if (scheduler_method == SCH_MLFQ)
-	{
+	} else if (scheduler_method == SCH_MLFQ) {
 		next_env = fos_scheduler_MLFQ();
-	}
-	else if (scheduler_method == SCH_BSD)
-	{
+	} else if (scheduler_method == SCH_BSD) {
 		next_env = fos_scheduler_BSD();
 	}
 	//temporarily set the curenv by the next env JUST for checking the scheduler
 	//Then: reset it again
 	struct Env* old_curenv = curenv;
-	curenv = next_env ;
-	chk2(next_env) ;
+	curenv = next_env;
+	chk2(next_env);
 	curenv = old_curenv;
 
 	//sched_print_all();
 
-	if(next_env != NULL)
-	{
+	if (next_env != NULL) {
 		//		cprintf("\nScheduler select program '%s' [%d]... counter = %d\n", next_env->prog_name, next_env->env_id, kclock_read_cnt0());
 		//		cprintf("Q0 = %d, Q1 = %d, Q2 = %d, Q3 = %d\n", queue_size(&(env_ready_queues[0])), queue_size(&(env_ready_queues[1])), queue_size(&(env_ready_queues[2])), queue_size(&(env_ready_queues[3])));
 		env_run(next_env);
-	}
-	else
-	{
+	} else {
 		/*2015*///No more envs... curenv doesn't exist any more! return back to command prompt
 		curenv = NULL;
 		//lcr3(K_PHYSICAL_ADDRESS(ptr_page_directory));
@@ -113,15 +112,14 @@ fos_scheduler(void)
 //=============================
 // [3] Initialize RR Scheduler:
 //=============================
-void sched_init_RR(uint8 quantum)
-{
+void sched_init_RR(uint8 quantum) {
 
 	// Create 1 ready queue for the RR
 	num_of_ready_queues = 1;
 #if USE_KHEAP
 	sched_delete_ready_queues();
 	env_ready_queues = kmalloc(sizeof(struct Env_Queue));
-	quantums = kmalloc(num_of_ready_queues * sizeof(uint8)) ;
+	quantums = kmalloc(num_of_ready_queues * sizeof(uint8));
 #endif
 	quantums[0] = quantum;
 	kclock_set_quantum(quantums[0]);
@@ -138,8 +136,7 @@ void sched_init_RR(uint8 quantum)
 //===============================
 // [4] Initialize MLFQ Scheduler:
 //===============================
-void sched_init_MLFQ(uint8 numOfLevels, uint8 *quantumOfEachLevel)
-{
+void sched_init_MLFQ(uint8 numOfLevels, uint8 *quantumOfEachLevel) {
 #if USE_KHEAP
 	//=========================================
 	//DON'T CHANGE THESE LINES=================
@@ -159,13 +156,23 @@ void sched_init_MLFQ(uint8 numOfLevels, uint8 *quantumOfEachLevel)
 //===============================
 // [5] Initialize BSD Scheduler:
 //===============================
-void sched_init_BSD(uint8 numOfLevels, uint8 quantum)
-{
+void sched_init_BSD(uint8 numOfLevels, uint8 quantum) {
 #if USE_KHEAP
 	//TODO: [PROJECT'23.MS3 - #4] [2] BSD SCHEDULER - sched_init_BSD
 	//Your code is here
 	//Comment the following line
-//	panic("Not implemented yet");
+
+	//panic("Not implemented yet");
+
+	num_of_ready_queues = numOfLevels;
+	env_ready_queues = kmalloc(sizeof(struct Env_Queue) * numOfLevels);
+	quantums = kmalloc(num_of_ready_queues * sizeof(uint8));
+
+	for (int i = 0; i < numOfLevels; i++) {
+		quantums[i] = quantum;
+		kclock_set_quantum(quantums[i]);
+		init_queue(&(env_ready_queues[i]));
+	}
 
 	//=========================================
 	//DON'T CHANGE THESE LINES=================
@@ -177,12 +184,10 @@ void sched_init_BSD(uint8 numOfLevels, uint8 quantum)
 	#endif
 }
 
-
 //=========================
 // [6] MLFQ Scheduler:
 //=========================
-struct Env* fos_scheduler_MLFQ()
-{
+struct Env* fos_scheduler_MLFQ() {
 	panic("not implemented");
 	return NULL;
 }
@@ -190,12 +195,24 @@ struct Env* fos_scheduler_MLFQ()
 //=========================
 // [7] BSD Scheduler:
 //=========================
-struct Env* fos_scheduler_BSD()
-{
+struct Env* fos_scheduler_BSD() {
 	//TODO: [PROJECT'23.MS3 - #5] [2] BSD SCHEDULER - fos_scheduler_BSD
 	//Your code is here
 	//Comment the following line
-	panic("Not implemented yet");
+	//panic("Not implemented yet");
+	struct Env* next_Env;
+	struct Env* tmp;
+//	LIST_FOREACH(tmp , &env_ready_queues){
+//		//tmp->
+//	}
+	for (int i = 0; i < env_ready_queues->size; i++) {
+		if (/*env_ready_queues[i] != NULL || */env_ready_queues->size == 0) {
+			cprintf("1\n");
+			next_Env = dequeue(&(env_ready_queues[i]));
+			kclock_set_quantum(quantums[i]);
+			return next_Env;
+		}
+	}
 	return NULL;
 }
 
@@ -203,23 +220,39 @@ struct Env* fos_scheduler_BSD()
 // [8] Clock Interrupt Handler
 //	  (Automatically Called Every Quantum)
 //========================================
-void clock_interrupt_handler()
-{
+void clock_interrupt_handler() {
 	//TODO: [PROJECT'23.MS3 - #5] [2] BSD SCHEDULER - Your code is here
 	{
+		int64 time = timer_ticks();
+//		if(quantums[0]!= NULL)
+		int num_of_ticks_perSecond = (1000 / quantums[0]);
 
+		if (/*seconds*/time != 0 && time % num_of_ticks_perSecond == 0) {
+			for (int i = 0; i < env_ready_queues->size; i++) {
+				for (int j = 0; j < env_ready_queues[i].size; j++) {
+					// update load avg & all recent cpu
 
+				}
+			}
+		}
+		if (/*4 ticks*/time % 4 == 0 && time != 0) {
+			for (int i = 0; i < env_ready_queues->size; i++) {
+				for (int j = 0; j < env_ready_queues[i].size; j++) {
+					// update priority
+				}
+			}
+		}
+		/* every tick */
+		// update recent cpu for the running processes
 
 	}
-
 
 	/********DON'T CHANGE THIS LINE***********/
-	ticks++ ;
-	if(isPageReplacmentAlgorithmLRU(PG_REP_LRU_TIME_APPROX))
-	{
+	ticks++;
+	if (isPageReplacmentAlgorithmLRU(PG_REP_LRU_TIME_APPROX)) {
 		update_WS_time_stamps();
 	}
-	//cprintf("Clock Handler\n") ;
+//cprintf("Clock Handler\n") ;
 	fos_scheduler();
 	/*****************************************/
 }
@@ -228,60 +261,56 @@ void clock_interrupt_handler()
 // [9] Update LRU Timestamp of WS Elements
 //	  (Automatically Called Every Quantum in case of LRU Time Approx)
 //===================================================================
-void update_WS_time_stamps()
-{
+void update_WS_time_stamps() {
 	struct Env *curr_env_ptr = curenv;
 
-	if(curr_env_ptr != NULL)
-	{
-		struct WorkingSetElement* wse ;
+	if (curr_env_ptr != NULL) {
+		struct WorkingSetElement* wse;
 		{
-			int i ;
+			int i;
 #if USE_KHEAP
 			LIST_FOREACH(wse, &(curr_env_ptr->page_WS_list))
 			{
 #else
-			for (i = 0 ; i < (curr_env_ptr->page_WS_max_size); i++)
-			{
-				wse = &(curr_env_ptr->ptr_pageWorkingSet[i]);
-				if( wse->empty == 1)
+				for (i = 0; i < (curr_env_ptr->page_WS_max_size); i++)
+				{
+					wse = &(curr_env_ptr->ptr_pageWorkingSet[i]);
+					if( wse->empty == 1)
 					continue;
 #endif
 				//update the time if the page was referenced
-				uint32 page_va = wse->virtual_address ;
-				uint32 perm = pt_get_page_permissions(curr_env_ptr->env_page_directory, page_va) ;
+				uint32 page_va = wse->virtual_address;
+				uint32 perm = pt_get_page_permissions(
+						curr_env_ptr->env_page_directory, page_va);
 				uint32 oldTimeStamp = wse->time_stamp;
 
-				if (perm & PERM_USED)
-				{
-					wse->time_stamp = (oldTimeStamp>>2) | 0x80000000;
-					pt_set_page_permissions(curr_env_ptr->env_page_directory, page_va, 0 , PERM_USED) ;
-				}
-				else
-				{
-					wse->time_stamp = (oldTimeStamp>>2);
+				if (perm & PERM_USED) {
+					wse->time_stamp = (oldTimeStamp >> 2) | 0x80000000;
+					pt_set_page_permissions(curr_env_ptr->env_page_directory,
+							page_va, 0, PERM_USED);
+				} else {
+					wse->time_stamp = (oldTimeStamp >> 2);
 				}
 			}
 		}
 
 		{
-			int t ;
-			for (t = 0 ; t < __TWS_MAX_SIZE; t++)
-			{
-				if( curr_env_ptr->__ptr_tws[t].empty != 1)
-				{
+			int t;
+			for (t = 0; t < __TWS_MAX_SIZE; t++) {
+				if (curr_env_ptr->__ptr_tws[t].empty != 1) {
 					//update the time if the page was referenced
 					uint32 table_va = curr_env_ptr->__ptr_tws[t].virtual_address;
 					uint32 oldTimeStamp = curr_env_ptr->__ptr_tws[t].time_stamp;
 
-					if (pd_is_table_used(curr_env_ptr->env_page_directory, table_va))
-					{
-						curr_env_ptr->__ptr_tws[t].time_stamp = (oldTimeStamp>>2) | 0x80000000;
-						pd_set_table_unused(curr_env_ptr->env_page_directory, table_va);
-					}
-					else
-					{
-						curr_env_ptr->__ptr_tws[t].time_stamp = (oldTimeStamp>>2);
+					if (pd_is_table_used(curr_env_ptr->env_page_directory,
+							table_va)) {
+						curr_env_ptr->__ptr_tws[t].time_stamp = (oldTimeStamp
+								>> 2) | 0x80000000;
+						pd_set_table_unused(curr_env_ptr->env_page_directory,
+								table_va);
+					} else {
+						curr_env_ptr->__ptr_tws[t].time_stamp = (oldTimeStamp
+								>> 2);
 					}
 				}
 			}

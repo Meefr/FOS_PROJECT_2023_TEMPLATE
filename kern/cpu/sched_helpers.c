@@ -9,8 +9,6 @@
 #include <kern/tests/utilities.h>
 #include <kern/cmd/command_prompt.h>
 
-int load_avg;
-
 //void on_clock_update_WS_time_stamps();
 extern void cleanup_buffers(struct Env* e);
 //================
@@ -487,6 +485,7 @@ void env_set_nice(struct Env* e, int nice_value) {
 	PRI_MAX - (env_get_recent_cpu(e) / 4) - (nice_value * 2);
 	e->priority = pri;
 	e->nice = nice_value;
+
 }
 int env_get_recent_cpu(struct Env* e) {
 	//TODO: [PROJECT'23.MS3 - #3] [2] BSD SCHEDULER - env_get_recent_cpu
@@ -499,6 +498,7 @@ int env_get_recent_cpu(struct Env* e) {
 	 */
 	int recent_cpu = fix_round(fix_scale(fix_int(e->recent_cpu), 100));
 	return recent_cpu;
+
 }
 int get_load_average() {
 	//TODO: [PROJECT'23.MS3 - #3] [2] BSD SCHEDULER - get_load_average
@@ -511,6 +511,7 @@ int get_load_average() {
 	 */
 	int lAvg = fix_round(fix_scale(fix_int(load_avg), 100));
 	return lAvg;
+
 }
 /********* for BSD Priority Scheduler *************/
 //==================================================================================//
