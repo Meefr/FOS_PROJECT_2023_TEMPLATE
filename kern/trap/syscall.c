@@ -534,7 +534,10 @@ void* sys_sbrk(int increment) {
 uint32 sys_get_hard_limit() {
 	return syscall(SYS_get_hard_limit, 0, 0, 0, 0, 0);
 }
-
+void sys_env_set_nice(int nice_value){
+	syscall(SYS_env_set_nice, nice_value, 0, 0, 0, 0);
+	return;
+}
 /**************************************************************************/
 /************************* SYSTEM CALLS HANDLER ***************************/
 /**************************************************************************/
@@ -549,6 +552,10 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4,
 	//=====================================================================
 	case SYS_get_hard_limit:
 		return curenv->hardLimit;
+		break;
+	case SYS_env_set_nice:
+		env_set_nice(curenv,(int)a1);
+		return 0;
 		break;
 	case SYS_sbrk:
 		return (uint32) sys_sbrk(a1);

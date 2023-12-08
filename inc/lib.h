@@ -67,6 +67,7 @@ void 	sys_scarce_memory();
 /*2024*/ //Dynamic Allocator
 void* 	sys_sbrk(int increment);
 uint32 sys_get_hard_limit();
+void sys_env_set_nice(int);
 //******************
 
 //User Heap
