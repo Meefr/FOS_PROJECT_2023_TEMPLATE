@@ -25,13 +25,14 @@ int sys_check_LRU_lists(uint32* active_list_content, uint32* second_list_content
 		{
 			if (ROUNDDOWN(ptr_WS_element->virtual_address, PAGE_SIZE) != ROUNDDOWN(active_list_content[idx_active_list], PAGE_SIZE))
 			{
+				cprintf("test1\n");
 				active_list_validation = 0;
 				break;
 			}
 			idx_active_list++;
 		}
 		if(LIST_SIZE(&env->ActiveList) != actual_active_list_size)
-		{
+		{	cprintf("test2\n");
 			active_list_validation = 0;
 
 		}
@@ -44,14 +45,16 @@ int sys_check_LRU_lists(uint32* active_list_content, uint32* second_list_content
 		LIST_FOREACH(ptr_WS_element, &(env->SecondList))
 		{
 			if (ROUNDDOWN(ptr_WS_element->virtual_address, PAGE_SIZE) != ROUNDDOWN(second_list_content[idx_second_list], PAGE_SIZE))
-			{
+			{cprintf("test3\n");
 				second_list_validation = 0;
 				break;
 			}
 			idx_second_list++;
 		}
-		if(LIST_SIZE(&env->SecondList) != actual_second_list_size)
+		if(LIST_SIZE(&env->SecondList) != actual_second_list_size){
+			cprintf("test4  my size:%d actual size%d\n",LIST_SIZE(&env->ActiveList),actual_active_list_size);
 			second_list_validation = 0;
+		}
 	}
 	return active_list_validation&second_list_validation;
 }
