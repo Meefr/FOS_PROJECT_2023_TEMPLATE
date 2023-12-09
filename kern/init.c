@@ -69,8 +69,8 @@ void FOS_initialize()
 	//setPageReplacmentAlgorithmFIFO();
 	//setPageReplacmentAlgorithmLRU(PG_REP_LRU_TIME_APPROX);
 
-	//setPageReplacmentAlgorithmFIFO();
-	setPageReplacmentAlgorithmLRU(PG_REP_LRU_LISTS_APPROX);
+	setPageReplacmentAlgorithmFIFO();
+	//setPageReplacmentAlgorithmLRU(PG_REP_LRU_LISTS_APPROX);
 
 	setUHeapPlacementStrategyFIRSTFIT();
 	setKHeapPlacementStrategyFIRSTFIT();

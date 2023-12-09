@@ -169,14 +169,14 @@ void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size) {
 				e->page_last_WS_element = LIST_NEXT(wsVM[index]);
 			}
 
-			cprintf("max size in free user mem %x\n",virtual_address);
+			//cprintf("max size in free user mem %x\n",virtual_address);
 			//cprintf("max size in free user mem after %x\n",e->page_last_WS_element);
 			LIST_REMOVE(&(e->page_WS_list), wsVM[index]);
 			kfree(wsVM[index]);
 			wsVM[index] = NULL;
 		}
 
-		cprintf("max size in free user mem %x\n",virtual_address);
+		//cprintf("max size in free user mem %x\n",virtual_address);
 		//env_page_ws_invalidate(e, i);
 		e->page_WS_list.lh_first=e->page_last_WS_element;
 	}
