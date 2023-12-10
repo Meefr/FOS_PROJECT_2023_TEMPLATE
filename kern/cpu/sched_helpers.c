@@ -509,7 +509,7 @@ int get_load_average() {
 	 * Returns 100 times the current system load average,
 	 * rounded to the nearest integer.
 	 */
-	int lAvg = fix_round(fix_scale(fix_int(load_avg), 100));
+	int lAvg = fix_round(fix_scale(load_avg, 100));
 	return lAvg;
 
 }
