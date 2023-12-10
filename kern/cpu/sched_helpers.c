@@ -484,6 +484,38 @@ void env_set_nice(struct Env* e, int nice_value) {
 	int pri =
 	PRI_MAX - (env_get_recent_cpu(e) / 4) - (nice_value * 2);
 	e->priority = pri;
+	int num_of_processes_per_queue = (PRI_MAX / num_of_ready_queues);
+
+	for (int i = 0; i < num_of_ready_queues; i++){
+		struct Env* env;
+		env = find_env_in_queue(&env_ready_queues[i], e->env_id);
+		if(env != NULL){
+			remove_from_queue(&env_ready_queues[i],env);
+			break;
+		}
+	}
+
+	for (int j = 0; j < num_of_ready_queues - 1; j++) {
+		if (j != 0) {
+			if (e->priority >= (j * num_of_processes_per_queue) + 1
+					&& e->priority
+							<= ((j + 1) * num_of_processes_per_queue)) {
+				enqueue(&env_ready_queues[j], e);
+				break;
+			} else if (j == num_of_ready_queues - 2) {
+				enqueue(&env_ready_queues[j + 1], e);
+				break;
+			}
+		} else {
+			if (e->priority >= (j * num_of_processes_per_queue)
+					&& e->priority
+							<= ((j + 1) * num_of_processes_per_queue)) {
+				enqueue(&env_ready_queues[j], e);
+				break;
+			}
+		}
+
+	}
 	e->nice = nice_value;
 
 }
