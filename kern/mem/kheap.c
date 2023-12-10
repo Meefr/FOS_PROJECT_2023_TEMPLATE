@@ -101,7 +101,7 @@ void* sbrk(int increment) {
 		return (void*) segmentbrk;
 	}
 	else if(segmentbrk+increment>hLimit) {
-				cprintf("segmentbrk=%d and hlimit=%d",segmentbrk,hLimit);
+				//cprintf("segmentbrk=%d and hlimit=%d",segmentbrk,hLimit);
 				panic("in sbrk func increment>0");
 			}
 	return (void*) -1;

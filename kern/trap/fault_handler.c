@@ -128,6 +128,7 @@ void page_fault_handler(struct Env * curenv, uint32 fault_va) {
 #endif
 
 //	cprintf("ws size : %d \n max %d\n",wsSize,curenv->page_WS_max_size);
+	fault_va= ROUNDDOWN(fault_va,PAGE_SIZE);
 
 	if (isPageReplacmentAlgorithmFIFO()) {
 
@@ -264,7 +265,7 @@ void page_fault_handler(struct Env * curenv, uint32 fault_va) {
 			int activeMaxSize = curenv->ActiveListSize;
 			int secondMaxSize = curenv->SecondListSize;
 			// create the elm
-			fault_va= ROUNDDOWN(fault_va,PAGE_SIZE);
+
 			struct WorkingSetElement* new_workingset =
 					env_page_ws_list_create_element(curenv, fault_va);
 			int index = (fault_va / PAGE_SIZE);
@@ -385,8 +386,8 @@ void page_fault_handler(struct Env * curenv, uint32 fault_va) {
 							== elm->virtual_address) {
 						found = 1;
 						break;
-					}// else
-						//continue;
+					} else
+						continue;
 				}
 
 				if (found) {
