@@ -449,9 +449,38 @@ void env_free(struct Env *e)
 	//TODO: [PROJECT'23.MS3 - BONUS] EXIT ENV: env_free
 	// your code is here, remove the panic and write your code
 	{
-		panic("env_free() is not implemented yet...!!");
+		//panic("env_free() is not implemented yet...!!");
 
+		// Remove all pages in the workingSets
+		struct WorkingSetElement* workingset;
+		LIST_FOREACH(workingset, e->page_WS_list) {
+			env_page_ws_invalidate(e, workingset->virtual_address);
+		}
 
+		LIST_FOREACH(workingset, e->ActiveList) {
+			env_page_ws_invalidate(e, workingset->virtual_address);
+		}
+
+		LIST_FOREACH(workingset, e->SecondList) {
+			env_page_ws_invalidate(e, workingset->virtual_address);
+		}
+
+		// Remove all pages from the virtual memory
+
+		for(int i = 0; i < numofVmem; i++) {
+			if(vMem[i] != 0) {
+				pd_clear_page_dir_entry(e->env_page_directory, vMem[i]);
+			}
+		}
+
+		// Remove workingSet itself
+
+		kfree(e->page_WS_list);
+		kfree(e->ActiveList);
+		kfree(e->SecondList);
+
+		// Remove directory
+		kfree(e->env_page_directory);
 
 
 
