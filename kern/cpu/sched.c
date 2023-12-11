@@ -166,14 +166,13 @@ void sched_init_BSD(uint8 numOfLevels, uint8 quantum) {
 
 	num_of_ready_queues = numOfLevels;
 	env_ready_queues = kmalloc(sizeof(struct Env_Queue) * numOfLevels);
-	quantums = kmalloc(num_of_ready_queues * sizeof(uint8));
+	quantums = kmalloc(sizeof(uint8));
+	quantums[0] = quantum;
+	kclock_set_quantum(quantums[0]);
 
 	for (int i = 0; i < numOfLevels; i++) {
-		quantums[i] = quantum;
-		kclock_set_quantum(quantums[i]);
 		init_queue(&(env_ready_queues[i]));
 	}
-
 	//=========================================
 	//DON'T CHANGE THESE LINES=================
 	scheduler_status = SCH_STOPPED;
@@ -181,7 +180,7 @@ void sched_init_BSD(uint8 numOfLevels, uint8 quantum) {
 	//=========================================
 	//=========================================
 
-	#endif
+#endif
 }
 
 //=========================
@@ -205,14 +204,23 @@ struct Env* fos_scheduler_BSD() {
 //	LIST_FOREACH(tmp , &env_ready_queues){
 //		//tmp->
 //	}
-	for (int i = 0; i < env_ready_queues->size; i++) {
-		if (/*env_ready_queues[i] != NULL || */env_ready_queues->size == 0) {
-			cprintf("1\n");
+//	cprintf("208 size: %d\n208 numofReadyQ: %d\n",env_ready_queues[0].size,num_of_ready_queues);
+	for (int i = 0; i < num_of_ready_queues; i++) {
+		cprintf("208 size %d: %d\n\n", i + 1, env_ready_queues[i].size);
+		if (/*env_ready_queues[i] != NULL || */env_ready_queues[i].size != 0) {
 			next_Env = dequeue(&(env_ready_queues[i]));
-			kclock_set_quantum(quantums[i]);
+			tmp = next_Env;
+			enqueue(&env_ready_queues[i], tmp);
+//			if (i != num_of_ready_queues - 1) {
+//				enqueue(&env_ready_queues[i + 1], tmp);
+//			} else {
+//				enqueue(&env_ready_queues[i], tmp);
+//			}
+			kclock_set_quantum(quantums[0]);
 			return next_Env;
 		}
 	}
+//	cprintf("208 return Null\n\n");
 	return NULL;
 }
 
@@ -223,12 +231,33 @@ struct Env* fos_scheduler_BSD() {
 void clock_interrupt_handler() {
 	//TODO: [PROJECT'23.MS3 - #5] [2] BSD SCHEDULER - Your code is here
 	{
+//		cprintf("226 time\n\n\n\n\n");
 		int64 time = timer_ticks();
 //		if(quantums[0]!= NULL)
 		int num_of_ticks_perSecond = (1000 / quantums[0]);
+		curenv->recent_cpu = curenv->recent_cpu + 1;
+		int num_of_processes_per_queue = (PRI_MAX / num_of_ready_queues);
 
 		if (/*seconds*/time != 0 && time % num_of_ticks_perSecond == 0) {
-			for (int i = 0; i < env_ready_queues->size; i++) {
+			for (int i = 0; i < num_of_ready_queues; i++) {
+				struct Env* envTmp;
+				LIST_FOREACH(envTmp,&env_ready_queues[i])
+				{
+//					cprintf("11\n");
+					//ð�‘Ÿð�‘’ð�‘�ð�‘’ð�‘›ð�‘¡_ð�‘�ð�‘�ð�‘¢ (ð�‘¡)=  (2Ã—ð�‘™ð�‘œð�‘Žð�‘‘_ð�‘Žð�‘£ð�‘”)/(2Ã—ð�‘™ð�‘œð�‘Žð�‘‘_ð�‘Žð�‘£ð�‘”+1)Ã—ð�‘Ÿð�‘’ð�‘�ð�‘’ð�‘›ð�‘¡_ð�‘�ð�‘�ð�‘¢ (ð�‘¡âˆ’1)+ð�‘›ð�‘–ð�‘�ð�‘’
+					/*(2Ã—ð�‘™ð�‘œð�‘Žð�‘‘_ð�‘Žð�‘£ð�‘”)*/
+					fixed_point_t x1 = fix_scale(load_avg, 2);
+					/*(2Ã—ð�‘™ð�‘œð�‘Žð�‘‘_ð�‘Žð�‘£ð�‘”+1)*/
+					fixed_point_t x2 = fix_scale(load_avg, 2);
+					/*(2Ã—ð�‘™ð�‘œð�‘Žð�‘‘_ð�‘Žð�‘£ð�‘”)/(2Ã—ð�‘™ð�‘œð�‘Žð�‘‘_ð�‘Žð�‘£ð�‘”+1)*/
+					fixed_point_t x3 = fix_scale(fix_add(load_avg, fix_int(1)),
+							2);
+					/*(2Ã—ð�‘™ð�‘œð�‘Žð�‘‘_ð�‘Žð�‘£ð�‘”)/(2Ã—ð�‘™ð�‘œð�‘Žð�‘‘_ð�‘Žð�‘£ð�‘”+1)Ã—ð�‘Ÿð�‘’ð�‘�ð�‘’ð�‘›ð�‘¡_ð�‘�ð�‘�ð�‘¢ (ð�‘¡âˆ’1)*/
+					fixed_point_t x4 = fix_mul(x3, fix_int(envTmp->recent_cpu));
+					/*(2Ã—ð�‘™ð�‘œð�‘Žð�‘‘_ð�‘Žð�‘£ð�‘”)/(2Ã—ð�‘™ð�‘œð�‘Žð�‘‘_ð�‘Žð�‘£ð�‘”+1)Ã—ð�‘Ÿð�‘’ð�‘�ð�‘’ð�‘›ð�‘¡_ð�‘�ð�‘�ð�‘¢ (ð�‘¡âˆ’1)+ð�‘›ð�‘–ð�‘�ð�‘’*/
+					fixed_point_t x5 = fix_add(x4, fix_int(envTmp->nice));
+					envTmp->recent_cpu = fix_round(x5);
+				}
 				for (int j = 0; j < env_ready_queues[i].size; j++) {
 					// update load avg & all recent cpu
 
@@ -236,15 +265,71 @@ void clock_interrupt_handler() {
 			}
 		}
 		if (/*4 ticks*/time % 4 == 0 && time != 0) {
-			for (int i = 0; i < env_ready_queues->size; i++) {
-				for (int j = 0; j < env_ready_queues[i].size; j++) {
-					// update priority
+			cprintf("timer 4\n");
+			for (int i = 0; i < num_of_ready_queues; i++) {
+				struct Env* envTmp;
+				LIST_FOREACH(envTmp,&env_ready_queues[i])
+				{
+					//cprintf("22\n");
+					//priority = PRI_MAX â€“ (ð�‘Ÿð�‘’ð�‘�ð�‘’ð�‘›ð�‘¡_ð�‘�ð�‘�ð�‘¢  / 4) â€“ (nice Ã— 2)
+					fixed_point_t x1 = fix_div(
+							fix_int(env_get_recent_cpu(envTmp)), fix_int(4));
+					fixed_point_t x2 = fix_mul(fix_int(envTmp->nice),
+							fix_int(2));
+
+					cprintf("Priority Before change: %d \n",envTmp->priority);
+
+					envTmp->priority = PRI_MAX - fix_round(fix_sub(x1, x2));
+					if (envTmp->priority > PRI_MAX)
+						envTmp->priority = PRI_MAX;
+					else if (envTmp->priority < PRI_MIN)
+						envTmp->priority = PRI_MIN;
+					struct Env* tmp = envTmp;
+					for (int j = 0; j < num_of_ready_queues - 1; j++) {
+						if (j != 0) {
+							if (envTmp->priority
+									>= (j * num_of_processes_per_queue) + 1
+									&& envTmp->priority
+											<= ((j + 1)
+													* num_of_processes_per_queue)) {
+								cprintf("292\n");
+								remove_from_queue(&env_ready_queues[i],tmp);
+								enqueue(&env_ready_queues[j], envTmp);
+								break;
+							} else if (j == num_of_ready_queues - 2) {
+								cprintf("296\n");
+								remove_from_queue(&env_ready_queues[i],tmp);
+								enqueue(&env_ready_queues[j + 1], envTmp);
+								break;
+							}
+						} else {
+							if (envTmp->priority
+									>= (j * num_of_processes_per_queue)
+									&& envTmp->priority
+											<= ((j + 1)
+													* num_of_processes_per_queue)) {
+								cprintf("309\n");
+								remove_from_queue(&env_ready_queues[i],tmp);
+								enqueue(&env_ready_queues[j], envTmp);
+								break;
+							}
+						}
+					}
+					cprintf("Priority After change: %d \n",envTmp->priority);
+//					fixed_point_t x1 = fix_div(fix_int(envTmp->recent_cpu),
+//							fix_int(4));
+//					fixed_point_t x2 = fix_mul(fix_int(envTmp->nice),
+//							fix_int(2));
+//					envTmp->priority = PRI_MAX - fix_round(fix_sub(x1, x2));
 				}
+				/*for (int j = 0; j < env_ready_queues[i].size; j++) {
+				 // update priority
+				 env_ready_queues[i]
+				 }*/
 			}
 		}
 		/* every tick */
-		// update recent cpu for the running processes
-
+// update recent cpu for the running processes
 	}
 
 	/********DON'T CHANGE THIS LINE***********/
