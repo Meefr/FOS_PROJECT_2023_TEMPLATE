@@ -30,7 +30,6 @@ void _main(void)
 
 		if( (freePages - (sys_calculate_free_frames() + sys_calculate_modified_frames())) != 0 ) panic("Extra memory are wrongly allocated... It's REplacement: expected that no extra frames are allocated");
 	}
-
 	cprintf("Congratulations: stack pages created, modified and read successfully!\n\n");
 
 

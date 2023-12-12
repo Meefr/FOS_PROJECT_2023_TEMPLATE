@@ -101,7 +101,7 @@ void* sbrk(int increment) {
 		return (void*) segmentbrk;
 	}
 	else if(segmentbrk+increment>hLimit) {
-				cprintf("segmentbrk=%d and hlimit=%d",segmentbrk,hLimit);
+				//cprintf("segmentbrk=%d and hlimit=%d",segmentbrk,hLimit);
 				panic("in sbrk func increment>0");
 			}
 	return (void*) -1;
@@ -197,10 +197,12 @@ void kfree(void* virtual_address) {
 	//panic("kfree() is not implemented yet...!!");
 	if ((uint32) virtual_address >= start
 			&& (uint32) virtual_address < hLimit) {
+		//cprintf("blockalloc\n");
 		free_block(virtual_address);
 		return;
 	} else if ((uint32) virtual_address >= hLimit + PAGE_SIZE
 			&& (uint32) virtual_address < KERNEL_HEAP_MAX) {
+	//	cprintf("Pagealloc\n");
 //		virtual_address = (void *)ROUNDDOWN((uint32)virtual_address,PAGE_SIZE);
 		for (int i = 0; i < num_of_all_pages; i++) {
 			if (vmS[i] == (uint32) virtual_address) {

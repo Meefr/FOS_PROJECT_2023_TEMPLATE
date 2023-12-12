@@ -476,7 +476,6 @@ void* sys_sbrk(int increment) {
 	//getting the hard limit of the environment
 	uint32 hardLimit = env->hardLimit;
 	uint32 segmentBreak = env->segBreak;
-//	cprintf("in sys_sbrk\n");
 	if (((increment + env->segBreak) >= hardLimit)
 			|| ((increment + env->segBreak) < env->start)) {
 		return (void*) -1;

@@ -108,7 +108,7 @@ void *alloc_block_FF(uint32 size) {
 	//	panic("alloc_block_FF is not implemented yet");
 	if (size == 0)
 		{
-			cprintf("size = zero");
+			//cprintf("size = zero");
 			return NULL;
 		}
 
