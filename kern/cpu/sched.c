@@ -205,8 +205,9 @@ struct Env* fos_scheduler_BSD() {
 //		//tmp->
 //	}
 //	cprintf("208 size: %d\n208 numofReadyQ: %d\n",env_ready_queues[0].size,num_of_ready_queues);
-	for (int i = 0; i < num_of_ready_queues; i++) {
-		cprintf("208 size %d: %d\n\n", i + 1, env_ready_queues[i].size);
+
+	for (int i = num_of_ready_queues - 1; i >= 0; i--) {
+		//cprintf("208 size %d: %d\n\n", i + 1, env_ready_queues[i].size);
 		if (/*env_ready_queues[i] != NULL || */env_ready_queues[i].size != 0) {
 			next_Env = dequeue(&(env_ready_queues[i]));
 			tmp = next_Env;
@@ -235,50 +236,31 @@ void clock_interrupt_handler() {
 		int64 time = timer_ticks();
 //		if(quantums[0]!= NULL)
 		int num_of_ticks_perSecond = (1000 / quantums[0]);
+
+		/* every tick */
+		// update recent cpu for the running processes
 		curenv->recent_cpu = curenv->recent_cpu + 1;
+
 		int num_of_processes_per_queue = (PRI_MAX / num_of_ready_queues);
 
-		if (/*seconds*/time != 0 && time % num_of_ticks_perSecond == 0) {
-			for (int i = 0; i < num_of_ready_queues; i++) {
-				struct Env* envTmp;
-				LIST_FOREACH(envTmp,&env_ready_queues[i])
-				{
-//					cprintf("11\n");
-					//ð�‘Ÿð�‘’ð�‘�ð�‘’ð�‘›ð�‘¡_ð�‘�ð�‘�ð�‘¢ (ð�‘¡)=  (2Ã—ð�‘™ð�‘œð�‘Žð�‘‘_ð�‘Žð�‘£ð�‘”)/(2Ã—ð�‘™ð�‘œð�‘Žð�‘‘_ð�‘Žð�‘£ð�‘”+1)Ã—ð�‘Ÿð�‘’ð�‘�ð�‘’ð�‘›ð�‘¡_ð�‘�ð�‘�ð�‘¢ (ð�‘¡âˆ’1)+ð�‘›ð�‘–ð�‘�ð�‘’
-					/*(2Ã—ð�‘™ð�‘œð�‘Žð�‘‘_ð�‘Žð�‘£ð�‘”)*/
-					fixed_point_t x1 = fix_scale(load_avg, 2);
-					/*(2Ã—ð�‘™ð�‘œð�‘Žð�‘‘_ð�‘Žð�‘£ð�‘”+1)*/
-					fixed_point_t x2 = fix_scale(load_avg, 2);
-					/*(2Ã—ð�‘™ð�‘œð�‘Žð�‘‘_ð�‘Žð�‘£ð�‘”)/(2Ã—ð�‘™ð�‘œð�‘Žð�‘‘_ð�‘Žð�‘£ð�‘”+1)*/
-					fixed_point_t x3 = fix_scale(fix_add(load_avg, fix_int(1)),
-							2);
-					/*(2Ã—ð�‘™ð�‘œð�‘Žð�‘‘_ð�‘Žð�‘£ð�‘”)/(2Ã—ð�‘™ð�‘œð�‘Žð�‘‘_ð�‘Žð�‘£ð�‘”+1)Ã—ð�‘Ÿð�‘’ð�‘�ð�‘’ð�‘›ð�‘¡_ð�‘�ð�‘�ð�‘¢ (ð�‘¡âˆ’1)*/
-					fixed_point_t x4 = fix_mul(x3, fix_int(envTmp->recent_cpu));
-					/*(2Ã—ð�‘™ð�‘œð�‘Žð�‘‘_ð�‘Žð�‘£ð�‘”)/(2Ã—ð�‘™ð�‘œð�‘Žð�‘‘_ð�‘Žð�‘£ð�‘”+1)Ã—ð�‘Ÿð�‘’ð�‘�ð�‘’ð�‘›ð�‘¡_ð�‘�ð�‘�ð�‘¢ (ð�‘¡âˆ’1)+ð�‘›ð�‘–ð�‘�ð�‘’*/
-					fixed_point_t x5 = fix_add(x4, fix_int(envTmp->nice));
-					envTmp->recent_cpu = fix_round(x5);
-				}
-				for (int j = 0; j < env_ready_queues[i].size; j++) {
-					// update load avg & all recent cpu
-
-				}
-			}
-		}
 		if (/*4 ticks*/time % 4 == 0 && time != 0) {
-			cprintf("timer 4\n");
+			//cprintf("timer 4\n");
 			for (int i = 0; i < num_of_ready_queues; i++) {
 				struct Env* envTmp;
 				LIST_FOREACH(envTmp,&env_ready_queues[i])
 				{
 					//cprintf("22\n");
-					//priority = PRI_MAX â€“ (ð�‘Ÿð�‘’ð�‘�ð�‘’ð�‘›ð�‘¡_ð�‘�ð�‘�ð�‘¢  / 4) â€“ (nice Ã— 2)
+
+					// recentCPU / 4
 					fixed_point_t x1 = fix_div(
 							fix_int(env_get_recent_cpu(envTmp)), fix_int(4));
+					// nice * 2
 					fixed_point_t x2 = fix_mul(fix_int(envTmp->nice),
 							fix_int(2));
 
-					cprintf("Priority Before change: %d \n",envTmp->priority);
+					//					cprintf("Priority Before change: %d \n",envTmp->priority);
 
+					// priority = PRI_MAX - (recentCPU /4) - (nice * 2)
 					envTmp->priority = PRI_MAX - fix_round(fix_sub(x1, x2));
 					if (envTmp->priority > PRI_MAX)
 						envTmp->priority = PRI_MAX;
@@ -292,13 +274,13 @@ void clock_interrupt_handler() {
 									&& envTmp->priority
 											<= ((j + 1)
 													* num_of_processes_per_queue)) {
-								cprintf("292\n");
-								remove_from_queue(&env_ready_queues[i],tmp);
+								//cprintf("292\n");
+								remove_from_queue(&env_ready_queues[i], tmp);
 								enqueue(&env_ready_queues[j], envTmp);
 								break;
 							} else if (j == num_of_ready_queues - 2) {
-								cprintf("296\n");
-								remove_from_queue(&env_ready_queues[i],tmp);
+								//cprintf("296\n");
+								remove_from_queue(&env_ready_queues[i], tmp);
 								enqueue(&env_ready_queues[j + 1], envTmp);
 								break;
 							}
@@ -308,19 +290,19 @@ void clock_interrupt_handler() {
 									&& envTmp->priority
 											<= ((j + 1)
 													* num_of_processes_per_queue)) {
-								cprintf("309\n");
-								remove_from_queue(&env_ready_queues[i],tmp);
+								//cprintf("309\n");
+								remove_from_queue(&env_ready_queues[i], tmp);
 								enqueue(&env_ready_queues[j], envTmp);
 								break;
 							}
 						}
 					}
-					cprintf("Priority After change: %d \n",envTmp->priority);
-//					fixed_point_t x1 = fix_div(fix_int(envTmp->recent_cpu),
-//							fix_int(4));
-//					fixed_point_t x2 = fix_mul(fix_int(envTmp->nice),
-//							fix_int(2));
-//					envTmp->priority = PRI_MAX - fix_round(fix_sub(x1, x2));
+					//					cprintf("Priority After change: %d \n",envTmp->priority);
+					//					fixed_point_t x1 = fix_div(fix_int(envTmp->recent_cpu),
+					//							fix_int(4));
+					//					fixed_point_t x2 = fix_mul(fix_int(envTmp->nice),
+					//							fix_int(2));
+					//					envTmp->priority = PRI_MAX - fix_round(fix_sub(x1, x2));
 				}
 				/*for (int j = 0; j < env_ready_queues[i].size; j++) {
 				 // update priority
@@ -328,8 +310,47 @@ void clock_interrupt_handler() {
 				 }*/
 			}
 		}
-		/* every tick */
-// update recent cpu for the running processes
+
+		if (/*seconds*/time != 0 && time % num_of_ticks_perSecond == 0) {
+			int number_Of_RunningyOrReady = 0;
+			for (int i = 0; i < num_of_ready_queues; i++) {
+				number_Of_RunningyOrReady += env_ready_queues[i].size;
+			}
+			for (int i = 0; i < num_of_ready_queues; i++) {
+				struct Env* envTmp;
+				LIST_FOREACH(envTmp,&env_ready_queues[i])
+				{
+					// update load avg & all recent cpu
+
+					/* update Load_Avg */
+					// 59/60
+					fixed_point_t l1 = fix_div(fix_int(59), fix_int(60));
+					// 1/60
+					fixed_point_t l2 = fix_div(fix_int(1), fix_int(60));
+					// 59/60 * load_avg(t-1)
+					fixed_point_t l3 = fix_mul(l1, load_avg);
+					// 1/60 * ready(t)
+					fixed_point_t l4 = fix_mul(l2,
+							fix_int(number_Of_RunningyOrReady));
+					load_avg = l4;
+
+					/* update Recent_Cpu */
+//					cprintf("11\n");
+					// 2 * load_avg
+					fixed_point_t x1 = fix_scale(load_avg, 2);
+					// 2 * load_avg + 1
+					fixed_point_t x2 = fix_add(x1, fix_int(1));
+					// round or not ?? -> (2*load_avg)/(2*load_avg+1)
+					fixed_point_t x3 = fix_div(x1, x2);
+					// (2*load_avg)/(2*load_avg+1) * recent_cpu
+					fixed_point_t x4 = fix_mul(x3, fix_int(envTmp->recent_cpu));
+					// (2*load_avg)/(2*load_avg+1) * recent_cpu + nice
+					fixed_point_t x5 = fix_add(x4, fix_int(envTmp->nice));
+					envTmp->recent_cpu = fix_round(x5);
+
+				}
+			}
+		}
 	}
 
 	/********DON'T CHANGE THIS LINE***********/
