@@ -205,13 +205,52 @@ struct Env* fos_scheduler_BSD() {
 //		//tmp->
 //	}
 //	cprintf("208 size: %d\n208 numofReadyQ: %d\n",env_ready_queues[0].size,num_of_ready_queues);
+	if (curenv != NULL) {
+		struct Env* curtmp = curenv;
+		int num_of_processes_per_queue = (PRI_MAX / num_of_ready_queues);
+		if (curenv->priority > PRI_MAX)
+			curenv->priority = PRI_MAX;
+		else if (curenv->priority < PRI_MIN)
+			curenv->priority = PRI_MIN;
 
+		for(int i = 0 ; i < num_of_ready_queues; i++){
+			curtmp = find_env_in_queue(&env_ready_queues[i],curenv->env_id);
+			if(curtmp != NULL){
+				remove_from_queue(&env_ready_queues[i],curtmp);
+				break;
+			}
+		}
+
+		for (int j = 0; j < num_of_ready_queues - 1; j++) {
+			if (j != 0) {
+				if (curenv->priority >= (j * num_of_processes_per_queue) + 1
+						&& curenv->priority
+								<= ((j + 1) * num_of_processes_per_queue)) {
+					//cprintf("292\n");
+					enqueue(&env_ready_queues[j], curenv);
+					break;
+				} else if (j == num_of_ready_queues - 2) {
+					//cprintf("296\n");
+					enqueue(&env_ready_queues[j + 1], curenv);
+					break;
+				}
+			} else {
+				if (curenv->priority >= (j * num_of_processes_per_queue)
+						&& curenv->priority
+								<= ((j + 1) * num_of_processes_per_queue)) {
+					//cprintf("309\n");
+					enqueue(&env_ready_queues[j], curenv);
+					break;
+				}
+			}
+		}
+	}
 	for (int i = num_of_ready_queues - 1; i >= 0; i--) {
 		//cprintf("208 size %d: %d\n\n", i + 1, env_ready_queues[i].size);
 		if (/*env_ready_queues[i] != NULL || */env_ready_queues[i].size != 0) {
 			next_Env = dequeue(&(env_ready_queues[i]));
 			tmp = next_Env;
-			enqueue(&env_ready_queues[i], tmp);
+//			enqueue(&env_ready_queues[i], tmp);
 //			if (i != num_of_ready_queues - 1) {
 //				enqueue(&env_ready_queues[i + 1], tmp);
 //			} else {
@@ -243,7 +282,8 @@ void clock_interrupt_handler() {
 
 		int num_of_processes_per_queue = (PRI_MAX / num_of_ready_queues);
 
-		if (/*4 ticks*/time % 4 == 0 && time != 0) {
+		if (/*4 ticks*/time % 4 == 0 /*&& time != 0*/) {
+//			cprintf("time every 4: %d\n", time);
 			//cprintf("timer 4\n");
 			for (int i = 0; i < num_of_ready_queues; i++) {
 				struct Env* envTmp;
@@ -311,7 +351,8 @@ void clock_interrupt_handler() {
 			}
 		}
 
-		if (/*seconds*/time != 0 && time % num_of_ticks_perSecond == 0) {
+		if (/*seconds*//*time != 0 &&*/ time % num_of_ticks_perSecond == 0) {
+//			cprintf("time every 1 sec: %d\n", time);
 			int number_Of_RunningyOrReady = 0;
 			for (int i = 0; i < num_of_ready_queues; i++) {
 				number_Of_RunningyOrReady += env_ready_queues[i].size;
