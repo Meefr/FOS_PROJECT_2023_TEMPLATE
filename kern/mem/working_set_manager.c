@@ -128,10 +128,10 @@ void env_page_ws_print(struct Env *e) {
 			cprintf("%d: %x", i, virtual_address);
 
 			//2021
-			cprintf(
-					", used= %d, modified= %d, buffered= %d, time stamp= %x, sweeps_cnt= %d",
-					isUsed, isModified, isBuffered, time_stamp,
-					wse->sweeps_counter);
+//			cprintf(
+//					", used= %d, modified= %d, buffered= %d, time stamp= %x, sweeps_cnt= %d",
+//					isUsed, isModified, isBuffered, time_stamp,
+//					wse->sweeps_counter);
 
 			if (wse == e->page_last_WS_element) {
 				cprintf(" <--");

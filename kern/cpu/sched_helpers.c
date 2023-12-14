@@ -480,55 +480,61 @@ void env_set_nice(struct Env* e, int nice_value) {
 	//Comment the following line
 	//	panic("Not implemented yet");
 	// priority = PRI_MAX - (𝑟𝑒𝑐𝑒𝑛𝑡_𝑐𝑝𝑢  / 4) - (nice × 2)
+	// [1] Update nice value of the given environment
+	// [2] If its status is NOT NEW, just update its priority without changing ready queues
+	// Else, do nothing
+
 	/*(fix_int(env_get_recent_cpu(e)) / 4)*/
-	int pri =
-	PRI_MAX - (env_get_recent_cpu(e) / 4) - (nice_value * 2);
-	if(pri < PRI_MIN)
-		pri = PRI_MIN;
-	else if(pri > PRI_MAX)
-		pri = PRI_MAX;
-	e->priority = pri;
+	if (e->env_status != ENV_NEW) {
+		int pri =
+		PRI_MAX - (env_get_recent_cpu(e) / 4) - (nice_value * 2);
+		if (pri < PRI_MIN)
+			pri = PRI_MIN;
+		else if (pri > PRI_MAX)
+			pri = PRI_MAX;
+		e->priority = pri;
+	}
 	/*int num_of_processes_per_queue = (PRI_MAX / num_of_ready_queues);
 
-	uint8 flag = 0;
+	 uint8 flag = 0;
 
-	struct Env* tmp = e;
-	for (int j = 0; j < num_of_ready_queues - 1; j++) {
-		if (j != 0) {
-			if (e->priority >= (j * num_of_processes_per_queue) + 1
-					&& e->priority
-							<= ((j + 1) * num_of_processes_per_queue)) {
-				//cprintf("292\n");
-				flag = 1;
-				enqueue(&env_ready_queues[j], e);
-				break;
-			} else if (j == num_of_ready_queues - 2) {
-				//cprintf("296\n");
-				flag = 1;
-				enqueue(&env_ready_queues[j + 1], e);
-				break;
-			}
-		} else {
-			if (e->priority >= (j * num_of_processes_per_queue)
-					&& e->priority
-							<= ((j + 1) * num_of_processes_per_queue)) {
-				//cprintf("309\n");
-				flag = 1;
-				enqueue(&env_ready_queues[j], e);
-				break;
-			}
-		}
-	}
-	if(flag == 1){
-		for (int i = 0; i < num_of_ready_queues; i++) {
-			struct Env* env;
-			env = find_env_in_queue(&env_ready_queues[i], e->env_id);
-			if (env != NULL) {
-				remove_from_queue(&env_ready_queues[i], env);
-				break;
-			}
-		}
-	}*/
+	 struct Env* tmp = e;
+	 for (int j = 0; j < num_of_ready_queues - 1; j++) {
+	 if (j != 0) {
+	 if (e->priority >= (j * num_of_processes_per_queue) + 1
+	 && e->priority
+	 <= ((j + 1) * num_of_processes_per_queue)) {
+	 //cprintf("292\n");
+	 flag = 1;
+	 enqueue(&env_ready_queues[j], e);
+	 break;
+	 } else if (j == num_of_ready_queues - 2) {
+	 //cprintf("296\n");
+	 flag = 1;
+	 enqueue(&env_ready_queues[j + 1], e);
+	 break;
+	 }
+	 } else {
+	 if (e->priority >= (j * num_of_processes_per_queue)
+	 && e->priority
+	 <= ((j + 1) * num_of_processes_per_queue)) {
+	 //cprintf("309\n");
+	 flag = 1;
+	 enqueue(&env_ready_queues[j], e);
+	 break;
+	 }
+	 }
+	 }
+	 if(flag == 1){
+	 for (int i = 0; i < num_of_ready_queues; i++) {
+	 struct Env* env;
+	 env = find_env_in_queue(&env_ready_queues[i], e->env_id);
+	 if (env != NULL) {
+	 remove_from_queue(&env_ready_queues[i], env);
+	 break;
+	 }
+	 }
+	 }*/
 	e->nice = nice_value;
 }
 int env_get_recent_cpu(struct Env* e) {

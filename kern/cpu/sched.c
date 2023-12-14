@@ -199,12 +199,16 @@ struct Env* fos_scheduler_BSD() {
 	//Your code is here
 	//Comment the following line
 	//panic("Not implemented yet");
+
+
 	struct Env* next_Env;
 	struct Env* tmp;
 //	LIST_FOREACH(tmp , &env_ready_queues){
 //		//tmp->
 //	}
 //	cprintf("208 size: %d\n208 numofReadyQ: %d\n",env_ready_queues[0].size,num_of_ready_queues);
+
+	//[1] Place the curenv (if any) in its correct queue
 	if (curenv != NULL) {
 		struct Env* curtmp = curenv;
 		int num_of_processes_per_queue = (PRI_MAX / num_of_ready_queues);
@@ -245,22 +249,26 @@ struct Env* fos_scheduler_BSD() {
 			}
 		}
 	}
+
+
+	// [2] Search for the next env in the queues according to their priorities
 	for (int i = num_of_ready_queues - 1; i >= 0; i--) {
 		//cprintf("208 size %d: %d\n\n", i + 1, env_ready_queues[i].size);
 		if (/*env_ready_queues[i] != NULL || */env_ready_queues[i].size != 0) {
+			// [3] If next env is found:
+			// 		1. Set CPU quantum
+			//      2. Remove the selected env from its queue and return it
+			// Else,
+			// 		1. Reset load_avg for next run
+			// 		2. return NULL
 			next_Env = dequeue(&(env_ready_queues[i]));
 			tmp = next_Env;
-//			enqueue(&env_ready_queues[i], tmp);
-//			if (i != num_of_ready_queues - 1) {
-//				enqueue(&env_ready_queues[i + 1], tmp);
-//			} else {
-//				enqueue(&env_ready_queues[i], tmp);
-//			}
 			kclock_set_quantum(quantums[0]);
 			return next_Env;
 		}
 	}
 //	cprintf("208 return Null\n\n");
+	load_avg = fix_int(0);
 	return NULL;
 }
 
@@ -271,8 +279,8 @@ struct Env* fos_scheduler_BSD() {
 void clock_interrupt_handler() {
 	//TODO: [PROJECT'23.MS3 - #5] [2] BSD SCHEDULER - Your code is here
 	{
-//		cprintf("226 time\n\n\n\n\n");
 		int64 time = timer_ticks();
+//		cprintf("275 time\n\n\n\n\n",time);
 //		if(quantums[0]!= NULL)
 		int num_of_ticks_perSecond = (1000 / quantums[0]);
 
