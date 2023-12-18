@@ -481,10 +481,8 @@ void* sys_sbrk(int increment) {
 		return (void*) -1;
 	}
 	if (increment > 0) {
-		increment = ROUNDUP(increment, PAGE_SIZE);
-		env->segBreak = ROUNDUP(env->segBreak,PAGE_SIZE);
-		segmentBreak = ROUNDUP(segmentBreak,PAGE_SIZE);
 		env->segBreak += increment;
+		env->segBreak = ROUNDUP(env->segBreak,PAGE_SIZE);
 		uint32 *pageTable;
 		for (uint32 i = segmentBreak; i < env->segBreak; i += (PAGE_SIZE)) {
 			int ret = get_page_table(env->env_page_directory, i, &pageTable);
@@ -501,21 +499,26 @@ void* sys_sbrk(int increment) {
 
 	} else if (increment < 0) {
 		increment = increment * -1;
-		uint32 newSbrk = segmentBreak - ((increment / PAGE_SIZE) * PAGE_SIZE);
+		uint32 newSbrk = segmentBreak - increment /*- ((increment / PAGE_SIZE) * PAGE_SIZE)*/;
 		if (newSbrk < env->start) {
 			return (void *) -1;
 		}
-		for (uint32 i = segmentBreak; i > newSbrk; i -= (PAGE_SIZE)) {
-//			pt_set_page_permissions(env->env_page_directory, i, 0, PERM_AVAILABLE);
-//			env_page_ws_invalidate(env, i);
-//			pf_remove_env_page(env, i);
-			unmap_frame(ptr_page_directory, i);
-//			free_frame((struct FrameInfo*) i);
-		}
+//		for (uint32 i = segmentBreak; i > newSbrk; i -= (PAGE_SIZE)) {
+////			pt_set_page_permissions(env->env_page_directory, i, 0, PERM_AVAILABLE);
+////			env_page_ws_invalidate(env, i);
+////			pf_remove_env_page(env, i);
+//			unmap_frame(ptr_page_directory, i);
+////			free_frame((struct FrameInfo*) i);
+//		}
 //		segmentBreak -= ((increment / PAGE_SIZE) * PAGE_SIZE);
+		if(((segmentBreak % PAGE_SIZE) <= increment && (segmentBreak % PAGE_SIZE) != 0) || (increment % PAGE_SIZE == 0)){
+			free_frame((struct FrameInfo*) ROUNDDOWN(segmentBreak,PAGE_SIZE));
+			env_page_ws_invalidate(env, ROUNDDOWN(segmentBreak,PAGE_SIZE));
+			unmap_frame(ptr_page_directory, ROUNDDOWN(segmentBreak,PAGE_SIZE));
+		}
 		segmentBreak -= increment;
 		env->segBreak = segmentBreak;
-//		if(segmentBreak + increment < env->start)
+		//		if(segmentBreak + increment < env->start)
 //			return (void*)-1;
 //		while(increment <= (-4 * kilo)){
 //			// moving the segment break by page boundary
