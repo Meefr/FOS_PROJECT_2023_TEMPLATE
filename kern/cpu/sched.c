@@ -194,6 +194,19 @@ struct Env* fos_scheduler_MLFQ() {
 //=========================
 // [7] BSD Scheduler:
 //=========================
+
+void rearrangeEnvs(struct Env* env) {
+	int num_of_processes_per_queue = ((PRI_MAX + 1) / num_of_ready_queues);
+	if(num_of_processes_per_queue == 0)
+		num_of_processes_per_queue = 1;
+	for (int j = 0; j < num_of_ready_queues; j++) {
+		if (env->priority >= (j * num_of_processes_per_queue)
+				&& env->priority < ((j + 1) * num_of_processes_per_queue)) {
+			enqueue(&env_ready_queues[j], env);
+			break;
+		}
+	}
+}
 struct Env* fos_scheduler_BSD() {
 	//TODO: [PROJECT'23.MS3 - #5] [2] BSD SCHEDULER - fos_scheduler_BSD
 	//Your code is here
@@ -210,7 +223,7 @@ struct Env* fos_scheduler_BSD() {
 	//[1] Place the curenv (if any) in its correct queue
 	if (curenv != NULL) {
 		struct Env* curtmp = curenv;
-		int num_of_processes_per_queue = ((PRI_MAX + 1) / num_of_ready_queues);
+//		int num_of_processes_per_queue = ((PRI_MAX + 1) / num_of_ready_queues);
 		if (curenv->priority > PRI_MAX)
 			curenv->priority = PRI_MAX;
 		else if (curenv->priority < PRI_MIN)
@@ -223,30 +236,7 @@ struct Env* fos_scheduler_BSD() {
 				break;
 			}
 		}
-
-		for (int j = 0; j < num_of_ready_queues - 1; j++) {
-			if (j != 0) {
-				if (curenv->priority >= (j * num_of_processes_per_queue) + 1
-						&& curenv->priority
-								<= ((j + 1) * num_of_processes_per_queue)) {
-					//cprintf("292\n");
-					enqueue(&env_ready_queues[j], curenv);
-					break;
-				} else if (j == num_of_ready_queues - 2) {
-					//cprintf("296\n");
-					enqueue(&env_ready_queues[j + 1], curenv);
-					break;
-				}
-			} else {
-				if (curenv->priority >= (j * num_of_processes_per_queue)
-						&& curenv->priority
-								<= ((j + 1) * num_of_processes_per_queue)) {
-					//cprintf("309\n");
-					enqueue(&env_ready_queues[j], curenv);
-					break;
-				}
-			}
-		}
+		rearrangeEnvs(curenv);
 	}
 
 	// [2] Search for the next env in the queues according to their priorities
@@ -290,7 +280,8 @@ void clock_interrupt_handler() {
 			curenv->recent_cpu = fix_add(curenv->recent_cpu, fix_int(1));
 
 		int num_of_processes_per_queue = ((PRI_MAX + 1) / num_of_ready_queues);
-
+		if(num_of_processes_per_queue == 0)
+			num_of_processes_per_queue = 1;
 		if (/*4 ticks*/time % 4 == 0 /*&& time != 0*/) {
 			env_set_nice(curenv, curenv->nice);
 			for (int i = 0; i < num_of_ready_queues; i++) {
@@ -305,16 +296,7 @@ void clock_interrupt_handler() {
 									< ((i + 1) * num_of_processes_per_queue)) {
 						enqueue(&env_ready_queues[i], envTmp);
 					} else {
-						for (int j = 0; j < num_of_ready_queues; j++) {
-							if (envTmp->priority
-									>= (j * num_of_processes_per_queue)
-									&& envTmp->priority
-											< ((j + 1)
-													* num_of_processes_per_queue)) {
-								enqueue(&env_ready_queues[j], envTmp);
-								break;
-							}
-						}
+						rearrangeEnvs(envTmp);
 //						sched_print_all();
 					}
 					queueSize--;
