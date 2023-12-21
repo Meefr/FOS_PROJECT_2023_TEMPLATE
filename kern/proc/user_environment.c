@@ -449,9 +449,20 @@ void env_free(struct Env *e)
 	//TODO: [PROJECT'23.MS3 - BONUS] EXIT ENV: env_free
 	// your code is here, remove the panic and write your code
 	{
-		panic("env_free() is not implemented yet...!!");
-
-
+		//panic("env_free() is not implemented yet...!!");
+		struct WorkingSetElement* workingset;
+		LIST_FOREACH(workingset, &e->ActiveList) {
+			env_page_ws_invalidate(e, workingset->virtual_address);
+		}
+		LIST_FOREACH(workingset, &e->page_WS_list) {
+			env_page_ws_invalidate(e, workingset->virtual_address);
+		}
+		LIST_FOREACH(workingset, &e->SecondList) {
+			env_page_ws_invalidate(e, workingset->virtual_address);
+		}
+		/*struct FrameInfo *Dir_FrameInfo = to_frame_info(kheap_physical_address(e->env_page_directory));
+		free_frame(Dir_FrameInfo);*/
+		kfree(e->env_page_directory);
 
 
 
