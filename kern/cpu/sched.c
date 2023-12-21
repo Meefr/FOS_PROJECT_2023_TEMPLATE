@@ -200,7 +200,6 @@ struct Env* fos_scheduler_BSD() {
 	//Comment the following line
 	//panic("Not implemented yet");
 
-
 	struct Env* next_Env;
 	struct Env* tmp;
 //	LIST_FOREACH(tmp , &env_ready_queues){
@@ -211,16 +210,16 @@ struct Env* fos_scheduler_BSD() {
 	//[1] Place the curenv (if any) in its correct queue
 	if (curenv != NULL) {
 		struct Env* curtmp = curenv;
-		int num_of_processes_per_queue = (PRI_MAX / num_of_ready_queues);
+		int num_of_processes_per_queue = ((PRI_MAX + 1) / num_of_ready_queues);
 		if (curenv->priority > PRI_MAX)
 			curenv->priority = PRI_MAX;
 		else if (curenv->priority < PRI_MIN)
 			curenv->priority = PRI_MIN;
 
-		for(int i = 0 ; i < num_of_ready_queues; i++){
-			curtmp = find_env_in_queue(&env_ready_queues[i],curenv->env_id);
-			if(curtmp != NULL){
-				remove_from_queue(&env_ready_queues[i],curtmp);
+		for (int i = 0; i < num_of_ready_queues; i++) {
+			curtmp = find_env_in_queue(&env_ready_queues[i], curenv->env_id);
+			if (curtmp != NULL) {
+				remove_from_queue(&env_ready_queues[i], curtmp);
 				break;
 			}
 		}
@@ -250,7 +249,6 @@ struct Env* fos_scheduler_BSD() {
 		}
 	}
 
-
 	// [2] Search for the next env in the queues according to their priorities
 	for (int i = num_of_ready_queues - 1; i >= 0; i--) {
 		//cprintf("208 size %d: %d\n\n", i + 1, env_ready_queues[i].size);
@@ -279,89 +277,55 @@ struct Env* fos_scheduler_BSD() {
 void clock_interrupt_handler() {
 	//TODO: [PROJECT'23.MS3 - #5] [2] BSD SCHEDULER - Your code is here
 	{
-		int64 time = timer_ticks();
+		int64 time = timer_ticks() + 1;
 //		cprintf("275 time\n\n\n\n\n",time);
 //		if(quantums[0]!= NULL)
-		int num_of_ticks_perSecond = (1000 / quantums[0]);
-
+		fixed_point_t fixed_num_of_ticks_perSecond = fix_div(fix_int(1000),
+				fix_int(quantums[0]));
+//		int num_of_ticks_perSecond = (1000 / quantums[0]);
+		int num_of_ticks_perSecond = fix_round(fixed_num_of_ticks_perSecond);
 		/* every tick */
 		// update recent cpu for the running processes
-		curenv->recent_cpu = curenv->recent_cpu + 1;
+		if (curenv != NULL)
+			curenv->recent_cpu = fix_add(curenv->recent_cpu, fix_int(1));
 
-		int num_of_processes_per_queue = (PRI_MAX / num_of_ready_queues);
+		int num_of_processes_per_queue = ((PRI_MAX + 1) / num_of_ready_queues);
 
 		if (/*4 ticks*/time % 4 == 0 /*&& time != 0*/) {
-//			cprintf("time every 4: %d\n", time);
-			//cprintf("timer 4\n");
+			env_set_nice(curenv, curenv->nice);
 			for (int i = 0; i < num_of_ready_queues; i++) {
-				struct Env* envTmp;
-				LIST_FOREACH(envTmp,&env_ready_queues[i])
-				{
-					//cprintf("22\n");
-
-					// recentCPU / 4
-					fixed_point_t x1 = fix_div(
-							fix_int(env_get_recent_cpu(envTmp)), fix_int(4));
-					// nice * 2
-					fixed_point_t x2 = fix_mul(fix_int(envTmp->nice),
-							fix_int(2));
-
-					//					cprintf("Priority Before change: %d \n",envTmp->priority);
-
-					// priority = PRI_MAX - (recentCPU /4) - (nice * 2)
-					envTmp->priority = PRI_MAX - fix_round(fix_sub(x1, x2));
-					if (envTmp->priority > PRI_MAX)
-						envTmp->priority = PRI_MAX;
-					else if (envTmp->priority < PRI_MIN)
-						envTmp->priority = PRI_MIN;
-					struct Env* tmp = envTmp;
-					for (int j = 0; j < num_of_ready_queues - 1; j++) {
-						if (j != 0) {
-							if (envTmp->priority
-									>= (j * num_of_processes_per_queue) + 1
-									&& envTmp->priority
-											<= ((j + 1)
-													* num_of_processes_per_queue)) {
-								//cprintf("292\n");
-								remove_from_queue(&env_ready_queues[i], tmp);
-								enqueue(&env_ready_queues[j], envTmp);
-								break;
-							} else if (j == num_of_ready_queues - 2) {
-								//cprintf("296\n");
-								remove_from_queue(&env_ready_queues[i], tmp);
-								enqueue(&env_ready_queues[j + 1], envTmp);
-								break;
-							}
-						} else {
+				int queueSize = queue_size(&env_ready_queues[i]);
+				while (queueSize > 0) {
+					struct Env* envTmp = dequeue(&env_ready_queues[i]);
+					int oldPri = envTmp->priority;
+					env_set_nice(envTmp, envTmp->nice);
+//					cprintf("oldPRI: %d\nNewPRI: %d\n",oldPri,envTmp->priority);
+					if (envTmp->priority >= (i * num_of_processes_per_queue)
+							&& envTmp->priority
+									< ((i + 1) * num_of_processes_per_queue)) {
+						enqueue(&env_ready_queues[i], envTmp);
+					} else {
+						for (int j = 0; j < num_of_ready_queues; j++) {
 							if (envTmp->priority
 									>= (j * num_of_processes_per_queue)
 									&& envTmp->priority
-											<= ((j + 1)
+											< ((j + 1)
 													* num_of_processes_per_queue)) {
-								//cprintf("309\n");
-								remove_from_queue(&env_ready_queues[i], tmp);
 								enqueue(&env_ready_queues[j], envTmp);
 								break;
 							}
 						}
+//						sched_print_all();
 					}
-					//					cprintf("Priority After change: %d \n",envTmp->priority);
-					//					fixed_point_t x1 = fix_div(fix_int(envTmp->recent_cpu),
-					//							fix_int(4));
-					//					fixed_point_t x2 = fix_mul(fix_int(envTmp->nice),
-					//							fix_int(2));
-					//					envTmp->priority = PRI_MAX - fix_round(fix_sub(x1, x2));
+					queueSize--;
 				}
-				/*for (int j = 0; j < env_ready_queues[i].size; j++) {
-				 // update priority
-				 env_ready_queues[i]
-				 }*/
+
 			}
 		}
 
-		if (/*seconds*//*time != 0 &&*/ time % num_of_ticks_perSecond == 0) {
+		if (/*seconds*//*time != 0 &&*/time % num_of_ticks_perSecond == 0) {
 //			cprintf("time every 1 sec: %d\n", time);
-			int number_Of_RunningyOrReady = 0;
+			int number_Of_RunningyOrReady = 1;
 			for (int i = 0; i < num_of_ready_queues; i++) {
 				number_Of_RunningyOrReady += env_ready_queues[i].size;
 			}
@@ -392,10 +356,10 @@ void clock_interrupt_handler() {
 					// round or not ?? -> (2*load_avg)/(2*load_avg+1)
 					fixed_point_t x3 = fix_div(x1, x2);
 					// (2*load_avg)/(2*load_avg+1) * recent_cpu
-					fixed_point_t x4 = fix_mul(x3, fix_int(envTmp->recent_cpu));
+					fixed_point_t x4 = fix_mul(x3, envTmp->recent_cpu);
 					// (2*load_avg)/(2*load_avg+1) * recent_cpu + nice
 					fixed_point_t x5 = fix_add(x4, fix_int(envTmp->nice));
-					envTmp->recent_cpu = fix_round(x5);
+					envTmp->recent_cpu = x5;
 
 				}
 			}

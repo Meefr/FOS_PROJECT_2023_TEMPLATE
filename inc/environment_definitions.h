@@ -7,6 +7,7 @@
 #include <inc/queue.h>
 #include <inc/trap.h>
 #include <inc/memlayout.h>
+#include <inc/fixed_point.h>
 
 // An environment ID 'envid_t' has three parts:
 //
@@ -119,7 +120,7 @@ struct Env {
 
     int nice;
 //    int priority;
-    int recent_cpu;
+    fixed_point_t recent_cpu;
 	//==================================================================================
 
 	//================

@@ -486,8 +486,10 @@ void env_set_nice(struct Env* e, int nice_value) {
 
 	/*(fix_int(env_get_recent_cpu(e)) / 4)*/
 	if (e->env_status != ENV_NEW) {
-		int pri =
-		PRI_MAX - (env_get_recent_cpu(e) / 4) - (nice_value * 2);
+		int x1 =
+		PRI_MAX - (nice_value * 2);
+		fixed_point_t x2 = fix_div(e->recent_cpu,fix_int(4));
+		int pri = fix_round(fix_sub(fix_int(x1),x2));
 		if (pri < PRI_MIN)
 			pri = PRI_MIN;
 		else if (pri > PRI_MAX)
@@ -546,7 +548,7 @@ int env_get_recent_cpu(struct Env* e) {
 	 * Returns 100 times the 𝑟𝑒𝑐𝑒𝑛𝑡_𝑐𝑝𝑢 value of the given environment,
 	 * rounded to the nearest integer
 	 */
-	int recent_cpu = fix_round(fix_scale(fix_int(e->recent_cpu), 100));
+	int recent_cpu = fix_round(fix_scale(e->recent_cpu, 100));
 	return recent_cpu;
 
 }
