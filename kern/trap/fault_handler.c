@@ -251,7 +251,7 @@ void page_fault_handler(struct Env * curenv, uint32 fault_va) {
 //				curenv->page_last_WS_index++;
 //				curenv->page_last_WS_element = NULL;
 			}
-			env_page_ws_print(curenv);
+			//env_page_ws_print(curenv);
 		}
 	} else {
 		if (isPageReplacmentAlgorithmLRU(PG_REP_LRU_LISTS_APPROX)) {

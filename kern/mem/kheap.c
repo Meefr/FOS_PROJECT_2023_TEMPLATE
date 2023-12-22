@@ -57,6 +57,10 @@ void* sbrk(int increment) {
 
 	//MS2: COMMENT THIS LINE BEFORE START CODING====
 	// edit in ms1 not finished yet
+	if (((increment + segmentbrk) >= hLimit)
+			|| ((increment + segmentbrk) < start)) {
+		panic("in sbrk func increment out limit");
+	}
 	if (increment > 0) {
 		// roundup then check if in the hard boundries
 		// should i pass page_size or just 4
@@ -64,54 +68,41 @@ void* sbrk(int increment) {
 		segmentbrk += increment;
 //		increment = ROUNDUP(increment, PAGE_SIZE);
 		segmentbrk = ROUNDUP(segmentbrk, PAGE_SIZE);
-		if (segmentbrk /*+ increment*/<= hLimit) {
-//			segmentbrk += increment;
-//			segmentbrk = ROUNDUP(segmentbrk, PAGE_SIZE);
-			for (uint32 i = prevSbrk; i < segmentbrk; i += (PAGE_SIZE)) {
-				struct FrameInfo* ptrr;
-				int ret = allocate_frame(&ptrr);
-				if (ret == E_NO_MEM) {
-					return (void*) E_NO_MEM;
-				}
-				ptrr->va = i;
-				map_frame(ptr_page_directory, ptrr, i, PERM_WRITEABLE);
-
+		for (uint32 i = prevSbrk; i < segmentbrk; i += (PAGE_SIZE)) {
+			struct FrameInfo* ptrr;
+			int ret = allocate_frame(&ptrr);
+			if (ret == E_NO_MEM) {
+				return (void*) E_NO_MEM;
 			}
-		} else {
-//			rerurn NULL;
-			panic("in sbrk func increment > 0");
+			ptrr->va = i;
+			map_frame(ptr_page_directory, ptrr, i, PERM_WRITEABLE);
 		}
 		return (void*) prevSbrk;
-	} else if (increment == 0) {
-		return (void*) segmentbrk;
 	} else if (increment < 0) {
 		// dec sbrk to increment
 		// if inc=10 , should i free 3 pages (12) or only 2 pages(8)
 		//increment = ROUNDUP(-increment, PAGE_SIZE);
 		increment = increment * -1;
-		uint32 newSbrk = segmentbrk - ((increment / PAGE_SIZE) * PAGE_SIZE);
+		uint32 newSbrk = segmentbrk
+				- increment/*((increment / PAGE_SIZE) * PAGE_SIZE)*/;
 		if (newSbrk < start) {
 			panic("in sbrk func increment < 0 and newSbrk<start");
 		}
-//		for (uint32 i = segmentbrk; i > newSbrk; i -= (PAGE_SIZE)) {
-//			unmap_frame(ptr_page_directory, i);
-//			free_frame((struct FrameInfo*) i);
-//		}
-		if (((segmentbrk % PAGE_SIZE) <= increment
-				&& (segmentbrk % PAGE_SIZE) != 0)
-				|| (increment % PAGE_SIZE == 0)) {
-			unmap_frame(ptr_page_directory, segmentbrk);
-			free_frame((struct FrameInfo*) segmentbrk);
+		uint32 oldSbrk = ROUNDUP(segmentbrk, PAGE_SIZE);
+		segmentbrk -= increment;
+		for (uint32 i = oldSbrk; i > ROUNDDOWN(segmentbrk, PAGE_SIZE); i -=
+				(PAGE_SIZE)) {
+			uint32 *page_table;
+			struct FrameInfo* tmpfram = get_frame_info(ptr_page_directory,
+					i, &page_table);
+			if (tmpfram != 0)
+				free_frame(tmpfram);
+			unmap_frame(ptr_page_directory, i);
 		}
 
-		segmentbrk -= increment;
-//		segmentbrk -= ((increment / PAGE_SIZE) * PAGE_SIZE);
 		return (void*) segmentbrk;
-	} else if (segmentbrk + increment > hLimit) {
-		//cprintf("segmentbrk=%d and hlimit=%d",segmentbrk,hLimit);
-		panic("in sbrk func increment>0");
 	}
-	return (void*) -1;
+	return (void*) segmentbrk;
 
 }
 
