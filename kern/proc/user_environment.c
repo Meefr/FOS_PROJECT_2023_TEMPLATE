@@ -443,7 +443,7 @@ void env_run(struct Env *e)
 void env_free(struct Env *e)
 {
 	/*REMOVE THIS LINE BEFORE START CODING*/
-	return;
+	//return;
 	/**************************************/
 
 	//TODO: [PROJECT'23.MS3 - BONUS] EXIT ENV: env_free
@@ -462,9 +462,12 @@ void env_free(struct Env *e)
 		}
 		/*struct FrameInfo *Dir_FrameInfo = to_frame_info(kheap_physical_address(e->env_page_directory));
 		free_frame(Dir_FrameInfo);*/
+		//vMem[0] = 0;
+		for(int i = (e->hardLimit + (4 * 1024)); i < KERNEL_HEAP_MAX; i += (4 * 1024)) {
+			pd_clear_page_dir_entry(e->env_page_directory, i);
+		}
+
 		kfree(e->env_page_directory);
-
-
 
 
 	}
