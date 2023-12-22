@@ -37,6 +37,7 @@ int initialize_kheap_dynamic_allocator(uint32 daStart,
 	return 0;
 }
 
+
 void* sbrk(int increment) {
 	//TODO: [PROJECT'23.MS2 - #02] [1] KERNEL HEAP - sbrk()
 	/* increment > 0: move the segment break of the kernel to increase the size of its heap,
@@ -63,7 +64,7 @@ void* sbrk(int increment) {
 		segmentbrk += increment;
 //		increment = ROUNDUP(increment, PAGE_SIZE);
 		segmentbrk = ROUNDUP(segmentbrk, PAGE_SIZE);
-		if (segmentbrk /*+ increment*/ <= hLimit) {
+		if (segmentbrk /*+ increment*/<= hLimit) {
 //			segmentbrk += increment;
 //			segmentbrk = ROUNDUP(segmentbrk, PAGE_SIZE);
 			for (uint32 i = prevSbrk; i < segmentbrk; i += (PAGE_SIZE)) {
@@ -92,18 +93,24 @@ void* sbrk(int increment) {
 		if (newSbrk < start) {
 			panic("in sbrk func increment < 0 and newSbrk<start");
 		}
-		for (uint32 i = segmentbrk; i > newSbrk; i -= (PAGE_SIZE)) {
-			unmap_frame(ptr_page_directory, i);
+//		for (uint32 i = segmentbrk; i > newSbrk; i -= (PAGE_SIZE)) {
+//			unmap_frame(ptr_page_directory, i);
 //			free_frame((struct FrameInfo*) i);
+//		}
+		if (((segmentbrk % PAGE_SIZE) <= increment
+				&& (segmentbrk % PAGE_SIZE) != 0)
+				|| (increment % PAGE_SIZE == 0)) {
+			unmap_frame(ptr_page_directory, segmentbrk);
+			free_frame((struct FrameInfo*) segmentbrk);
 		}
+
 		segmentbrk -= increment;
 //		segmentbrk -= ((increment / PAGE_SIZE) * PAGE_SIZE);
 		return (void*) segmentbrk;
+	} else if (segmentbrk + increment > hLimit) {
+		//cprintf("segmentbrk=%d and hlimit=%d",segmentbrk,hLimit);
+		panic("in sbrk func increment>0");
 	}
-	else if(segmentbrk+increment>hLimit) {
-				cprintf("segmentbrk=%d and hlimit=%d",segmentbrk,hLimit);
-				panic("in sbrk func increment>0");
-			}
 	return (void*) -1;
 
 }

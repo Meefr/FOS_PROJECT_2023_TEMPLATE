@@ -117,7 +117,7 @@ void allocate_user_mem(struct Env* e, uint32 virtual_address, uint32 size) {
 	/*=============================================================================*/
 	//TODO: [PROJECT'23.MS2 - #10] [2] USER HEAP - allocate_user_mem() [Kernel Side]
 	// ------------------------------meefr code-------------------------------- //
-//	cprintf("here!! alloc user mem\n");
+
 	for (uint32 i = virtual_address; i < virtual_address + size; i +=
 			PAGE_SIZE) {
 
@@ -130,20 +130,7 @@ void allocate_user_mem(struct Env* e, uint32 virtual_address, uint32 size) {
 		PERM_AVAILABLE, 0);
 	}
 
-	// ---------------------------hazem code--------------------------- //
 
-//	//uint32 page_permissions = pt_get_page_permissions(e, virtual_address );
-//	env_page_ws_print(e);
-//	//create new page
-//	uint32* page = create_page_table(e->env_page_directory, virtual_address);
-//
-//	/* set PERM_AVAILABLE to 1 indicates that it is marked as it is reserved in
-//	 virtual memory and available to point to physical address after page fault*/
-//	pt_set_page_permissions(e->env_page_directory, virtual_address,
-//			PERM_AVAILABLE, 0);
-//
-//	// Write your code here, remove the panic and write your code
-//	//panic("allocate_user_mem() is not implemented yet...!!");
 
 }
 
@@ -169,16 +156,15 @@ void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size) {
 				e->page_last_WS_element = LIST_NEXT(wsVM[index]);
 			}
 
-			cprintf("max size in free user mem %x\n",virtual_address);
-			//cprintf("max size in free user mem after %x\n",e->page_last_WS_element);
+
 			LIST_REMOVE(&(e->page_WS_list), wsVM[index]);
 			kfree(wsVM[index]);
 			wsVM[index] = NULL;
 		}
 
-		cprintf("max size in free user mem %x\n",virtual_address);
+		//cprintf("max size in free user mem %x\n",virtual_address);
 		//env_page_ws_invalidate(e, i);
-		e->page_WS_list.lh_first=e->page_last_WS_element;
+		//e->page_WS_list.lh_first=e->page_last_WS_element;
 	}
 
 	// Write your code here, remove the panic and write your code
