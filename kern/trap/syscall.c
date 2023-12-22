@@ -482,53 +482,36 @@ void* sys_sbrk(int increment) {
 	}
 	if (increment > 0) {
 		env->segBreak += increment;
-		env->segBreak = ROUNDUP(env->segBreak,PAGE_SIZE);
+		env->segBreak = ROUNDUP(env->segBreak, PAGE_SIZE);
 		uint32 *pageTable;
 		for (uint32 i = segmentBreak; i < env->segBreak; i += (PAGE_SIZE)) {
 			int ret = get_page_table(env->env_page_directory, i, &pageTable);
 			if (ret == TABLE_NOT_EXIST) {
 				create_page_table(env->env_page_directory, i);
 			}
-			pt_set_page_permissions(env->env_page_directory, i,PERM_AVAILABLE, 0);
+			pt_set_page_permissions(env->env_page_directory, i, PERM_AVAILABLE,
+					0);
 		}
-//		if(increment % (4 * kilo) == 0) {
-//			env->segBreak += increment;
-//		} else {
-//			env->segBreak += (((increment/(4*kilo))*(4*kilo)) + (4 * kilo));
-//		}
 
 	} else if (increment < 0) {
 		increment = increment * -1;
-		uint32 newSbrk = segmentBreak - increment /*- ((increment / PAGE_SIZE) * PAGE_SIZE)*/;
+		uint32 newSbrk = segmentBreak
+				- increment /*- ((increment / PAGE_SIZE) * PAGE_SIZE)*/;
 		if (newSbrk < env->start) {
 			return (void *) -1;
 		}
-//		for (uint32 i = segmentBreak; i > newSbrk; i -= (PAGE_SIZE)) {
-////			pt_set_page_permissions(env->env_page_directory, i, 0, PERM_AVAILABLE);
-////			env_page_ws_invalidate(env, i);
-////			pf_remove_env_page(env, i);
-//			unmap_frame(ptr_page_directory, i);
-////			free_frame((struct FrameInfo*) i);
-//		}
-//		segmentBreak -= ((increment / PAGE_SIZE) * PAGE_SIZE);
-		if(((segmentBreak % PAGE_SIZE) <= increment && (segmentBreak % PAGE_SIZE) != 0) || (increment % PAGE_SIZE == 0)){
-			free_frame((struct FrameInfo*) ROUNDDOWN(segmentBreak,PAGE_SIZE));
-			env_page_ws_invalidate(env, ROUNDDOWN(segmentBreak,PAGE_SIZE));
-			unmap_frame(ptr_page_directory, ROUNDDOWN(segmentBreak,PAGE_SIZE));
+
+		if (((segmentBreak % PAGE_SIZE) <= increment
+				&& (segmentBreak % PAGE_SIZE) != 0)
+				|| (increment % PAGE_SIZE == 0)) {
+			uint32 *page_table;
+			env_page_ws_invalidate(env, ROUNDDOWN(segmentBreak, PAGE_SIZE));
+			unmap_frame(ptr_page_directory, ROUNDDOWN(segmentBreak, PAGE_SIZE));
+			free_frame((struct FrameInfo*) ROUNDDOWN(segmentBreak, PAGE_SIZE));
 		}
 		segmentBreak -= increment;
 		env->segBreak = segmentBreak;
-		//		if(segmentBreak + increment < env->start)
-//			return (void*)-1;
-//		while(increment <= (-4 * kilo)){
-//			// moving the segment break by page boundary
-//			segmentBreak -=(4 * kilo);
-//			// deallocate page entry
-//			unmap_frame(env->env_page_directory,segmentBreak);
-//			//move to the next page.
-//			increment += (4 * kilo);
-//		}
-//		env->segBreak = segmentBreak;
+
 	}
 	return (void *) segmentBreak;
 }

@@ -117,9 +117,8 @@ void allocate_user_mem(struct Env* e, uint32 virtual_address, uint32 size) {
 	/*=============================================================================*/
 	//TODO: [PROJECT'23.MS2 - #10] [2] USER HEAP - allocate_user_mem() [Kernel Side]
 	// ------------------------------meefr code-------------------------------- //
-
 	for (uint32 i = virtual_address; i < virtual_address + size; i +=
-			PAGE_SIZE) {
+	PAGE_SIZE) {
 
 		uint32* pageTabel;
 		int ret = get_page_table(e->env_page_directory, i, &pageTabel);
@@ -129,8 +128,6 @@ void allocate_user_mem(struct Env* e, uint32 virtual_address, uint32 size) {
 		pt_set_page_permissions(e->env_page_directory, i,
 		PERM_AVAILABLE, 0);
 	}
-
-
 
 }
 
@@ -151,19 +148,21 @@ void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size) {
 		unmap_frame(e->env_page_directory, i);
 		pf_remove_env_page(e, i);
 		int index = (i / PAGE_SIZE);
-		if (wsVM[index] != NULL) {
-			if (e->page_last_WS_element == wsVM[index]) {
-				e->page_last_WS_element = LIST_NEXT(wsVM[index]);
+
+		if (isPageReplacmentAlgorithmLRU(PG_REP_LRU_LISTS_APPROX))
+			//cprintf("max size in free user mem %x\n",virtual_address);
+			env_page_ws_invalidate(e, i);
+		else {
+			if (wsVM[index] != NULL) {
+				if (e->page_last_WS_element == wsVM[index]) {
+					e->page_last_WS_element = LIST_NEXT(wsVM[index]);
+				}
+
+				LIST_REMOVE(&(e->page_WS_list), wsVM[index]);
+				kfree(wsVM[index]);
+				wsVM[index] = NULL;
 			}
-
-
-			LIST_REMOVE(&(e->page_WS_list), wsVM[index]);
-			kfree(wsVM[index]);
-			wsVM[index] = NULL;
 		}
-
-		//cprintf("max size in free user mem %x\n",virtual_address);
-		//env_page_ws_invalidate(e, i);
 		//e->page_WS_list.lh_first=e->page_last_WS_element;
 	}
 
