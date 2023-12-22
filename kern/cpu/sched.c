@@ -200,8 +200,9 @@ void rearrangeEnvs(struct Env* env) {
 	if(num_of_processes_per_queue == 0)
 		num_of_processes_per_queue = 1;
 	for (int j = 0; j < num_of_ready_queues; j++) {
-		if (env->priority >= (j * num_of_processes_per_queue)
-				&& env->priority < ((j + 1) * num_of_processes_per_queue)) {
+		if ((env->priority >= (j * num_of_processes_per_queue)
+				&& env->priority < ((j + 1) * num_of_processes_per_queue))||
+				(j == num_of_ready_queues - 1 && env->priority >= num_of_processes_per_queue)) {
 			enqueue(&env_ready_queues[j], env);
 			break;
 		}
@@ -283,6 +284,7 @@ void clock_interrupt_handler() {
 		if(num_of_processes_per_queue == 0)
 			num_of_processes_per_queue = 1;
 		if (/*4 ticks*/time % 4 == 0 /*&& time != 0*/) {
+			//sched_print_all();
 			env_set_nice(curenv, curenv->nice);
 			for (int i = 0; i < num_of_ready_queues; i++) {
 				int queueSize = queue_size(&env_ready_queues[i]);
@@ -291,9 +293,10 @@ void clock_interrupt_handler() {
 					int oldPri = envTmp->priority;
 					env_set_nice(envTmp, envTmp->nice);
 //					cprintf("oldPRI: %d\nNewPRI: %d\n",oldPri,envTmp->priority);
-					if (envTmp->priority >= (i * num_of_processes_per_queue)
+					if ((envTmp->priority >= (i * num_of_processes_per_queue)
 							&& envTmp->priority
-									< ((i + 1) * num_of_processes_per_queue)) {
+									< ((i + 1) * num_of_processes_per_queue)) ||
+									(i == num_of_ready_queues - 1 && envTmp->priority >= num_of_ready_queues)) {
 						enqueue(&env_ready_queues[i], envTmp);
 					} else {
 						rearrangeEnvs(envTmp);
