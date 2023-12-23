@@ -241,17 +241,6 @@ void page_fault_handler(struct Env * curenv, uint32 fault_va) {
 				LIST_INSERT_BEFORE(&(curenv->page_WS_list),
 						curenv->page_last_WS_element, new_workingset);
 			}
-			if (curenv->page_WS_max_size == curenv->page_WS_list.size) {
-				//cprintf("inside maxSize");
-//				curenv->page_last_WS_element = curenv->page_WS_list.lh_first;
-//				curenv->page_last_WS_index = 0;
-
-			} else {
-				//	cprintf("inside last WS = null");
-//				curenv->page_last_WS_index++;
-//				curenv->page_last_WS_element = NULL;
-			}
-			//env_page_ws_print(curenv);
 		}
 	} else {
 		if (isPageReplacmentAlgorithmLRU(PG_REP_LRU_LISTS_APPROX)) {
@@ -337,7 +326,6 @@ void page_fault_handler(struct Env * curenv, uint32 fault_va) {
 					}
 
 					else {
-						cprintf("not found");
 						// the required doesnot exist in secondList then read it from PF and add it to ActiveList
 						struct FrameInfo* frame;
 						allocate_frame(&frame);
