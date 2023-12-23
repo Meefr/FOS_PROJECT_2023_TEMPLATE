@@ -500,16 +500,27 @@ void* sys_sbrk(int increment) {
 		if (newSbrk < env->start) {
 			return (void *) -1;
 		}
-
-		if (((segmentBreak % PAGE_SIZE) <= increment
-				&& (segmentBreak % PAGE_SIZE) != 0)
-				|| (increment % PAGE_SIZE == 0)) {
-			uint32 *page_table;
-			env_page_ws_invalidate(env, ROUNDDOWN(segmentBreak, PAGE_SIZE));
-			unmap_frame(ptr_page_directory, ROUNDDOWN(segmentBreak, PAGE_SIZE));
-			free_frame((struct FrameInfo*) ROUNDDOWN(segmentBreak, PAGE_SIZE));
-		}
+		uint32 oldSbrk = ROUNDUP(segmentBreak, PAGE_SIZE);
+		uint32 *page_table;
 		segmentBreak -= increment;
+		for (uint32 i = oldSbrk; i > ROUNDDOWN(segmentBreak, PAGE_SIZE); i -=
+				(PAGE_SIZE)) {
+			env_page_ws_invalidate(env,i);
+			struct FrameInfo* tmpfram = get_frame_info(env->env_page_directory, i,
+					&page_table);
+			if (tmpfram != 0)
+				free_frame(tmpfram);
+			unmap_frame(ptr_page_directory, i);
+		}
+//		if (((segmentBreak % PAGE_SIZE) <= increment
+//				&& (segmentBreak % PAGE_SIZE) != 0)
+//				|| (increment % PAGE_SIZE == 0)) {
+//			uint32 *page_table;
+//			env_page_ws_invalidate(env, ROUNDDOWN(segmentBreak, PAGE_SIZE));
+//			unmap_frame(ptr_page_directory, ROUNDDOWN(segmentBreak, PAGE_SIZE));
+//			free_frame((struct FrameInfo*) ROUNDDOWN(segmentBreak, PAGE_SIZE));
+//		}
+//		segmentBreak -= increment;
 		env->segBreak = segmentBreak;
 
 	}
