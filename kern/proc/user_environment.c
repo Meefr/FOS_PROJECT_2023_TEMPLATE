@@ -466,10 +466,7 @@ void env_free(struct Env *e)
 		for(int i = (e->hardLimit + (4 * 1024)); i < KERNEL_HEAP_MAX; i += (4 * 1024)) {
 			pd_clear_page_dir_entry(e->env_page_directory, i);
 		}
-
 		kfree(e->env_page_directory);
-
-
 	}
 
 	// [9] remove this program from the page file
